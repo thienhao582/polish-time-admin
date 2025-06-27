@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -268,43 +269,108 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
               />
             </CardContent>
           </Card>
-        </div>
 
-        {/* Service and Staff */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Service and Staff */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Scissors className="w-5 h-5" />
+                  Dịch vụ
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="serviceId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chọn dịch vụ</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn dịch vụ" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {services.map((service) => (
+                            <SelectItem key={service.id} value={service.id}>
+                              <div>
+                                <div className="font-medium">{service.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  {service.duration} phút - {service.price.toLocaleString()}đ
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Nhân viên
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="staffId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Chọn nhân viên</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn nhân viên" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {staff.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              <div>
+                                <div className="font-medium">{member.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  {member.specialties.join(", ")}
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Notes */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scissors className="w-5 h-5" />
-                Dịch vụ
-              </CardTitle>
+              <CardTitle>Ghi chú</CardTitle>
             </CardHeader>
             <CardContent>
               <FormField
                 control={form.control}
-                name="serviceId"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Chọn dịch vụ</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn dịch vụ" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {services.map((service) => (
-                          <SelectItem key={service.id} value={service.id}>
-                            <div>
-                              <div className="font-medium">{service.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {service.duration} phút - {service.price.toLocaleString()}đ
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <textarea
+                        placeholder="Ghi chú thêm về lịch hẹn..."
+                        className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -312,82 +378,17 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Nhân viên
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Chọn nhân viên</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn nhân viên" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {staff.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            <div>
-                              <div className="font-medium">{member.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {member.specialties.join(", ")}
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ghi chú</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <textarea
-                      placeholder="Ghi chú thêm về lịch hẹn..."
-                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Hủy
-          </Button>
-          <Button type="submit" className="bg-pink-600 hover:bg-pink-700">
-            Tạo lịch hẹn
-          </Button>
-        </div>
-      </form>
-    </Form>
+          {/* Actions */}
+          <div className="flex justify-end gap-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Hủy
+            </Button>
+            <Button type="submit" className="bg-pink-600 hover:bg-pink-700">
+              Tạo lịch hẹn
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }
