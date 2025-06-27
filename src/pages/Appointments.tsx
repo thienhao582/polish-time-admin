@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +9,25 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 
+interface Appointment {
+  id: number;
+  date: string;
+  time: string;
+  customer: string;
+  phone: string;
+  service: string;
+  duration: string;
+  price: string;
+  status: string;
+  staff: string;
+}
+
 const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const appointments = [
+  const [appointments, setAppointments] = useState<Appointment[]>([
     {
       id: 1,
       date: "2024-06-27",
@@ -64,7 +76,41 @@ const Appointments = () => {
       status: "cancelled",
       staff: "Linh",
     },
-  ];
+  ]);
+
+  const handleAppointmentCreate = (appointmentData: any) => {
+    const services = [
+      { id: "1", name: "Gel Polish + Nail Art", duration: 90, price: 450000 },
+      { id: "2", name: "Manicure + Pedicure", duration: 120, price: 380000 },
+      { id: "3", name: "Nail Extension", duration: 150, price: 650000 },
+      { id: "4", name: "Basic Manicure", duration: 60, price: 200000 },
+    ];
+
+    const staff = [
+      { id: "1", name: "Mai" },
+      { id: "2", name: "Linh" },
+      { id: "3", name: "Hương" },
+    ];
+
+    const selectedService = services.find(s => s.id === appointmentData.serviceId);
+    const selectedStaff = staff.find(s => s.id === appointmentData.staffId);
+
+    const newAppointment: Appointment = {
+      id: appointments.length + 1,
+      date: format(appointmentData.date, "yyyy-MM-dd"),
+      time: appointmentData.time,
+      customer: appointmentData.customerName,
+      phone: appointmentData.customerPhone,
+      service: selectedService?.name || "Unknown Service",
+      duration: `${selectedService?.duration || 0} phút`,
+      price: `${selectedService?.price.toLocaleString() || 0}đ`,
+      status: "confirmed",
+      staff: selectedStaff?.name || "Unknown Staff",
+    };
+
+    setAppointments(prev => [...prev, newAppointment]);
+    setIsFormOpen(false);
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -194,11 +240,11 @@ const Appointments = () => {
               Thêm lịch hẹn
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
             </DialogHeader>
-            <AppointmentForm onClose={() => setIsFormOpen(false)} />
+            <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
           </DialogContent>
         </Dialog>
       </div>

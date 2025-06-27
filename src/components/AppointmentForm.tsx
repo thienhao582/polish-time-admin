@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 const appointmentSchema = z.object({
   date: z.date({
@@ -34,9 +33,10 @@ type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 interface AppointmentFormProps {
   onClose: () => void;
+  onSubmit: (data: AppointmentFormData) => void;
 }
 
-export function AppointmentForm({ onClose }: AppointmentFormProps) {
+export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   
   // Mock data - in real app, this would come from API
@@ -76,13 +76,13 @@ export function AppointmentForm({ onClose }: AppointmentFormProps) {
     },
   });
 
-  const onSubmit = (data: AppointmentFormData) => {
+  const handleFormSubmit = (data: AppointmentFormData) => {
     console.log("Appointment data:", data);
     toast({
       title: "Lịch hẹn đã được tạo!",
       description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
     });
-    onClose();
+    onSubmit(data);
   };
 
   const handleCustomerSelect = (customerId: string) => {
@@ -96,9 +96,9 @@ export function AppointmentForm({ onClose }: AppointmentFormProps) {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           {/* Date and Time */}
           <Card>
             <CardHeader>
