@@ -9,7 +9,7 @@ import { AppointmentForm } from "@/components/AppointmentForm";
 import { StaffServiceManager } from "@/components/StaffServiceManager";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
-import { dataStore, Appointment } from "@/utils/dataStore";
+import { useSalonStore } from "@/stores/useSalonStore";
 
 interface Appointment {
   id: number;
@@ -29,16 +29,11 @@ const Appointments = () => {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isStaffManagerOpen, setIsStaffManagerOpen] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  useEffect(() => {
-    // Load appointments from data store
-    setAppointments(dataStore.getAppointments());
-  }, []);
+  // Get appointments from Zustand store
+  const { appointments } = useSalonStore();
 
   const handleAppointmentCreate = (appointmentData: any) => {
-    // Refresh appointments from data store
-    setAppointments(dataStore.getAppointments());
     setIsFormOpen(false);
   };
 

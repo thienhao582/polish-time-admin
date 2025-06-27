@@ -4,20 +4,19 @@ import { User, Scissors } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { dataStore, Staff, Service } from "@/utils/dataStore";
 import { toast } from "@/hooks/use-toast";
+import { useSalonStore } from "@/stores/useSalonStore";
 
 export function StaffServiceManager() {
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const { staff, services, updateStaffServices } = useSalonStore();
+  const [localStaff, setLocalStaff] = useState(staff);
 
   useEffect(() => {
-    setStaff(dataStore.getStaff());
-    setServices(dataStore.getServices());
-  }, []);
+    setLocalStaff(staff);
+  }, [staff]);
 
   const handleServiceToggle = (staffId: string, serviceId: string, checked: boolean) => {
-    const updatedStaff = staff.map(member => {
+    const updatedStaff = localStaff.map(member => {
       if (member.id === staffId) {
         const updatedServices = checked
           ? [...member.assignedServices, serviceId]
@@ -31,14 +30,13 @@ export function StaffServiceManager() {
       return member;
     });
 
-    setStaff(updatedStaff);
+    setLocalStaff(updatedStaff);
   };
 
   const handleSave = () => {
-    staff.forEach(member => {
-      dataStore.updateStaffServices(member.id, member.assignedServices);
+    localStaff.forEach(member => {
+      updateStaffServices(member.id, member.assignedServices);
     });
-    dataStore.saveToStorage();
     
     toast({
       title: "Đã cập nhật!",
@@ -59,7 +57,7 @@ export function StaffServiceManager() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {staff.map((member) => (
+        {localStaff.map((member) => (
           <Card key={member.id}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

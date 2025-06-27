@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { dataStore, Service, Staff, Customer } from "@/utils/dataStore";
+import { useSalonStore } from "@/stores/useSalonStore";
 
 const appointmentSchema = z.object({
   date: z.date({
@@ -40,11 +40,18 @@ interface AppointmentFormProps {
 
 export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [allStaff, setAllStaff] = useState<Staff[]>([]);
-  const [availableStaff, setAvailableStaff] = useState<Staff[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+
+  // Get data from Zustand store
+  const { 
+    customers, 
+    services, 
+    staff, 
+    addAppointment, 
+    getAvailableStaffForService 
+  } = useSalonStore();
+
+  const [availableStaff, setAvailableStaff] = useState(staff);
 
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
@@ -64,16 +71,9 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   });
 
   useEffect(() => {
-    // Load data from data store
-    setCustomers(dataStore.getCustomers());
-    setServices(dataStore.getServices());
-    setAllStaff(dataStore.getStaff());
-  }, []);
-
-  useEffect(() => {
     // Update available staff when service changes
     if (selectedServiceId) {
-      const staffForService = dataStore.getAvailableStaffForService(selectedServiceId);
+      const staffForService = getAvailableStaffForService(selectedServiceId);
       setAvailableStaff(staffForService);
       
       // Reset staff selection if current selection is not available for the new service
@@ -85,14 +85,13 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
       setAvailableStaff([]);
       form.setValue("staffId", "");
     }
-  }, [selectedServiceId, form]);
+  }, [selectedServiceId, form, getAvailableStaffForService]);
 
   const handleFormSubmit = (data: AppointmentFormData) => {
     console.log("Appointment data:", data);
     
-    // Save to data store
-    const newAppointment = dataStore.addAppointment(data);
-    dataStore.saveToStorage();
+    // Save to Zustand store
+    const newAppointment = addAppointment(data);
     
     toast({
       title: "Lịch hẹn đã được tạo!",
