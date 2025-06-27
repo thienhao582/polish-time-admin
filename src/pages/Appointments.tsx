@@ -165,11 +165,13 @@ const Appointments = () => {
                 Quản lý nhân viên
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-6xl max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Quản lý nhân viên & dịch vụ</DialogTitle>
               </DialogHeader>
-              <StaffServiceManager />
+              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <StaffServiceManager />
+              </div>
             </DialogContent>
           </Dialog>
           
@@ -180,11 +182,13 @@ const Appointments = () => {
                 Thêm lịch hẹn
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
               </DialogHeader>
-              <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
+              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
