@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { dataStore, Service, Staff, Customer } from "@/utils/dataStore";
 
 const appointmentSchema = z.object({
   date: z.date({
@@ -39,26 +40,11 @@ interface AppointmentFormProps {
 
 export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
-  
-  // Mock data - in real app, this would come from API
-  const existingCustomers = [
-    { id: "1", name: "Nguyễn Thị Lan", phone: "0901234567", email: "lan.nguyen@email.com" },
-    { id: "2", name: "Trần Minh Anh", phone: "0987654321", email: "anh.tran@email.com" },
-    { id: "3", name: "Lê Thị Hoa", phone: "0912345678", email: "hoa.le@email.com" },
-  ];
-
-  const services = [
-    { id: "1", name: "Gel Polish + Nail Art", duration: 90, price: 450000 },
-    { id: "2", name: "Manicure + Pedicure", duration: 120, price: 380000 },
-    { id: "3", name: "Nail Extension", duration: 150, price: 650000 },
-    { id: "4", name: "Basic Manicure", duration: 60, price: 200000 },
-  ];
-
-  const staff = [
-    { id: "1", name: "Mai", specialties: ["Gel Polish", "Nail Art", "Extension"] },
-    { id: "2", name: "Linh", specialties: ["Manicure", "Pedicure", "Basic Care"] },
-    { id: "3", name: "Hương", specialties: ["Extension", "Nail Art", "Design"] },
-  ];
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [allStaff, setAllStaff] = useState<Staff[]>([]);
+  const [availableStaff, setAvailableStaff] = useState<Staff[]>([]);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
 
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
@@ -77,8 +63,37 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
     },
   });
 
+  useEffect(() => {
+    // Load data from data store
+    setCustomers(dataStore.getCustomers());
+    setServices(dataStore.getServices());
+    setAllStaff(dataStore.getStaff());
+  }, []);
+
+  useEffect(() => {
+    // Update available staff when service changes
+    if (selectedServiceId) {
+      const staffForService = dataStore.getAvailableStaffForService(selectedServiceId);
+      setAvailableStaff(staffForService);
+      
+      // Reset staff selection if current selection is not available for the new service
+      const currentStaffId = form.getValues("staffId");
+      if (currentStaffId && !staffForService.find(s => s.id === currentStaffId)) {
+        form.setValue("staffId", "");
+      }
+    } else {
+      setAvailableStaff([]);
+      form.setValue("staffId", "");
+    }
+  }, [selectedServiceId, form]);
+
   const handleFormSubmit = (data: AppointmentFormData) => {
     console.log("Appointment data:", data);
+    
+    // Save to data store
+    const newAppointment = dataStore.addAppointment(data);
+    dataStore.saveToStorage();
+    
     toast({
       title: "Lịch hẹn đã được tạo!",
       description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
@@ -87,13 +102,18 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   };
 
   const handleCustomerSelect = (customerId: string) => {
-    const customer = existingCustomers.find(c => c.id === customerId);
+    const customer = customers.find(c => c.id === customerId);
     if (customer) {
       form.setValue("customerId", customerId);
       form.setValue("customerName", customer.name);
       form.setValue("customerPhone", customer.phone);
       form.setValue("customerEmail", customer.email || "");
     }
+  };
+
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedServiceId(serviceId);
+    form.setValue("serviceId", serviceId);
   };
 
   return (
@@ -213,7 +233,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                       <SelectValue placeholder="Chọn khách hàng có sẵn" />
                     </SelectTrigger>
                     <SelectContent>
-                      {existingCustomers.map((customer) => (
+                      {customers.map((customer) => (
                         <SelectItem key={customer.id} value={customer.id}>
                           <div>
                             <div className="font-medium">{customer.name}</div>
@@ -286,7 +306,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Chọn dịch vụ</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={handleServiceSelect} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Chọn dịch vụ" />
@@ -333,16 +353,22 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {staff.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                              <div>
-                                <div className="font-medium">{member.name}</div>
-                                <div className="text-sm text-gray-500">
-                                  {member.specialties.join(", ")}
+                          {availableStaff.length > 0 ? (
+                            availableStaff.map((member) => (
+                              <SelectItem key={member.id} value={member.id}>
+                                <div>
+                                  <div className="font-medium">{member.name}</div>
+                                  <div className="text-sm text-gray-500">
+                                    {member.specialties.join(", ")}
+                                  </div>
                                 </div>
-                              </div>
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-staff" disabled>
+                              {selectedServiceId ? "Không có nhân viên cho dịch vụ này" : "Vui lòng chọn dịch vụ trước"}
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />

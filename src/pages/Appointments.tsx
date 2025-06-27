@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AppointmentForm } from "@/components/AppointmentForm";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
+import { StaffServiceManager } from "@/components/StaffServiceManager";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
+import { dataStore, Appointment } from "@/utils/dataStore";
 
 interface Appointment {
   id: number;
@@ -26,89 +28,17 @@ const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isStaffManagerOpen, setIsStaffManagerOpen] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: 1,
-      date: "2024-06-27",
-      time: "09:00",
-      customer: "Nguyễn Thị Lan",
-      phone: "0901234567",
-      service: "Gel Polish + Nail Art",
-      duration: "90 phút",
-      price: "450.000đ",
-      status: "confirmed",
-      staff: "Mai",
-    },
-    {
-      id: 2,
-      date: "2024-06-27",
-      time: "10:30",
-      customer: "Trần Minh Anh",
-      phone: "0987654321",
-      service: "Manicure + Pedicure",
-      duration: "120 phút",
-      price: "380.000đ",
-      status: "pending",
-      staff: "Linh",
-    },
-    {
-      id: 3,
-      date: "2024-06-27",
-      time: "14:00",
-      customer: "Lê Thị Hoa",
-      phone: "0912345678",
-      service: "Nail Extension",
-      duration: "150 phút",
-      price: "650.000đ",
-      status: "completed",
-      staff: "Mai",
-    },
-    {
-      id: 4,
-      date: "2024-06-28",
-      time: "09:30",
-      customer: "Phạm Thị Thu",
-      phone: "0923456789",
-      service: "Basic Manicure",
-      duration: "60 phút",
-      price: "200.000đ",
-      status: "cancelled",
-      staff: "Linh",
-    },
-  ]);
+  useEffect(() => {
+    // Load appointments from data store
+    setAppointments(dataStore.getAppointments());
+  }, []);
 
   const handleAppointmentCreate = (appointmentData: any) => {
-    const services = [
-      { id: "1", name: "Gel Polish + Nail Art", duration: 90, price: 450000 },
-      { id: "2", name: "Manicure + Pedicure", duration: 120, price: 380000 },
-      { id: "3", name: "Nail Extension", duration: 150, price: 650000 },
-      { id: "4", name: "Basic Manicure", duration: 60, price: 200000 },
-    ];
-
-    const staff = [
-      { id: "1", name: "Mai" },
-      { id: "2", name: "Linh" },
-      { id: "3", name: "Hương" },
-    ];
-
-    const selectedService = services.find(s => s.id === appointmentData.serviceId);
-    const selectedStaff = staff.find(s => s.id === appointmentData.staffId);
-
-    const newAppointment: Appointment = {
-      id: appointments.length + 1,
-      date: format(appointmentData.date, "yyyy-MM-dd"),
-      time: appointmentData.time,
-      customer: appointmentData.customerName,
-      phone: appointmentData.customerPhone,
-      service: selectedService?.name || "Unknown Service",
-      duration: `${selectedService?.duration || 0} phút`,
-      price: `${selectedService?.price.toLocaleString() || 0}đ`,
-      status: "confirmed",
-      staff: selectedStaff?.name || "Unknown Staff",
-    };
-
-    setAppointments(prev => [...prev, newAppointment]);
+    // Refresh appointments from data store
+    setAppointments(dataStore.getAppointments());
     setIsFormOpen(false);
   };
 
@@ -233,20 +163,36 @@ const Appointments = () => {
           <h1 className="text-3xl font-bold text-gray-800">Quản lý Lịch Hẹn</h1>
           <p className="text-gray-600 mt-1">Theo dõi và quản lý tất cả lịch hẹn</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Thêm lịch hẹn
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
-            </DialogHeader>
-            <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-pink-600 text-pink-600 hover:bg-pink-50">
+                Quản lý nhân viên
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Quản lý nhân viên & dịch vụ</DialogTitle>
+              </DialogHeader>
+              <StaffServiceManager />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-pink-600 hover:bg-pink-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Thêm lịch hẹn
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
+              </DialogHeader>
+              <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* View Controls */}
