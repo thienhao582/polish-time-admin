@@ -36,8 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkSession = async () => {
     try {
+      console.log('Checking session...');
+      
       const sessionData = localStorage.getItem('nail_salon_session');
       if (!sessionData) {
+        console.log('No session found');
         setLoading(false);
         return;
       }
@@ -46,10 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Check if session is expired
       if (new Date() > new Date(expiresAt)) {
+        console.log('Session expired');
         localStorage.removeItem('nail_salon_session');
         setLoading(false);
         return;
       }
+
+      console.log('Session found, verifying with database...');
 
       // Verify session in database
       const { data: sessionRecord, error } = await supabase
@@ -57,9 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('user_id')
         .eq('session_token', sessionToken)
         .gt('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
-      if (error || !sessionRecord) {
+      if (error) {
+        console.error('Session verification error:', error);
+        localStorage.removeItem('nail_salon_session');
+        setLoading(false);
+        return;
+      }
+
+      if (!sessionRecord) {
+        console.log('Session not found in database');
         localStorage.removeItem('nail_salon_session');
         setLoading(false);
         return;
@@ -71,14 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('id', sessionRecord.user_id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (userError || !freshUserData) {
+        console.error('User verification error:', userError);
         localStorage.removeItem('nail_salon_session');
         setLoading(false);
         return;
       }
 
+      console.log('Session valid, user authenticated:', freshUserData.email);
       setUser(freshUserData);
     } catch (error) {
       console.error('Session check error:', error);
@@ -89,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = (userData: User) => {
+    console.log('Login called with user:', userData.email);
     setUser(userData);
   };
 

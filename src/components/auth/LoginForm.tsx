@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LoginFormProps {
   onLoginSuccess: (user: any) => void;
@@ -19,6 +20,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setIsLoading(true);
 
     try {
+      console.log('Attempting login with:', { email, pin });
+
       // Validate PIN format
       if (!/^\d{4}$/.test(pin)) {
         setError("Mã PIN phải có đúng 4 chữ số");
@@ -33,17 +37,32 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         return;
       }
 
-      // Query user from our custom users table
+      // First, let's try to find the user
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email.toLowerCase())
-        .eq('pin_code', pin)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (userError || !userData) {
-        setError("Email hoặc mã PIN không đúng");
+      console.log('User query result:', { userData, userError });
+
+      if (userError) {
+        console.error('Database error:', userError);
+        setError("Lỗi kết nối database");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!userData) {
+        setError("Email không tồn tại trong hệ thống");
+        setIsLoading(false);
+        return;
+      }
+
+      // Check PIN
+      if (userData.pin_code !== pin) {
+        setError("Mã PIN không đúng");
         setIsLoading(false);
         return;
       }
@@ -52,6 +71,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       const sessionToken = crypto.randomUUID();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
+
+      console.log('Creating session...');
 
       const { error: sessionError } = await supabase
         .from('user_sessions')
@@ -62,6 +83,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         });
 
       if (sessionError) {
+        console.error('Session creation error:', sessionError);
         setError("Lỗi tạo phiên đăng nhập");
         setIsLoading(false);
         return;
@@ -74,11 +96,15 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         expiresAt: expiresAt.toISOString()
       }));
 
+      console.log('Login successful!');
+
       toast({
         title: "Đăng nhập thành công!",
         description: `Chào mừng ${userData.full_name}`,
       });
 
+      // Update auth context
+      login(userData);
       onLoginSuccess(userData);
 
     } catch (error) {
@@ -149,6 +175,12 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
               "Đăng nhập"
             )}
           </Button>
+
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-700 font-medium">Tài khoản demo:</p>
+            <p className="text-sm text-blue-600">Email: admin@example.com</p>
+            <p className="text-sm text-blue-600">PIN: 1234</p>
+          </div>
         </form>
       </CardContent>
     </Card>
