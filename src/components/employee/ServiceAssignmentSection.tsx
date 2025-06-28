@@ -1,7 +1,11 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Service } from "@/stores/useSalonStore";
+
+interface Service {
+  id: string;
+  name: string;
+}
 
 interface ServiceAssignmentSectionProps {
   services: Service[];

@@ -12,7 +12,7 @@ interface BasicInfoSectionProps {
     status: Employee['status'];
     startDate: string;
   };
-  onFormDataChange: (updates: Partial<typeof formData>) => void;
+  onFormDataChange: (updates: Partial<BasicInfoSectionProps['formData']>) => void;
 }
 
 export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectionProps) {
@@ -27,7 +27,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
           value={formData.name}
           onChange={(e) => onFormDataChange({ name: e.target.value })}
           placeholder="Nhập tên nhân viên"
-          className="focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+          className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
           required
         />
       </div>
@@ -41,7 +41,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
           value={formData.phone}
           onChange={(e) => onFormDataChange({ phone: e.target.value })}
           placeholder="Nhập số điện thoại"
-          className="focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+          className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
           required
         />
       </div>
@@ -51,7 +51,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
           Vai trò
         </Label>
         <Select value={formData.role} onValueChange={(value) => onFormDataChange({ role: value as Employee['role'] })}>
-          <SelectTrigger className="focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+          <SelectTrigger className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200">
             <SelectValue placeholder="Chọn vai trò" />
           </SelectTrigger>
           <SelectContent className="bg-white border shadow-lg z-50">
@@ -68,7 +68,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
           Trạng thái
         </Label>
         <Select value={formData.status} onValueChange={(value) => onFormDataChange({ status: value as Employee['status'] })}>
-          <SelectTrigger className="focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200">
+          <SelectTrigger className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200">
             <SelectValue placeholder="Chọn trạng thái" />
           </SelectTrigger>
           <SelectContent className="bg-white border shadow-lg z-50">
@@ -87,7 +87,7 @@ export function BasicInfoSection({ formData, onFormDataChange }: BasicInfoSectio
           type="date"
           value={formData.startDate}
           onChange={(e) => onFormDataChange({ startDate: e.target.value })}
-          className="focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+          className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
         />
       </div>
     </div>
