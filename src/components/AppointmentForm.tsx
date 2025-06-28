@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,16 +41,16 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
 
-  // Get data from Zustand store
+  // Get data from Zustand store - using employees instead of staff
   const { 
     customers, 
     services, 
-    staff, 
+    employees, 
     addAppointment, 
-    getAvailableStaffForService 
+    getAvailableEmployeesForService 
   } = useSalonStore();
 
-  const [availableStaff, setAvailableStaff] = useState(staff);
+  const [availableEmployees, setAvailableEmployees] = useState(employees);
 
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
@@ -71,21 +70,21 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   });
 
   useEffect(() => {
-    // Update available staff when service changes
+    // Update available employees when service changes
     if (selectedServiceId) {
-      const staffForService = getAvailableStaffForService(selectedServiceId);
-      setAvailableStaff(staffForService);
+      const employeesForService = getAvailableEmployeesForService(selectedServiceId);
+      setAvailableEmployees(employeesForService);
       
       // Reset staff selection if current selection is not available for the new service
       const currentStaffId = form.getValues("staffId");
-      if (currentStaffId && !staffForService.find(s => s.id === currentStaffId)) {
+      if (currentStaffId && !employeesForService.find(e => e.id === currentStaffId)) {
         form.setValue("staffId", "");
       }
     } else {
-      setAvailableStaff([]);
+      setAvailableEmployees([]);
       form.setValue("staffId", "");
     }
-  }, [selectedServiceId, form, getAvailableStaffForService]);
+  }, [selectedServiceId, form, getAvailableEmployeesForService]);
 
   const handleFormSubmit = (data: AppointmentFormData) => {
     console.log("Appointment data:", data);
@@ -311,7 +310,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {services.map((service) => (
+                        {services.filter(service => service.status === 'active').map((service) => (
                           <SelectItem key={service.id} value={service.id}>
                             <div>
                               <div className="font-medium">{service.name}</div>
@@ -351,13 +350,13 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableStaff.length > 0 ? (
-                          availableStaff.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
+                        {availableEmployees.length > 0 ? (
+                          availableEmployees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
                               <div>
-                                <div className="font-medium">{member.name}</div>
+                                <div className="font-medium">{employee.name}</div>
                                 <div className="text-sm text-gray-500">
-                                  {member.specialties.join(", ")}
+                                  {employee.specialties.join(", ")}
                                 </div>
                               </div>
                             </SelectItem>

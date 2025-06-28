@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Staff, Customer, Appointment } from '@/utils/dataStore';
+import { Customer, Appointment } from '@/utils/dataStore';
 
 // Enhanced Service interface
 export interface Service {
@@ -15,7 +15,7 @@ export interface Service {
   updatedAt: string;
 }
 
-// New interfaces for employee management
+// Employee interface (unified)
 export interface Employee {
   id: string;
   name: string;
@@ -64,7 +64,6 @@ export interface CustomerEnhanced {
 interface SalonState {
   // State
   services: Service[];
-  staff: Staff[];
   customers: Customer[];
   appointments: Appointment[];
   nextAppointmentId: number;
@@ -74,7 +73,7 @@ interface SalonState {
   enhancedCustomers: CustomerEnhanced[];
   nextEnhancedCustomerId: number;
   
-  // New employee management state
+  // Employee management state (unified)
   employees: Employee[];
   timeRecords: TimeRecord[];
   nextEmployeeId: number;
@@ -85,11 +84,6 @@ interface SalonState {
   updateService: (id: string, service: Partial<Omit<Service, 'id' | 'createdAt'>>) => void;
   deleteService: (id: string) => void;
   toggleServiceStatus: (id: string) => void;
-  
-  addStaff: (staff: Omit<Staff, 'id'>) => void;
-  updateStaff: (id: string, staff: Partial<Staff>) => void;
-  updateStaffServices: (staffId: string, assignedServices: string[]) => void;
-  deleteStaff: (id: string) => void;
   
   addCustomer: (customer: Omit<Customer, 'id'>) => Customer;
   updateCustomer: (id: string, customer: Partial<Customer>) => void;
@@ -106,7 +100,7 @@ interface SalonState {
   updateAppointment: (id: number, appointment: Partial<Appointment>) => void;
   deleteAppointment: (id: number) => void;
   
-  // New employee actions  
+  // Employee actions  
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   updateEmployee: (id: string, employee: Partial<Employee>) => void;
   deleteEmployee: (id: string) => void;
@@ -118,7 +112,7 @@ interface SalonState {
   getTotalHoursForEmployee: (employeeId: string, period: 'week' | 'month') => number;
   
   // Utility functions
-  getAvailableStaffForService: (serviceId: string) => Staff[];
+  getAvailableEmployeesForService: (serviceId: string) => Employee[];
   
   // Data initialization
   initializeData: () => void;
@@ -182,24 +176,36 @@ const initialServices: Service[] = [
   },
 ];
 
-const initialStaff: Staff[] = [
-  { 
-    id: "1", 
-    name: "Mai", 
+const initialEmployees: Employee[] = [
+  {
+    id: "1",
+    name: "Mai Nguyễn",
+    phone: "0901234567",
+    role: "thợ chính",
+    status: "đang làm",
+    assignedServices: ["1", "3"],
     specialties: ["Gel Polish", "Nail Art", "Extension"],
-    assignedServices: ["1", "3"]
+    startDate: "2024-01-15",
   },
-  { 
+  {
     id: "2", 
-    name: "Linh", 
+    name: "Linh Trần",
+    phone: "0987654321",
+    role: "thợ chính",
+    status: "đang làm",
+    assignedServices: ["2", "4"],
     specialties: ["Manicure", "Pedicure", "Basic Care"],
-    assignedServices: ["2", "4"]
+    startDate: "2024-02-01",
   },
-  { 
-    id: "3", 
-    name: "Hương", 
+  {
+    id: "3",
+    name: "Hương Lê",
+    phone: "0912345678", 
+    role: "phụ tá",
+    status: "đang làm",
+    assignedServices: ["1", "3"],
     specialties: ["Extension", "Nail Art", "Design"],
-    assignedServices: ["1", "3"]
+    startDate: "2024-03-10",
   },
 ];
 
@@ -254,39 +260,6 @@ const initialAppointments: Appointment[] = [
     customerId: "3",
     serviceId: "3",
     staffId: "1",
-  },
-];
-
-const initialEmployees: Employee[] = [
-  {
-    id: "1",
-    name: "Mai Nguyễn",
-    phone: "0901234567",
-    role: "thợ chính",
-    status: "đang làm",
-    assignedServices: ["1", "3"],
-    specialties: ["Gel Polish", "Nail Art", "Extension"],
-    startDate: "2024-01-15",
-  },
-  {
-    id: "2", 
-    name: "Linh Trần",
-    phone: "0987654321",
-    role: "thợ chính",
-    status: "đang làm",
-    assignedServices: ["2", "4"],
-    specialties: ["Manicure", "Pedicure", "Basic Care"],
-    startDate: "2024-02-01",
-  },
-  {
-    id: "3",
-    name: "Hương Lê",
-    phone: "0912345678", 
-    role: "phụ tá",
-    status: "đang làm",
-    assignedServices: ["1", "3"],
-    specialties: ["Extension", "Nail Art", "Design"],
-    startDate: "2024-03-10",
   },
 ];
 
@@ -392,7 +365,6 @@ export const useSalonStore = create<SalonState>()(
     (set, get) => ({
       // Initial state
       services: [...initialServices],
-      staff: [...initialStaff],
       customers: [...initialCustomers],
       appointments: [...initialAppointments],
       nextAppointmentId: 4,
@@ -402,7 +374,7 @@ export const useSalonStore = create<SalonState>()(
       enhancedCustomers: [...initialEnhancedCustomers],
       nextEnhancedCustomerId: 5,
       
-      // New employee state
+      // Employee state (unified)
       employees: [...initialEmployees],
       timeRecords: [],
       nextEmployeeId: 4,
@@ -444,27 +416,6 @@ export const useSalonStore = create<SalonState>()(
               } 
             : s
         )
-      })),
-
-      // Staff actions
-      addStaff: (staff) => set((state) => ({
-        staff: [...state.staff, { ...staff, id: Date.now().toString() }]
-      })),
-
-      updateStaff: (id, staff) => set((state) => ({
-        staff: state.staff.map(s => s.id === id ? { ...s, ...staff } : s)
-      })),
-
-      updateStaffServices: (staffId, assignedServices) => set((state) => ({
-        staff: state.staff.map(member => 
-          member.id === staffId 
-            ? { ...member, assignedServices }
-            : member
-        )
-      })),
-
-      deleteStaff: (id) => set((state) => ({
-        staff: state.staff.filter(s => s.id !== id)
       })),
 
       // Customer actions
@@ -558,7 +509,7 @@ export const useSalonStore = create<SalonState>()(
       addAppointment: (appointmentData) => {
         const state = get();
         const service = state.services.find(s => s.id === appointmentData.serviceId);
-        const staff = state.staff.find(s => s.id === appointmentData.staffId);
+        const employee = state.employees.find(e => e.id === appointmentData.staffId);
 
         // Add customer if it's a new customer
         let customerId = appointmentData.customerId;
@@ -581,7 +532,7 @@ export const useSalonStore = create<SalonState>()(
           duration: `${service?.duration || 0} phút`,
           price: `${service?.price.toLocaleString() || 0}đ`,
           status: "confirmed",
-          staff: staff?.name || "Unknown Staff",
+          staff: employee?.name || "Unknown Staff",
           customerId,
           serviceId: appointmentData.serviceId,
           staffId: appointmentData.staffId,
@@ -605,7 +556,7 @@ export const useSalonStore = create<SalonState>()(
         appointments: state.appointments.filter(a => a.id !== id)
       })),
 
-      // New employee actions  
+      // Employee actions  
       addEmployee: (employee) => set((state) => ({
         employees: [...state.employees, { ...employee, id: state.nextEmployeeId.toString() }],
         nextEmployeeId: state.nextEmployeeId + 1
@@ -717,14 +668,15 @@ export const useSalonStore = create<SalonState>()(
       },
 
       // Utility functions
-      getAvailableStaffForService: (serviceId) => {
-        return get().staff.filter(member => member.assignedServices.includes(serviceId));
+      getAvailableEmployeesForService: (serviceId) => {
+        return get().employees.filter(employee => 
+          employee.assignedServices.includes(serviceId) && employee.status === 'đang làm'
+        );
       },
 
       // Initialize data
       initializeData: () => set({
         services: [...initialServices],
-        staff: [...initialStaff],
         customers: [...initialCustomers],
         appointments: [...initialAppointments],
         nextAppointmentId: 4,
@@ -741,7 +693,6 @@ export const useSalonStore = create<SalonState>()(
       name: 'salon-storage',
       partialize: (state) => ({
         services: state.services,
-        staff: state.staff,
         customers: state.customers,
         appointments: state.appointments,
         nextAppointmentId: state.nextAppointmentId,
