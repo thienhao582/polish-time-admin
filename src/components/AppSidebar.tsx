@@ -1,5 +1,5 @@
 
-import { Calendar, Users, Scissors, BarChart3, Home, UserCheck, Clock } from "lucide-react";
+import { Calendar, Users, Scissors, BarChart3, Home, UserCheck, Clock, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -19,6 +19,7 @@ const menuItems = [
   { title: "Dịch Vụ", url: "/services", icon: Scissors },
   { title: "Nhân Viên", url: "/employees", icon: UserCheck },
   { title: "Chấm Công", url: "/timetracking", icon: Clock },
+  { title: "Cài đặt", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
