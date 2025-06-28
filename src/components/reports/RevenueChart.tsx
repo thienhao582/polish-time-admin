@@ -15,12 +15,24 @@ export const RevenueChart = ({ period, startDate, endDate }: RevenueChartProps) 
   const { invoices } = useInvoiceStore();
 
   const revenueData = useMemo(() => {
-    const filteredInvoices = invoices.filter(
-      invoice => 
-        invoice.status === 'paid' &&
-        invoice.createdAt >= startDate && 
-        invoice.createdAt <= endDate
-    );
+    console.log("Revenue Chart - Date range:", { period, startDate, endDate });
+    
+    const filteredInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      
+      // Reset time to compare dates only
+      invoiceDate.setHours(0, 0, 0, 0);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd.setHours(23, 59, 59, 999);
+      
+      const isInRange = invoice.status === 'paid' && invoiceDate >= filterStart && invoiceDate <= filterEnd;
+      
+      return isInRange;
+    });
+
+    console.log("Revenue filtered invoices:", filteredInvoices);
 
     const groupedData: { [key: string]: number } = {};
 
@@ -46,6 +58,8 @@ export const RevenueChart = ({ period, startDate, endDate }: RevenueChartProps) 
 
       groupedData[key] = (groupedData[key] || 0) + invoice.total;
     });
+
+    console.log("Revenue grouped data:", groupedData);
 
     return Object.entries(groupedData).map(([period, revenue]) => ({
       period,

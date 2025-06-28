@@ -15,11 +15,31 @@ export const ReportSummary = ({ startDate, endDate }: ReportSummaryProps) => {
   const { enhancedCustomers } = useSalonStore();
 
   const summaryData = useMemo(() => {
-    const filteredInvoices = invoices.filter(
-      invoice => 
-        invoice.createdAt >= startDate && 
-        invoice.createdAt <= endDate
-    );
+    console.log("Report Summary - Date range:", { startDate, endDate });
+    console.log("All invoices:", invoices);
+    
+    const filteredInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      
+      // Reset time to compare dates only
+      invoiceDate.setHours(0, 0, 0, 0);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd.setHours(23, 59, 59, 999);
+      
+      const isInRange = invoiceDate >= filterStart && invoiceDate <= filterEnd;
+      console.log(`Invoice ${invoice.invoiceNumber}:`, {
+        invoiceDate: invoiceDate.toISOString(),
+        filterStart: filterStart.toISOString(), 
+        filterEnd: filterEnd.toISOString(),
+        isInRange
+      });
+      
+      return isInRange;
+    });
+
+    console.log("Filtered invoices:", filteredInvoices);
 
     const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
     const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
@@ -28,6 +48,14 @@ export const ReportSummary = ({ startDate, endDate }: ReportSummaryProps) => {
 
     // Calculate average revenue per customer
     const avgRevenuePerCustomer = uniqueCustomers > 0 ? totalRevenue / uniqueCustomers : 0;
+
+    console.log("Summary calculations:", {
+      totalRevenue,
+      totalServices,
+      uniqueCustomers,
+      avgRevenuePerCustomer,
+      totalInvoices: filteredInvoices.length
+    });
 
     return {
       totalRevenue,

@@ -14,11 +14,18 @@ export const CustomerRetentionChart = ({ startDate, endDate }: CustomerRetention
   const { invoices } = useInvoiceStore();
 
   const retentionData = useMemo(() => {
-    const filteredInvoices = invoices.filter(
-      invoice => 
-        invoice.createdAt >= startDate && 
-        invoice.createdAt <= endDate
-    );
+    const filteredInvoices = invoices.filter(invoice => {
+      const invoiceDate = new Date(invoice.createdAt);
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      
+      // Reset time to compare dates only
+      invoiceDate.setHours(0, 0, 0, 0);
+      filterStart.setHours(0, 0, 0, 0);
+      filterEnd.setHours(23, 59, 59, 999);
+      
+      return invoiceDate >= filterStart && invoiceDate <= filterEnd;
+    });
 
     // Group by month
     const monthlyData: { [key: string]: { newCustomers: Set<string>; returningCustomers: Set<string> } } = {};
