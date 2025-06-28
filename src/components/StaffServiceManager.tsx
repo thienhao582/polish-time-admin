@@ -8,34 +8,34 @@ import { toast } from "@/hooks/use-toast";
 import { useSalonStore } from "@/stores/useSalonStore";
 
 export function StaffServiceManager() {
-  const { staff, services, updateStaffServices } = useSalonStore();
-  const [localStaff, setLocalStaff] = useState(staff);
+  const { employees, services, updateEmployee } = useSalonStore();
+  const [localEmployees, setLocalEmployees] = useState(employees);
 
   useEffect(() => {
-    setLocalStaff(staff);
-  }, [staff]);
+    setLocalEmployees(employees);
+  }, [employees]);
 
-  const handleServiceToggle = (staffId: string, serviceId: string, checked: boolean) => {
-    const updatedStaff = localStaff.map(member => {
-      if (member.id === staffId) {
+  const handleServiceToggle = (employeeId: string, serviceId: string, checked: boolean) => {
+    const updatedEmployees = localEmployees.map(employee => {
+      if (employee.id === employeeId) {
         const updatedServices = checked
-          ? [...member.assignedServices, serviceId]
-          : member.assignedServices.filter(id => id !== serviceId);
+          ? [...employee.assignedServices, serviceId]
+          : employee.assignedServices.filter(id => id !== serviceId);
         
         return {
-          ...member,
+          ...employee,
           assignedServices: updatedServices
         };
       }
-      return member;
+      return employee;
     });
 
-    setLocalStaff(updatedStaff);
+    setLocalEmployees(updatedEmployees);
   };
 
   const handleSave = () => {
-    localStaff.forEach(member => {
-      updateStaffServices(member.id, member.assignedServices);
+    localEmployees.forEach(employee => {
+      updateEmployee(employee.id, { assignedServices: employee.assignedServices });
     });
     
     toast({
@@ -57,12 +57,12 @@ export function StaffServiceManager() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {localStaff.map((member) => (
-          <Card key={member.id}>
+        {localEmployees.map((employee) => (
+          <Card key={employee.id}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
-                {member.name}
+                {employee.name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -75,14 +75,14 @@ export function StaffServiceManager() {
                   {services.map((service) => (
                     <div key={service.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`${member.id}-${service.id}`}
-                        checked={member.assignedServices.includes(service.id)}
+                        id={`${employee.id}-${service.id}`}
+                        checked={employee.assignedServices.includes(service.id)}
                         onCheckedChange={(checked) => 
-                          handleServiceToggle(member.id, service.id, checked as boolean)
+                          handleServiceToggle(employee.id, service.id, checked as boolean)
                         }
                       />
                       <label
-                        htmlFor={`${member.id}-${service.id}`}
+                        htmlFor={`${employee.id}-${service.id}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         {service.name}
@@ -95,7 +95,7 @@ export function StaffServiceManager() {
               <div>
                 <h5 className="text-sm font-medium text-gray-600 mb-1">Chuyên môn</h5>
                 <div className="flex flex-wrap gap-1">
-                  {member.specialties.map((specialty, index) => (
+                  {employee.specialties.map((specialty, index) => (
                     <span
                       key={index}
                       className="inline-block bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-full"
