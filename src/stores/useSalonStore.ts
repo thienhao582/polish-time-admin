@@ -1,7 +1,30 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Service, Staff, Customer, Appointment } from '@/utils/dataStore';
+
+// New interfaces for employee management
+export interface Employee {
+  id: string;
+  name: string;
+  avatar?: string;
+  phone: string;
+  role: 'thợ chính' | 'phụ tá' | 'lễ tân' | 'quản lý';
+  status: 'đang làm' | 'đã nghỉ';
+  assignedServices: string[];
+  specialties: string[];
+  startDate: string;
+}
+
+export interface TimeRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  totalHours?: number;
+  status: 'working' | 'completed' | 'absent';
+}
 
 interface SalonState {
   // State
@@ -11,6 +34,12 @@ interface SalonState {
   appointments: Appointment[];
   nextAppointmentId: number;
   nextCustomerId: number;
+  
+  // New employee management state
+  employees: Employee[];
+  timeRecords: TimeRecord[];
+  nextEmployeeId: number;
+  nextTimeRecordId: number;
   
   // Actions
   addService: (service: Omit<Service, 'id'>) => void;
@@ -29,6 +58,17 @@ interface SalonState {
   addAppointment: (appointment: any) => Appointment;
   updateAppointment: (id: number, appointment: Partial<Appointment>) => void;
   deleteAppointment: (id: number) => void;
+  
+  // New employee actions  
+  addEmployee: (employee: Omit<Employee, 'id'>) => void;
+  updateEmployee: (id: string, employee: Partial<Employee>) => void;
+  deleteEmployee: (id: string) => void;
+  
+  // Time tracking actions
+  checkIn: (employeeId: string) => void;
+  checkOut: (employeeId: string) => void;
+  getTimeRecordsForEmployee: (employeeId: string, startDate?: string, endDate?: string) => TimeRecord[];
+  getTotalHoursForEmployee: (employeeId: string, period: 'week' | 'month') => number;
   
   // Utility functions
   getAvailableStaffForService: (serviceId: string) => Staff[];
@@ -119,6 +159,39 @@ const initialAppointments: Appointment[] = [
   },
 ];
 
+const initialEmployees: Employee[] = [
+  {
+    id: "1",
+    name: "Mai Nguyễn",
+    phone: "0901234567",
+    role: "thợ chính",
+    status: "đang làm",
+    assignedServices: ["1", "3"],
+    specialties: ["Gel Polish", "Nail Art", "Extension"],
+    startDate: "2024-01-15",
+  },
+  {
+    id: "2", 
+    name: "Linh Trần",
+    phone: "0987654321",
+    role: "thợ chính",
+    status: "đang làm",
+    assignedServices: ["2", "4"],
+    specialties: ["Manicure", "Pedicure", "Basic Care"],
+    startDate: "2024-02-01",
+  },
+  {
+    id: "3",
+    name: "Hương Lê",
+    phone: "0912345678", 
+    role: "phụ tá",
+    status: "đang làm",
+    assignedServices: ["1", "3"],
+    specialties: ["Extension", "Nail Art", "Design"],
+    startDate: "2024-03-10",
+  },
+];
+
 export const useSalonStore = create<SalonState>()(
   persist(
     (set, get) => ({
@@ -129,7 +202,13 @@ export const useSalonStore = create<SalonState>()(
       appointments: [...initialAppointments],
       nextAppointmentId: 4,
       nextCustomerId: 4,
-
+      
+      // New employee state
+      employees: [...initialEmployees],
+      timeRecords: [],
+      nextEmployeeId: 4,
+      nextTimeRecordId: 1,
+      
       // Service actions
       addService: (service) => set((state) => ({
         services: [...state.services, { ...service, id: Date.now().toString() }]
@@ -238,6 +317,117 @@ export const useSalonStore = create<SalonState>()(
         appointments: state.appointments.filter(a => a.id !== id)
       })),
 
+      // New employee actions  
+      addEmployee: (employee) => set((state) => ({
+        employees: [...state.employees, { ...employee, id: state.nextEmployeeId.toString() }],
+        nextEmployeeId: state.nextEmployeeId + 1
+      })),
+
+      updateEmployee: (id, employee) => set((state) => ({
+        employees: state.employees.map(e => e.id === id ? { ...e, ...employee } : e)
+      })),
+
+      deleteEmployee: (id) => set((state) => ({
+        employees: state.employees.filter(e => e.id !== id)
+      })),
+
+      // Time tracking actions
+      checkIn: (employeeId) => {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+        const state = get();
+        const employee = state.employees.find(e => e.id === employeeId);
+        
+        if (!employee) return;
+
+        const existingRecord = state.timeRecords.find(
+          r => r.employeeId === employeeId && r.date === today
+        );
+
+        if (existingRecord) {
+          // Update existing record
+          set((state) => ({
+            timeRecords: state.timeRecords.map(r =>
+              r.id === existingRecord.id
+                ? { ...r, checkIn: now, status: 'working' as const }
+                : r
+            )
+          }));
+        } else {
+          // Create new record
+          const newRecord: TimeRecord = {
+            id: state.nextTimeRecordId.toString(),
+            employeeId,
+            employeeName: employee.name,
+            date: today,
+            checkIn: now,
+            status: 'working'
+          };
+          
+          set((state) => ({
+            timeRecords: [...state.timeRecords, newRecord],
+            nextTimeRecordId: state.nextTimeRecordId + 1
+          }));
+        }
+      },
+
+      checkOut: (employeeId) => {
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+        
+        set((state) => ({
+          timeRecords: state.timeRecords.map(r => {
+            if (r.employeeId === employeeId && r.date === today && r.checkIn) {
+              const checkInTime = new Date(`${today} ${r.checkIn}`);
+              const checkOutTime = new Date(`${today} ${now}`);
+              const totalHours = Math.round((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60) * 100) / 100;
+              
+              return {
+                ...r,
+                checkOut: now,
+                totalHours,
+                status: 'completed' as const
+              };
+            }
+            return r;
+          })
+        }));
+      },
+
+      getTimeRecordsForEmployee: (employeeId, startDate, endDate) => {
+        const state = get();
+        let records = state.timeRecords.filter(r => r.employeeId === employeeId);
+        
+        if (startDate) {
+          records = records.filter(r => r.date >= startDate);
+        }
+        if (endDate) {
+          records = records.filter(r => r.date <= endDate);
+        }
+        
+        return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      },
+
+      getTotalHoursForEmployee: (employeeId, period) => {
+        const state = get();
+        const now = new Date();
+        let startDate: Date;
+        
+        if (period === 'week') {
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else {
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+        
+        const records = state.timeRecords.filter(r => 
+          r.employeeId === employeeId && 
+          new Date(r.date) >= startDate &&
+          r.totalHours
+        );
+        
+        return records.reduce((total, record) => total + (record.totalHours || 0), 0);
+      },
+
       // Utility functions
       getAvailableStaffForService: (serviceId) => {
         return get().staff.filter(member => member.assignedServices.includes(serviceId));
@@ -251,6 +441,10 @@ export const useSalonStore = create<SalonState>()(
         appointments: [...initialAppointments],
         nextAppointmentId: 4,
         nextCustomerId: 4,
+        employees: [...initialEmployees],
+        timeRecords: [],
+        nextEmployeeId: 4,
+        nextTimeRecordId: 1,
       }),
     }),
     {
@@ -262,6 +456,10 @@ export const useSalonStore = create<SalonState>()(
         appointments: state.appointments,
         nextAppointmentId: state.nextAppointmentId,
         nextCustomerId: state.nextCustomerId,
+        employees: state.employees,
+        timeRecords: state.timeRecords,
+        nextEmployeeId: state.nextEmployeeId,
+        nextTimeRecordId: state.nextTimeRecordId,
       }),
     }
   )

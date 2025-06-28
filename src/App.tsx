@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Customers from "./pages/Customers";
 import Services from "./pages/Services";
+import EmployeeManagement from "./pages/EmployeeManagement";
+import TimeTracking from "./pages/TimeTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,8 @@ const App = () => (
             <Route path="appointments" element={<Appointments />} />
             <Route path="customers" element={<Customers />} />
             <Route path="services" element={<Services />} />
+            <Route path="employees" element={<EmployeeManagement />} />
+            <Route path="timetracking" element={<TimeTracking />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
