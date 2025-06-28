@@ -28,7 +28,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      console.log('Attempting login with:', { email: email.toLowerCase(), pin });
+      console.log('Attempting login with:', { email: email.toLowerCase().trim(), pin });
 
       // Validate PIN format
       if (!/^\d{4}$/.test(pin)) {
@@ -37,34 +37,74 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         return;
       }
 
-      // Query user with exact email match
-      const { data: userData, error: userError } = await supabase
+      const trimmedEmail = email.toLowerCase().trim();
+
+      // Try multiple query approaches
+      console.log('Querying with trimmed email:', trimmedEmail);
+
+      // First try with exact match
+      let { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .ilike('email', email.toLowerCase())
+        .eq('email', trimmedEmail)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      console.log('User query result:', { userData, userError });
+      console.log('Exact match result:', { userData, userError });
+
+      // If no result, try with ilike
+      if (!userData && !userError) {
+        console.log('Trying with ilike...');
+        const result = await supabase
+          .from('users')
+          .select('*')
+          .ilike('email', trimmedEmail)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        userData = result.data;
+        userError = result.error;
+        console.log('ilike result:', { userData, userError });
+      }
+
+      // If still no result, try without is_active filter
+      if (!userData && !userError) {
+        console.log('Trying without is_active filter...');
+        const result = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', trimmedEmail)
+          .maybeSingle();
+        
+        userData = result.data;
+        userError = result.error;
+        console.log('Without is_active filter result:', { userData, userError });
+      }
 
       if (userError) {
         console.error('Database error:', userError);
-        if (userError.code === 'PGRST116') {
-          setError("Email không tồn tại trong hệ thống");
-        } else {
-          setError("Lỗi kết nối database: " + userError.message);
-        }
+        setError("Lỗi kết nối database: " + userError.message);
         setIsLoading(false);
         return;
       }
 
       if (!userData) {
-        setError("Email không tồn tại trong hệ thống");
+        setError("Email không tồn tại trong hệ thống hoặc tài khoản chưa được kích hoạt");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Found user:', { id: userData.id, email: userData.email, is_active: userData.is_active });
+
+      // Check if account is active
+      if (!userData.is_active) {
+        setError("Tài khoản đã bị vô hiệu hóa");
         setIsLoading(false);
         return;
       }
 
       // Check PIN
+      console.log('Checking PIN:', { provided: pin, stored: userData.pin_code });
       if (userData.pin_code !== pin) {
         setError("Mã PIN không đúng");
         setIsLoading(false);
@@ -76,7 +116,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
 
-      console.log('Creating session...');
+      console.log('Creating session for user:', userData.id);
 
       const { error: sessionError } = await supabase
         .from('user_sessions')
@@ -100,7 +140,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         expiresAt: expiresAt.toISOString()
       }));
 
-      console.log('Login successful!');
+      console.log('Login successful for user:', userData.email);
 
       toast({
         title: "Đăng nhập thành công!",
