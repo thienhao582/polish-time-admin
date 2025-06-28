@@ -28,7 +28,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      console.log('Attempting login with:', { email, pin });
+      console.log('Attempting login with:', { email: email.toLowerCase(), pin });
 
       // Validate PIN format
       if (!/^\d{4}$/.test(pin)) {
@@ -37,19 +37,23 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         return;
       }
 
-      // First, let's try to find the user
+      // Query user with exact email match
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email.toLowerCase())
+        .ilike('email', email.toLowerCase())
         .eq('is_active', true)
-        .maybeSingle();
+        .single();
 
       console.log('User query result:', { userData, userError });
 
       if (userError) {
         console.error('Database error:', userError);
-        setError("Lỗi kết nối database");
+        if (userError.code === 'PGRST116') {
+          setError("Email không tồn tại trong hệ thống");
+        } else {
+          setError("Lỗi kết nối database: " + userError.message);
+        }
         setIsLoading(false);
         return;
       }
@@ -84,7 +88,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
       if (sessionError) {
         console.error('Session creation error:', sessionError);
-        setError("Lỗi tạo phiên đăng nhập");
+        setError("Lỗi tạo phiên đăng nhập: " + sessionError.message);
         setIsLoading(false);
         return;
       }
