@@ -1,73 +1,66 @@
-
-import { Calendar, Users, Scissors, BarChart3, Home, UserCheck, Clock, Settings } from "lucide-react";
-import { NavLink } from "react-router-dom";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+  LayoutDashboard,
+  Calendar,
+  User,
+  Settings,
+  Users,
+  BarChart,
+  Clock,
+  Scissors,
+  Receipt
+} from "lucide-react";
+import { NavLink } from "react-router-dom";
 
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Lịch Hẹn", url: "/appointments", icon: Calendar },
-  { title: "Khách Hàng", url: "/customers", icon: Users },
-  { title: "Dịch Vụ", url: "/services", icon: Scissors },
-  { title: "Nhân Viên", url: "/employees", icon: UserCheck },
-  { title: "Chấm Công", url: "/timetracking", icon: Clock },
-  { title: "Cài đặt", url: "/settings", icon: Settings },
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+}
+
+const navItems: NavItem[] = [
+  { name: "Tổng quan", href: "/", icon: LayoutDashboard },
+  { name: "Lịch hẹn", href: "/appointments", icon: Calendar },
+  { name: "Khách hàng", href: "/customers", icon: Users },
+  { name: "Dịch vụ", href: "/services", icon: Scissors },
+  { name: "Hóa đơn", href: "/invoices", icon: Receipt },
+  { name: "Nhân viên", href: "/employees", icon: User },
+  { name: "Chấm công", href: "/timetracking", icon: Clock },
+  { name: "Báo cáo", href: "/reports", icon: BarChart },
+  { name: "Cài đặt", href: "/settings", icon: Settings },
 ];
 
-export function AppSidebar() {
+const AppSidebar = () => {
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white border-r">
-        <div className="p-4 border-b">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-rose-400 rounded-lg flex items-center justify-center">
-              <Scissors className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h2 className="font-bold text-gray-800">Nail Salon</h2>
-              <p className="text-xs text-gray-500">Admin Panel</p>
-            </div>
-          </div>
-        </div>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-600 font-medium">
-            Quản lý
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={({ isActive }) =>
-                        `flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-pink-50 text-pink-600 border-r-2 border-pink-400"
-                            : "text-gray-600 hover:bg-gray-50"
-                        }`
-                      }
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div className="flex flex-col h-full bg-gray-50 border-r py-4">
+      <div className="px-6 py-3">
+        <h1 className="text-lg font-bold">Quản lý Tiệm Nail</h1>
+      </div>
+      <nav className="flex-1">
+        <ul>
+          {navItems.map((item) => (
+            <li key={item.name}>
+              <NavLink
+                to={item.href}
+                className={({ isActive }) =>
+                  `flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900 ${
+                    isActive ? "bg-gray-100 font-medium text-gray-900" : ""
+                  }`
+                }
+              >
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.name}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="border-t py-4 text-center">
+        <p className="text-sm text-gray-500">
+          © {new Date().getFullYear()} Nail Salon
+        </p>
+      </div>
+    </div>
   );
-}
+};
+
+export default AppSidebar;
