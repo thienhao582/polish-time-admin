@@ -1,6 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Service, Staff, Customer, Appointment } from '@/utils/dataStore';
+import { Staff, Customer, Appointment } from '@/utils/dataStore';
+
+// Enhanced Service interface
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  duration: number; // in minutes
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
 
 // New interfaces for employee management
 export interface Employee {
@@ -68,9 +81,10 @@ interface SalonState {
   nextTimeRecordId: number;
   
   // Actions
-  addService: (service: Omit<Service, 'id'>) => void;
-  updateService: (id: string, service: Partial<Service>) => void;
+  addService: (service: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateService: (id: string, service: Partial<Omit<Service, 'id' | 'createdAt'>>) => void;
   deleteService: (id: string) => void;
+  toggleServiceStatus: (id: string) => void;
   
   addStaff: (staff: Omit<Staff, 'id'>) => void;
   updateStaff: (id: string, staff: Partial<Staff>) => void;
@@ -111,10 +125,61 @@ interface SalonState {
 }
 
 const initialServices: Service[] = [
-  { id: "1", name: "Gel Polish + Nail Art", duration: 90, price: 450000 },
-  { id: "2", name: "Manicure + Pedicure", duration: 120, price: 380000 },
-  { id: "3", name: "Nail Extension", duration: 150, price: 650000 },
-  { id: "4", name: "Basic Manicure", duration: 60, price: 200000 },
+  { 
+    id: "1", 
+    name: "Gel Polish + Nail Art", 
+    description: "Sơn gel bền màu kết hợp với nail art tùy chỉnh theo yêu cầu",
+    category: "Nail Art",
+    duration: 90, 
+    price: 450000,
+    status: "active",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "2", 
+    name: "Manicure + Pedicure", 
+    description: "Chăm sóc móng tay và móng chân hoàn chỉnh bao gồm cắt, dũa, massage",
+    category: "Manicure",
+    duration: 120, 
+    price: 380000,
+    status: "active",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "3", 
+    name: "Nail Extension", 
+    description: "Nối móng acrylic hoặc gel với độ dài và hình dáng theo yêu cầu",
+    category: "Nối móng",
+    duration: 150, 
+    price: 650000,
+    status: "active",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "4", 
+    name: "Basic Manicure", 
+    description: "Cắt móng, dũa móng, đẩy lõi móng cơ bản",
+    category: "Manicure",
+    duration: 60, 
+    price: 200000,
+    status: "active",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
+  { 
+    id: "5", 
+    name: "French Manicure", 
+    description: "Sơn móng kiểu Pháp cổ điển với đầu móng trắng",
+    category: "Manicure",
+    duration: 75, 
+    price: 280000,
+    status: "inactive",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
+  },
 ];
 
 const initialStaff: Staff[] = [
@@ -344,16 +409,41 @@ export const useSalonStore = create<SalonState>()(
       nextTimeRecordId: 1,
       
       // Service actions
-      addService: (service) => set((state) => ({
-        services: [...state.services, { ...service, id: Date.now().toString() }]
-      })),
+      addService: (service) => set((state) => {
+        const now = new Date().toISOString();
+        const newService: Service = {
+          ...service,
+          id: Date.now().toString(),
+          createdAt: now,
+          updatedAt: now
+        };
+        return {
+          services: [...state.services, newService]
+        };
+      }),
 
       updateService: (id, service) => set((state) => ({
-        services: state.services.map(s => s.id === id ? { ...s, ...service } : s)
+        services: state.services.map(s => 
+          s.id === id 
+            ? { ...s, ...service, updatedAt: new Date().toISOString() } 
+            : s
+        )
       })),
 
       deleteService: (id) => set((state) => ({
         services: state.services.filter(s => s.id !== id)
+      })),
+
+      toggleServiceStatus: (id) => set((state) => ({
+        services: state.services.map(s => 
+          s.id === id 
+            ? { 
+                ...s, 
+                status: s.status === 'active' ? 'inactive' : 'active',
+                updatedAt: new Date().toISOString()
+              } 
+            : s
+        )
       })),
 
       // Staff actions
