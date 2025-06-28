@@ -73,6 +73,22 @@ export const InvoiceForm = ({ open, onOpenChange, invoice }: InvoiceFormProps) =
     setNewItem({ serviceId: "", employeeId: "" });
   }, [invoice, open]);
 
+  // Filter employees based on selected service
+  const availableEmployees = newItem.serviceId 
+    ? employees.filter(employee => 
+        employee.status === 'đang làm' && 
+        employee.assignedServices.includes(newItem.serviceId)
+      )
+    : [];
+
+  // Reset employee selection when service changes
+  const handleServiceChange = (serviceId: string) => {
+    setNewItem({ 
+      serviceId, 
+      employeeId: "" // Reset employee when service changes
+    });
+  };
+
   const addItem = () => {
     if (!newItem.serviceId || !newItem.employeeId) {
       toast({
@@ -199,7 +215,7 @@ export const InvoiceForm = ({ open, onOpenChange, invoice }: InvoiceFormProps) =
                     <Label>Dịch vụ</Label>
                     <Select 
                       value={newItem.serviceId} 
-                      onValueChange={(value) => setNewItem({...newItem, serviceId: value})}
+                      onValueChange={handleServiceChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Chọn dịch vụ" />
@@ -218,12 +234,19 @@ export const InvoiceForm = ({ open, onOpenChange, invoice }: InvoiceFormProps) =
                     <Select 
                       value={newItem.employeeId} 
                       onValueChange={(value) => setNewItem({...newItem, employeeId: value})}
+                      disabled={!newItem.serviceId}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn nhân viên" />
+                        <SelectValue placeholder={
+                          !newItem.serviceId 
+                            ? "Chọn dịch vụ trước" 
+                            : availableEmployees.length === 0 
+                              ? "Không có nhân viên phù hợp"
+                              : "Chọn nhân viên"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees.filter(e => e.status === 'đang làm').map((employee) => (
+                        {availableEmployees.map((employee) => (
                           <SelectItem key={employee.id} value={employee.id}>
                             {employee.name}
                           </SelectItem>

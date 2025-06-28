@@ -195,7 +195,6 @@ export const useSalonStore = create<SalonState>()(
           nextAppointmentId: state.nextAppointmentId + 1
         }));
 
-        console.log("Appointment saved to Zustand store:", newAppointment);
         return newAppointment;
       },
 

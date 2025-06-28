@@ -1,113 +1,170 @@
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp, TrendingDown, Users, Calendar, DollarSign } from "lucide-react";
 import { useInvoiceStore } from "@/stores/useInvoiceStore";
 import { useSalonStore } from "@/stores/useSalonStore";
-import { useMemo } from "react";
-import { DollarSign, Users, Calendar, TrendingUp } from "lucide-react";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 interface ReportSummaryProps {
-  startDate: string;
-  endDate: string;
+  period: 'day' | 'week' | 'month';
+  startDate: Date;
+  endDate: Date;
 }
 
-export const ReportSummary = ({ startDate, endDate }: ReportSummaryProps) => {
+export const ReportSummary = ({ period, startDate, endDate }: ReportSummaryProps) => {
   const { invoices } = useInvoiceStore();
-  const { enhancedCustomers } = useSalonStore();
+  const { enhancedCustomers, appointments } = useSalonStore();
 
-  const summaryData = useMemo(() => {
-    console.log("Report Summary - Date range:", { startDate, endDate });
-    console.log("All invoices:", invoices);
-    
+  const metrics = useMemo(() => {
+    // Normalize dates for comparison
+    const normalizedStartDate = startOfDay(startDate);
+    const normalizedEndDate = endOfDay(endDate);
+
+    // Filter invoices in date range and paid status
     const filteredInvoices = invoices.filter(invoice => {
-      const invoiceDate = new Date(invoice.createdAt);
-      const filterStart = new Date(startDate);
-      const filterEnd = new Date(endDate);
-      
-      // Reset time to compare dates only
-      invoiceDate.setHours(0, 0, 0, 0);
-      filterStart.setHours(0, 0, 0, 0);
-      filterEnd.setHours(23, 59, 59, 999);
-      
-      const isInRange = invoiceDate >= filterStart && invoiceDate <= filterEnd;
-      console.log(`Invoice ${invoice.invoiceNumber}:`, {
-        invoiceDate: invoiceDate.toISOString(),
-        filterStart: filterStart.toISOString(), 
-        filterEnd: filterEnd.toISOString(),
-        isInRange
-      });
-      
-      return isInRange;
+      const invoiceDate = startOfDay(new Date(invoice.createdAt));
+      return invoiceDate >= normalizedStartDate && 
+             invoiceDate <= normalizedEndDate &&
+             invoice.status === 'paid';
     });
 
-    console.log("Filtered invoices:", filteredInvoices);
+    // Calculate revenue
+    const totalRevenue = filteredInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
 
-    const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
-    const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
-    const totalServices = filteredInvoices.reduce((sum, inv) => sum + inv.items.length, 0);
-    const uniqueCustomers = new Set(filteredInvoices.map(inv => inv.customerId)).size;
-
-    // Calculate average revenue per customer
-    const avgRevenuePerCustomer = uniqueCustomers > 0 ? totalRevenue / uniqueCustomers : 0;
-
-    console.log("Summary calculations:", {
-      totalRevenue,
-      totalServices,
-      uniqueCustomers,
-      avgRevenuePerCustomer,
-      totalInvoices: filteredInvoices.length
+    // Calculate appointments in range
+    const filteredAppointments = appointments.filter(appointment => {
+      const appointmentDate = startOfDay(new Date(appointment.date));
+      return appointmentDate >= normalizedStartDate && appointmentDate <= normalizedEndDate;
     });
+
+    // Calculate new customers in range
+    const newCustomers = enhancedCustomers.filter(customer => {
+      const joinDate = startOfDay(new Date(customer.joinDate));
+      return joinDate >= normalizedStartDate && joinDate <= normalizedEndDate;
+    }).length;
+
+    // Calculate previous period for comparison
+    let previousStart: Date, previousEnd: Date;
+    const timeDiff = normalizedEndDate.getTime() - normalizedStartDate.getTime();
+    
+    if (period === 'day') {
+      previousStart = new Date(normalizedStartDate.getTime() - timeDiff - 24 * 60 * 60 * 1000);
+      previousEnd = new Date(normalizedStartDate.getTime() - 24 * 60 * 60 * 1000);
+    } else if (period === 'week') {
+      previousStart = startOfWeek(new Date(normalizedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000));
+      previousEnd = endOfWeek(new Date(normalizedStartDate.getTime() - 7 * 24 * 60 * 60 * 1000));
+    } else {
+      previousStart = startOfMonth(new Date(normalizedStartDate.getTime() - 30 * 24 * 60 * 60 * 1000));
+      previousEnd = endOfMonth(new Date(normalizedStartDate.getTime() - 30 * 24 * 60 * 60 * 1000));
+    }
+
+    // Previous period metrics
+    const previousInvoices = invoices.filter(invoice => {
+      const invoiceDate = startOfDay(new Date(invoice.createdAt));
+      return invoiceDate >= previousStart && 
+             invoiceDate <= previousEnd &&
+             invoice.status === 'paid';
+    });
+    
+    const previousRevenue = previousInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
+
+    const previousAppointments = appointments.filter(appointment => {
+      const appointmentDate = startOfDay(new Date(appointment.date));
+      return appointmentDate >= previousStart && appointmentDate <= previousEnd;
+    }).length;
+
+    // Calculate growth percentages
+    const revenueGrowth = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+    const appointmentGrowth = previousAppointments > 0 ? ((filteredAppointments.length - previousAppointments) / previousAppointments) * 100 : 0;
 
     return {
       totalRevenue,
-      totalServices,
-      uniqueCustomers,
-      avgRevenuePerCustomer,
-      totalInvoices: filteredInvoices.length
+      totalAppointments: filteredAppointments.length,
+      newCustomers,
+      averageOrderValue: filteredInvoices.length > 0 ? totalRevenue / filteredInvoices.length : 0,
+      revenueGrowth,
+      appointmentGrowth
     };
-  }, [invoices, startDate, endDate]);
+  }, [invoices, appointments, enhancedCustomers, startDate, endDate, period]);
 
-  const summaryCards = [
-    {
-      title: "Tổng Doanh thu",
-      value: `${summaryData.totalRevenue.toLocaleString()}đ`,
-      icon: DollarSign,
-      color: "text-green-600"
-    },
-    {
-      title: "Khách hàng",
-      value: summaryData.uniqueCustomers.toString(),
-      icon: Users,
-      color: "text-blue-600"
-    },
-    {
-      title: "Dịch vụ thực hiện",
-      value: summaryData.totalServices.toString(),
-      icon: Calendar,
-      color: "text-purple-600"
-    },
-    {
-      title: "TB/Khách hàng",
-      value: `${Math.round(summaryData.avgRevenuePerCustomer / 1000)}K`,
-      icon: TrendingUp,
-      color: "text-orange-600"
-    }
-  ];
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+  };
+
+  const formatGrowth = (growth: number) => {
+    return growth > 0 ? `+${growth.toFixed(1)}%` : `${growth.toFixed(1)}%`;
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {summaryCards.map((card) => (
-        <Card key={card.title}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">{card.title}</p>
-                <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
-              </div>
-              <card.icon className={`w-8 h-8 ${card.color}`} />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(metrics.totalRevenue)}</div>
+          <p className="text-xs text-muted-foreground flex items-center">
+            {metrics.revenueGrowth >= 0 ? (
+              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+            ) : (
+              <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
+            )}
+            <span className={metrics.revenueGrowth >= 0 ? "text-green-500" : "text-red-500"}>
+              {formatGrowth(metrics.revenueGrowth)}
+            </span>
+            {" "}so với kỳ trước
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Lịch hẹn</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{metrics.totalAppointments}</div>
+          <p className="text-xs text-muted-foreground flex items-center">
+            {metrics.appointmentGrowth >= 0 ? (
+              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+            ) : (
+              <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
+            )}
+            <span className={metrics.appointmentGrowth >= 0 ? "text-green-500" : "text-red-500"}>
+              {formatGrowth(metrics.appointmentGrowth)}
+            </span>
+            {" "}so với kỳ trước
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Khách hàng mới</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{metrics.newCustomers}</div>
+          <p className="text-xs text-muted-foreground">
+            Khách hàng đăng ký mới
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Giá trị trung bình</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{formatCurrency(metrics.averageOrderValue)}</div>
+          <p className="text-xs text-muted-foreground">
+            Trung bình mỗi hóa đơn
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
