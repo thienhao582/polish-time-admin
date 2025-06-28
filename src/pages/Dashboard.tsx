@@ -82,7 +82,7 @@ const Dashboard = () => {
               <p className="text-xs text-gray-500 mt-1">
                 <span className={
                   stat.changeType === 'positive' ? 'text-green-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+                  stat.changeType === 'neutral' ? 'text-gray-500' : 'text-red-600'
                 }>
                   {stat.change}
                 </span>
@@ -115,7 +115,7 @@ const Dashboard = () => {
                 <div key={appointment.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-800">{appointment.customerName}</p>
+                    <p className="font-medium text-gray-800">{appointment.customer}</p>
                     <p className="text-sm text-gray-600">{appointment.service}</p>
                   </div>
                   <div className="text-right">
