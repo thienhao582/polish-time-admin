@@ -40,10 +40,6 @@ const Login = () => {
         <LoginForm 
           onLoginSuccess={() => navigate('/')} 
         />
-        
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Tài khoản demo: admin@example.com / PIN: 1234</p>
-        </div>
       </div>
     </div>
   );

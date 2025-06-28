@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -219,12 +218,6 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
               "Đăng nhập"
             )}
           </Button>
-
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700 font-medium">Tài khoản demo:</p>
-            <p className="text-sm text-blue-600">Email: admin@example.com</p>
-            <p className="text-sm text-blue-600">PIN: 1234</p>
-          </div>
         </form>
       </CardContent>
     </Card>
