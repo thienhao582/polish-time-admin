@@ -75,7 +75,12 @@ export const useSupabaseData = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Type assertion with proper validation
+      return (data || []).map(item => ({
+        ...item,
+        status: (item.status === 'active' || item.status === 'inactive') ? item.status : 'active'
+      })) as SupabaseService[];
     } catch (error) {
       console.error('Error fetching services:', error);
       toast({
