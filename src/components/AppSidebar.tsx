@@ -1,65 +1,104 @@
-import {
-  LayoutDashboard,
-  Calendar,
-  User,
-  Settings,
-  Users,
-  BarChart,
-  Clock,
-  Scissors,
-  Receipt
-} from "lucide-react";
-import { NavLink } from "react-router-dom";
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: any;
-}
-
-const navItems: NavItem[] = [
-  { name: "Tổng quan", href: "/", icon: LayoutDashboard },
-  { name: "Lịch hẹn", href: "/appointments", icon: Calendar },
-  { name: "Khách hàng", href: "/customers", icon: Users },
-  { name: "Dịch vụ", href: "/services", icon: Scissors },
-  { name: "Hóa đơn", href: "/invoices", icon: Receipt },
-  { name: "Nhân viên", href: "/employees", icon: User },
-  { name: "Chấm công", href: "/timetracking", icon: Clock },
-  { name: "Báo cáo", href: "/reports", icon: BarChart },
-  { name: "Cài đặt", href: "/settings", icon: Settings },
-];
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const AppSidebar = () => {
+  const location = useLocation();
+  const { hasPermission } = useAuth();
+
+  const menuItems = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: BarChart3,
+    },
+    {
+      title: "Lịch hẹn",
+      url: "/appointments",
+      icon: Calendar,
+    },
+    {
+      title: "Khách hàng",
+      url: "/customers",
+      icon: Users,
+    },
+    {
+      title: "Dịch vụ",
+      url: "/services",
+      icon: Scissors,
+      requiresPermission: "manage_services"
+    },
+    {
+      title: "Hóa đơn",
+      url: "/invoices",
+      icon: Receipt,
+    },
+    {
+      title: "Nhân viên",
+      url: "/employees",
+      icon: UserCog,
+      requiresPermission: "manage_employees"
+    },
+    {
+      title: "Chấm công",
+      url: "/timetracking",
+      icon: Clock,
+    },
+    {
+      title: "Quản lý tài khoản",
+      url: "/accounts",
+      icon: UserCog,
+      requiresPermission: "create_user"
+    },
+    {
+      title: "Cài đặt",
+      url: "/settings",
+      icon: Settings,
+      requiresPermission: "manage_settings"
+    },
+  ];
+
+  const filteredMenuItems = menuItems.filter(item => 
+    !item.requiresPermission || hasPermission(item.requiresPermission)
+  );
+
   return (
-    <div className="flex flex-col h-full bg-gray-50 border-r py-4">
-      <div className="px-6 py-3">
-        <h1 className="text-lg font-bold">Quản lý Tiệm Nail</h1>
-      </div>
-      <nav className="flex-1">
-        <ul>
-          {navItems.map((item) => (
-            <li key={item.name}>
-              <NavLink
-                to={item.href}
-                className={({ isActive }) =>
-                  `flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 hover:text-gray-900 ${
-                    isActive ? "bg-gray-100 font-medium text-gray-900" : ""
-                  }`
-                }
-              >
-                <item.icon className="w-4 h-4 mr-2" />
-                {item.name}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="border-t py-4 text-center">
-        <p className="text-sm text-gray-500">
-          © {new Date().getFullYear()} Nail Salon
-        </p>
-      </div>
-    </div>
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center gap-2 px-4 py-2">
+          <Scissors className="h-6 w-6 text-pink-600" />
+          <span className="font-bold text-lg">Nail Salon</span>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {filteredMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === item.url}
+                  >
+                    <Link to={item.url} className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="px-4 py-2 text-xs text-gray-500">
+          © 2024 Nail Salon Management
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 

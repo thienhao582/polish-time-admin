@@ -14,6 +14,7 @@ import Services from "./pages/Services";
 import EmployeeManagement from "./pages/EmployeeManagement";
 import TimeTracking from "./pages/TimeTracking";
 import Settings from "./pages/Settings";
+import AccountManagement from "./pages/AccountManagement";
 import NotFound from "./pages/NotFound";
 import Invoices from "./pages/Invoices";
 import Login from "./pages/Login";
@@ -49,6 +50,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="timetracking" element={<TimeTracking />} />
+              <Route path="accounts" element={
+                <ProtectedRoute requiredPermission="create_user">
+                  <AccountManagement />
+                </ProtectedRoute>
+              } />
               <Route path="settings" element={
                 <ProtectedRoute requiredPermission="manage_settings">
                   <Settings />
