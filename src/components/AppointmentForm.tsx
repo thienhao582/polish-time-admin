@@ -120,7 +120,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
                     selected={field.value}
                     onSelect={field.onChange}
                     disabled={(date) =>
-                      date > new Date()
+                      date < new Date(new Date().setHours(0, 0, 0, 0))
                     }
                     initialFocus
                   />
