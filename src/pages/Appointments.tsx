@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +77,7 @@ const Appointments = () => {
         <div className="grid grid-cols-7 border-b bg-gray-50">
           {["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"].map((day) => (
             <div key={day} className="p-3 text-center font-medium text-gray-600 border-r last:border-r-0">
-              {day.substring(0, 2)}
+              {day}
             </div>
           ))}
         </div>
@@ -94,13 +93,13 @@ const Appointments = () => {
             return (
               <div
                 key={day.toISOString()}
-                className={`min-h-[120px] border-r border-b last:border-r-0 p-2 cursor-pointer hover:bg-gray-50 transition-colors ${
+                className={`min-h-[160px] border-r border-b last:border-r-0 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
                 } ${isSelected ? 'ring-2 ring-pink-500' : ''}`}
                 onClick={() => setSelectedDate(day)}
               >
                 {/* Date number */}
-                <div className="flex justify-between items-start mb-1">
+                <div className="flex justify-between items-start mb-2">
                   <span className={`text-sm font-medium ${
                     isToday ? 'bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs' :
                     isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
@@ -108,7 +107,7 @@ const Appointments = () => {
                     {format(day, "d")}
                   </span>
                   {dayAppointments.length > 0 && (
-                    <span className="text-xs bg-pink-100 text-pink-600 px-1 rounded">
+                    <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded">
                       {dayAppointments.length}
                     </span>
                   )}
@@ -116,19 +115,19 @@ const Appointments = () => {
 
                 {/* Appointments list */}
                 <div className="space-y-1">
-                  {dayAppointments.slice(0, 3).map((apt) => (
+                  {dayAppointments.slice(0, 4).map((apt) => (
                     <div
                       key={apt.id}
-                      className="text-xs p-1 bg-pink-50 border-l-2 border-pink-400 rounded text-gray-700 truncate"
+                      className="text-xs p-2 bg-pink-50 border-l-2 border-pink-400 rounded text-gray-700 truncate"
                       title={`${apt.time} - ${apt.customer} (${apt.service})`}
                     >
                       <div className="font-medium">{apt.time}</div>
                       <div className="truncate">{apt.customer}</div>
                     </div>
                   ))}
-                  {dayAppointments.length > 3 && (
+                  {dayAppointments.length > 4 && (
                     <div className="text-xs text-gray-500 text-center">
-                      +{dayAppointments.length - 3} khác
+                      +{dayAppointments.length - 4} khác
                     </div>
                   )}
                 </div>
