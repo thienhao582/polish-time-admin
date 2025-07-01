@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,15 +46,13 @@ const Appointments = () => {
   // Filter appointments based on search query and staff filter
   const filteredAppointments = appointments.filter(apt => {
     // Search filter
-    const searchMatch = 
+    const searchMatch = searchQuery === "" || 
       apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
       apt.staff.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Staff filter
     const staffMatch = selectedStaffIds.length === 0 || 
       selectedStaffIds.some(staffId => {
-        // Here you would match staffId with actual staff data
-        // For now, we'll use staff name matching
         const staff = useSalonStore.getState().employees.find(e => e.id === staffId);
         return staff && apt.staff.includes(staff.name);
       });

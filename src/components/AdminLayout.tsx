@@ -10,7 +10,10 @@ const AdminLayout = () => {
       <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <Header />
+          <div className="flex items-center gap-2 p-2 border-b bg-white">
+            <SidebarTrigger />
+            <Header />
+          </div>
           <main className="flex-1 p-6">
             <Outlet />
           </main>
