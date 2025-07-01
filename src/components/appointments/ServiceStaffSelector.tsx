@@ -4,16 +4,23 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useSalonStore } from "@/stores/useSalonStore";
 
 interface ServiceStaffItem {
   id: string;
   serviceId: string;
   serviceName: string;
-  staffId: string;
-  staffName: string;
+  staffIds: string[]; // Changed to array for multiple staff
+  staffNames: string[]; // Changed to array for multiple staff names
   price: number;
   duration: number;
+  staffSalaryInfo?: Array<{
+    staffId: string;
+    staffName: string;
+    commissionRate?: number; // For future salary calculation
+    fixedAmount?: number; // For future salary calculation
+  }>;
 }
 
 interface ServiceStaffSelectorProps {
@@ -24,33 +31,51 @@ interface ServiceStaffSelectorProps {
 export function ServiceStaffSelector({ selectedItems, onItemsChange }: ServiceStaffSelectorProps) {
   const { services, employees } = useSalonStore();
   const [currentServiceId, setCurrentServiceId] = useState("");
-  const [currentStaffId, setCurrentStaffId] = useState("");
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
 
   const addServiceStaffItem = () => {
-    if (!currentServiceId || !currentStaffId) return;
+    if (!currentServiceId || selectedStaffIds.length === 0) return;
 
     const service = services.find(s => s.id === currentServiceId);
-    const staff = employees.find(e => e.id === currentStaffId);
-    
-    if (!service || !staff) return;
+    if (!service) return;
+
+    const selectedStaff = employees.filter(e => selectedStaffIds.includes(e.id));
+    const staffNames = selectedStaff.map(s => s.name);
+
+    // Prepare salary calculation data structure
+    const staffSalaryInfo = selectedStaff.map(staff => ({
+      staffId: staff.id,
+      staffName: staff.name,
+      commissionRate: 0.3, // Default 30% commission - can be customized later
+      fixedAmount: 0 // For future fixed salary amounts
+    }));
 
     const newItem: ServiceStaffItem = {
-      id: `${currentServiceId}-${currentStaffId}-${Date.now()}`,
+      id: `${currentServiceId}-${selectedStaffIds.join('-')}-${Date.now()}`,
       serviceId: currentServiceId,
       serviceName: service.name,
-      staffId: currentStaffId,
-      staffName: staff.name,
+      staffIds: selectedStaffIds,
+      staffNames,
       price: service.price,
-      duration: service.duration
+      duration: service.duration,
+      staffSalaryInfo
     };
 
     onItemsChange([...selectedItems, newItem]);
     setCurrentServiceId("");
-    setCurrentStaffId("");
+    setSelectedStaffIds([]);
   };
 
   const removeItem = (itemId: string) => {
     onItemsChange(selectedItems.filter(item => item.id !== itemId));
+  };
+
+  const handleStaffSelection = (staffId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedStaffIds([...selectedStaffIds, staffId]);
+    } else {
+      setSelectedStaffIds(selectedStaffIds.filter(id => id !== staffId));
+    }
   };
 
   const totalPrice = selectedItems.reduce((sum, item) => sum + item.price, 0);
@@ -58,7 +83,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange }: ServiceSt
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Dịch vụ</label>
           <Select value={currentServiceId} onValueChange={setCurrentServiceId}>
@@ -75,28 +100,35 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange }: ServiceSt
           </Select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Nhân viên</label>
-          <Select value={currentStaffId} onValueChange={setCurrentStaffId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Chọn nhân viên" />
-            </SelectTrigger>
-            <SelectContent>
+        {currentServiceId && (
+          <div>
+            <label className="block text-sm font-medium mb-2">Nhân viên (chọn nhiều)</label>
+            <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-gray-50 max-h-32 overflow-y-auto">
               {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name}
-                </SelectItem>
+                <div key={employee.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`staff-${employee.id}`}
+                    checked={selectedStaffIds.includes(employee.id)}
+                    onCheckedChange={(checked) => handleStaffSelection(employee.id, checked as boolean)}
+                  />
+                  <label
+                    htmlFor={`staff-${employee.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {employee.name}
+                  </label>
+                </div>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </div>
+          </div>
+        )}
 
-        <div className="flex items-end">
+        <div className="flex justify-end">
           <Button 
             type="button" 
             onClick={addServiceStaffItem}
-            disabled={!currentServiceId || !currentStaffId}
-            className="w-full bg-pink-600 hover:bg-pink-700"
+            disabled={!currentServiceId || selectedStaffIds.length === 0}
+            className="bg-pink-600 hover:bg-pink-700"
           >
             <Plus className="w-4 h-4 mr-2" />
             Thêm
@@ -114,8 +146,13 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange }: ServiceSt
                   <div className="flex-1">
                     <div className="font-medium">{item.serviceName}</div>
                     <div className="text-sm text-gray-600">
-                      Nhân viên: {item.staffName} • {item.duration} phút • {item.price.toLocaleString('vi-VN')}đ
+                      Nhân viên: {item.staffNames.join(", ")} • {item.duration} phút • {item.price.toLocaleString('vi-VN')}đ
                     </div>
+                    {item.staffSalaryInfo && item.staffSalaryInfo.length > 1 && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        Chia cho {item.staffSalaryInfo.length} nhân viên (mỗi người: {Math.round(item.price * 0.3 / item.staffSalaryInfo.length).toLocaleString('vi-VN')}đ)
+                      </div>
+                    )}
                   </div>
                   <Button
                     type="button"

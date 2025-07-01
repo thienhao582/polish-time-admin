@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Customer, Appointment } from '@/utils/dataStore';
@@ -187,7 +186,9 @@ export const useSalonStore = create<SalonState>()(
           customerId,
           serviceId: appointmentData.serviceId,
           staffId: appointmentData.staffId,
-          notes: appointmentData.notes
+          notes: appointmentData.notes,
+          // New salary calculation data
+          staffSalaryData: appointmentData.staffSalaryData
         };
 
         set((state) => ({
@@ -315,6 +316,42 @@ export const useSalonStore = create<SalonState>()(
         );
         
         return records.reduce((total, record) => total + (record.totalHours || 0), 0);
+      },
+
+      // New method for calculating staff salary from appointments
+      calculateStaffSalary: (employeeId, startDate, endDate) => {
+        const state = get();
+        const appointments = state.appointments.filter(apt => {
+          const employee = state.employees.find(e => e.id === employeeId);
+          return employee && 
+                 apt.staff.includes(employee.name) &&
+                 apt.date >= startDate && 
+                 apt.date <= endDate &&
+                 apt.status === 'completed';
+        });
+
+        let totalCommission = 0;
+        let totalFixedAmount = 0;
+        let appointmentCount = 0;
+
+        appointments.forEach(apt => {
+          if (apt.staffSalaryData) {
+            const staffSalary = apt.staffSalaryData;
+            const priceNumber = parseFloat(apt.price.replace(/[^\d]/g, ''));
+            
+            totalCommission += priceNumber * (staffSalary.commissionRate || 0.3);
+            totalFixedAmount += staffSalary.fixedAmount || 0;
+            appointmentCount++;
+          }
+        });
+
+        return {
+          totalCommission,
+          totalFixedAmount,
+          totalSalary: totalCommission + totalFixedAmount,
+          appointmentCount,
+          appointments
+        };
       },
 
       // Utility functions

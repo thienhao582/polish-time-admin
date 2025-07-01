@@ -36,10 +36,16 @@ interface ServiceStaffItem {
   id: string;
   serviceId: string;
   serviceName: string;
-  staffId: string;
-  staffName: string;
+  staffIds: string[];
+  staffNames: string[];
   price: number;
   duration: number;
+  staffSalaryInfo?: Array<{
+    staffId: string;
+    staffName: string;
+    commissionRate?: number;
+    fixedAmount?: number;
+  }>;
 }
 
 interface Appointment {
@@ -104,10 +110,16 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           id: `${service.id}-${employee.id}-edit`,
           serviceId: service.id,
           serviceName: service.name,
-          staffId: employee.id,
-          staffName: employee.name,
+          staffIds: [employee.id],
+          staffNames: [employee.name],
           price: service.price,
-          duration: service.duration
+          duration: service.duration,
+          staffSalaryInfo: [{
+            staffId: employee.id,
+            staffName: employee.name,
+            commissionRate: 0.3,
+            fixedAmount: 0
+          }]
         };
         setSelectedServiceStaffItems([editItem]);
       }
@@ -130,11 +142,13 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     if (editData) {
       // For editing, use the first selected service/staff combination
       const firstItem = selectedServiceStaffItems[0];
+      const firstStaffId = firstItem.staffIds[0]; // Take first staff for backward compatibility
       const updateData = {
         ...data,
         date: format(data.date, "yyyy-MM-dd"),
         serviceId: firstItem.serviceId,
-        staffId: firstItem.staffId
+        staffId: firstStaffId,
+        staffSalaryData: firstItem.staffSalaryInfo // Store salary calculation data
       };
       updateAppointment(editData.id, updateData);
       toast({
@@ -142,20 +156,25 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
       });
     } else {
-      // For new appointments, create multiple appointments if multiple services are selected
+      // For new appointments, create multiple appointments for each service-staff combination
       selectedServiceStaffItems.forEach((item, index) => {
-        const appointmentData = {
-          ...data,
-          serviceId: item.serviceId,
-          staffId: item.staffId
-        };
-        
-        addAppointment(appointmentData);
+        item.staffIds.forEach((staffId, staffIndex) => {
+          const staffName = item.staffNames[staffIndex];
+          const appointmentData = {
+            ...data,
+            serviceId: item.serviceId,
+            staffId: staffId,
+            staffSalaryData: item.staffSalaryInfo?.find(s => s.staffId === staffId) // Individual staff salary data
+          };
+          
+          addAppointment(appointmentData);
+        });
         
         if (index === 0) {
+          const totalAppointments = selectedServiceStaffItems.reduce((sum, item) => sum + item.staffIds.length, 0);
           toast({
             title: "Lịch hẹn đã được tạo!",
-            description: `${selectedServiceStaffItems.length > 1 ? `Đã tạo ${selectedServiceStaffItems.length} lịch hẹn` : 'Lịch hẹn'} cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
+            description: `${totalAppointments > 1 ? `Đã tạo ${totalAppointments} lịch hẹn` : 'Lịch hẹn'} cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
           });
         }
       });
