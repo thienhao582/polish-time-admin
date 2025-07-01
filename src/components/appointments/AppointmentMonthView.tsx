@@ -1,5 +1,6 @@
 
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, getWeeksInMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import { AppointmentOverflow } from "./AppointmentOverflow";
 
 interface Appointment {
   id: number;
@@ -19,13 +20,15 @@ interface AppointmentMonthViewProps {
   setSelectedDate: (date: Date) => void;
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
+  displayMode: "customer" | "staff";
 }
 
 export function AppointmentMonthView({
   selectedDate,
   setSelectedDate,
   filteredAppointments,
-  handleAppointmentClick
+  handleAppointmentClick,
+  displayMode
 }: AppointmentMonthViewProps) {
   const getAppointmentsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
@@ -80,24 +83,14 @@ export function AppointmentMonthView({
                 )}
               </div>
 
-              {/* Appointments list */}
+              {/* Appointments list with overflow handling */}
               <div className="space-y-1">
-                {dayAppointments.slice(0, 4).map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="text-xs p-2 bg-pink-50 border-l-2 border-pink-400 rounded text-gray-700 truncate cursor-pointer hover:bg-pink-100 transition-colors"
-                    title={`${apt.time} - ${apt.customer} (${apt.service})`}
-                    onClick={(e) => handleAppointmentClick(apt, e)}
-                  >
-                    <div className="font-medium">{apt.time}</div>
-                    <div className="truncate">{apt.customer}</div>
-                  </div>
-                ))}
-                {dayAppointments.length > 4 && (
-                  <div className="text-xs text-gray-500 text-center">
-                    +{dayAppointments.length - 4} khác
-                  </div>
-                )}
+                <AppointmentOverflow
+                  appointments={dayAppointments}
+                  maxVisible={3}
+                  displayMode={displayMode}
+                  onAppointmentClick={handleAppointmentClick}
+                />
               </div>
             </div>
           );

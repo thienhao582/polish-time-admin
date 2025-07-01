@@ -1,6 +1,6 @@
 
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { format, isSameDay } from "date-fns";
+import { AppointmentOverflow } from "./AppointmentOverflow";
 
 interface Appointment {
   id: number;
@@ -19,64 +19,71 @@ interface AppointmentDayViewProps {
   selectedDate: Date;
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
+  displayMode: "customer" | "staff";
 }
 
 export function AppointmentDayView({
   selectedDate,
   filteredAppointments,
-  handleAppointmentClick
+  handleAppointmentClick,
+  displayMode
 }: AppointmentDayViewProps) {
-  const getAppointmentsForTimeSlot = (date: Date, hour: number) => {
-    const dateString = format(date, "yyyy-MM-dd");
-    const appointments = filteredAppointments.filter(apt => apt.date === dateString);
-    return appointments.filter(apt => {
-      const [appointmentHour] = apt.time.split(':').map(Number);
-      return appointmentHour === hour;
-    });
+  const dateString = format(selectedDate, "yyyy-MM-dd");
+  const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
+
+  // Create time slots from 7 AM to 8 PM
+  const timeSlots = [];
+  for (let hour = 7; hour <= 20; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    if (hour < 20) {
+      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+  }
+
+  const getAppointmentsForTimeSlot = (timeSlot: string) => {
+    return dayAppointments.filter(apt => apt.time === timeSlot);
   };
 
-  const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7 AM to 8 PM
-  
   return (
-    <div className="flex h-[600px]">
-      {/* Time column */}
-      <div className="w-20 border-r">
-        <div className="h-12 border-b"></div> {/* Header spacer */}
-        {hours.map((hour) => (
-          <div key={hour} className="h-12 border-b flex items-center justify-center text-sm text-gray-600">
-            {hour}:00
-          </div>
-        ))}
+    <div className="w-full">
+      {/* Header */}
+      <div className="bg-gray-50 p-4 border-b">
+        <h3 className="font-medium text-lg">
+          {format(selectedDate, "EEEE, dd/MM/yyyy")}
+        </h3>
+        <p className="text-sm text-gray-600">
+          {dayAppointments.length} lịch hẹn
+        </p>
       </div>
 
-      {/* Day content */}
-      <div className="flex-1">
-        {/* Header */}
-        <div className="h-12 border-b flex items-center justify-center bg-gray-50 font-medium">
-          {format(selectedDate, "EEEE, dd MMMM yyyy", { locale: vi })}
+      {/* Timeline */}
+      <div className="flex">
+        {/* Time column */}
+        <div className="w-20 bg-gray-50">
+          {timeSlots.map((timeSlot) => (
+            <div key={timeSlot} className="h-16 p-2 border-b border-r text-sm text-gray-600 font-medium">
+              {timeSlot}
+            </div>
+          ))}
         </div>
-        
-        {/* Timeline */}
-        <div className="relative">
-          {hours.map((hour) => {
-            const appointments = getAppointmentsForTimeSlot(selectedDate, hour);
+
+        {/* Appointments column */}
+        <div className="flex-1">
+          {timeSlots.map((timeSlot) => {
+            const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
+            
             return (
-              <div key={hour} className="h-12 border-b relative hover:bg-gray-50">
-                {appointments.map((apt, index) => (
-                  <div
-                    key={apt.id}
-                    className="absolute left-2 right-2 bg-pink-100 border-l-4 border-pink-500 rounded p-1 cursor-pointer hover:bg-pink-200 z-10"
-                    style={{
-                      top: `${index * 25}px`,
-                      height: '22px'
-                    }}
-                    onClick={(e) => handleAppointmentClick(apt, e)}
-                  >
-                    <div className="text-xs font-medium truncate">
-                      {apt.customer} - {apt.service}
-                    </div>
+              <div key={timeSlot} className="h-16 p-2 border-b bg-white hover:bg-gray-50">
+                {timeSlotAppointments.length > 0 && (
+                  <div className="h-full">
+                    <AppointmentOverflow
+                      appointments={timeSlotAppointments}
+                      maxVisible={2}
+                      displayMode={displayMode}
+                      onAppointmentClick={handleAppointmentClick}
+                    />
                   </div>
-                ))}
+                )}
               </div>
             );
           })}

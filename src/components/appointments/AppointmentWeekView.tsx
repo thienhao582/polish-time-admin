@@ -1,5 +1,6 @@
 
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import { AppointmentOverflow } from "./AppointmentOverflow";
 
 interface Appointment {
   id: number;
@@ -18,12 +19,14 @@ interface AppointmentWeekViewProps {
   selectedDate: Date;
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
+  displayMode: "customer" | "staff";
 }
 
 export function AppointmentWeekView({
   selectedDate,
   filteredAppointments,
-  handleAppointmentClick
+  handleAppointmentClick,
+  displayMode
 }: AppointmentWeekViewProps) {
   const getAppointmentsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
@@ -35,35 +38,47 @@ export function AppointmentWeekView({
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   return (
-    <div className="grid grid-cols-7 gap-1">
-      {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, index) => (
-        <div key={day} className="p-2 text-center font-medium text-gray-600 border-b">
-          {day}
-        </div>
-      ))}
-      {weekDays.map((day) => {
-        const dayAppointments = getAppointmentsForDate(day);
-        return (
-          <div key={day.toISOString()} className="min-h-[200px] p-2 border-r border-b">
-            <div className={`text-sm font-medium mb-2 ${isSameDay(day, new Date()) ? 'text-pink-600' : 'text-gray-700'}`}>
+    <div className="w-full">
+      {/* Header with day names */}
+      <div className="grid grid-cols-7 border-b bg-gray-50">
+        {weekDays.map((day) => (
+          <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0">
+            <div className="font-medium text-gray-600">
+              {format(day, "EEEE", { locale: { localize: { day: () => ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][day.getDay()] } } })}
+            </div>
+            <div className={`text-sm ${isSameDay(day, new Date()) ? 'bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto' : 'text-gray-900'}`}>
               {format(day, "d")}
             </div>
-            <div className="space-y-1">
-              {dayAppointments.map((apt) => (
-                <div 
-                  key={apt.id} 
-                  className="text-xs p-1 bg-pink-50 border-l-2 border-pink-400 rounded cursor-pointer hover:bg-pink-100"
-                  onClick={(e) => handleAppointmentClick(apt, e)}
-                >
-                  <div className="font-medium">{apt.time}</div>
-                  <div className="text-gray-600">{apt.customer}</div>
-                  <div className="text-gray-500">{apt.staff}</div>
-                </div>
-              ))}
-            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      {/* Week grid */}
+      <div className="grid grid-cols-7 border-l border-t">
+        {weekDays.map((day) => {
+          const dayAppointments = getAppointmentsForDate(day);
+          const isToday = isSameDay(day, new Date());
+
+          return (
+            <div
+              key={day.toISOString()}
+              className={`min-h-[400px] border-r border-b last:border-r-0 p-3 ${
+                isToday ? 'bg-pink-50' : 'bg-white'
+              }`}
+            >
+              {/* Appointments list with overflow handling */}
+              <div className="space-y-1">
+                <AppointmentOverflow
+                  appointments={dayAppointments}
+                  maxVisible={4}
+                  displayMode={displayMode}
+                  onAppointmentClick={handleAppointmentClick}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

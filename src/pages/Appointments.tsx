@@ -9,6 +9,7 @@ import { StaffServiceManager } from "@/components/StaffServiceManager";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { AppointmentCalendarHeader } from "@/components/appointments/AppointmentCalendarHeader";
 import { AppointmentSearchBar } from "@/components/appointments/AppointmentSearchBar";
+import { AppointmentFilters } from "@/components/appointments/AppointmentFilters";
 import { AppointmentMonthView } from "@/components/appointments/AppointmentMonthView";
 import { AppointmentWeekView } from "@/components/appointments/AppointmentWeekView";
 import { AppointmentDayView } from "@/components/appointments/AppointmentDayView";
@@ -36,15 +37,31 @@ const Appointments = () => {
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayMode, setDisplayMode] = useState<"customer" | "staff">("customer");
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   // Get appointments from Zustand store
   const { appointments, deleteAppointment } = useSalonStore();
 
-  // Filter appointments based on search query
-  const filteredAppointments = appointments.filter(apt => 
-    apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    apt.staff.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter appointments based on search query and staff filter
+  const filteredAppointments = appointments.filter(apt => {
+    // Search filter
+    const searchMatch = 
+      apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      apt.staff.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Staff filter
+    const staffMatch = selectedStaffIds.length === 0 || 
+      selectedStaffIds.some(staffId => {
+        // Here you would match staffId with actual staff data
+        // For now, we'll use staff name matching
+        const staff = useSalonStore.getState().employees.find(e => e.id === staffId);
+        return staff && apt.staff.includes(staff.name);
+      });
+    
+    return searchMatch && staffMatch;
+  });
 
   const handleAppointmentCreate = (appointmentData: any) => {
     setIsFormOpen(false);
@@ -83,8 +100,12 @@ const Appointments = () => {
     setSelectedDate(newDate);
   };
 
+  const handleMaximize = () => {
+    setIsMaximized(!isMaximized);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${isMaximized ? 'fixed inset-0 z-50 bg-white p-6 overflow-auto' : ''}`}>
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Quản lý Lịch Hẹn</h1>
@@ -129,6 +150,16 @@ const Appointments = () => {
       {/* Search Bar */}
       <AppointmentSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
+      {/* Filters */}
+      <AppointmentFilters
+        displayMode={displayMode}
+        setDisplayMode={setDisplayMode}
+        selectedStaffIds={selectedStaffIds}
+        setSelectedStaffIds={setSelectedStaffIds}
+        filteredAppointmentsCount={filteredAppointments.length}
+        onMaximize={handleMaximize}
+      />
+
       {/* View Controls */}
       <Card>
         <CardContent className="p-6">
@@ -151,6 +182,7 @@ const Appointments = () => {
               setSelectedDate={setSelectedDate}
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
+              displayMode={displayMode}
             />
           )}
           {viewMode === "week" && (
@@ -158,6 +190,7 @@ const Appointments = () => {
               selectedDate={selectedDate}
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
+              displayMode={displayMode}
             />
           )}
           {viewMode === "day" && (
@@ -165,6 +198,7 @@ const Appointments = () => {
               selectedDate={selectedDate}
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
+              displayMode={displayMode}
             />
           )}
         </CardContent>

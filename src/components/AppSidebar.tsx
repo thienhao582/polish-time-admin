@@ -65,7 +65,7 @@ const AppSidebar = () => {
   );
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
           <Scissors className="h-6 w-6 text-pink-600" />
