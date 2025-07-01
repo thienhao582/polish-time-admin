@@ -1,4 +1,3 @@
-
 // Temporary data store for appointments and staff management
 export interface Service {
   id: string;
@@ -33,9 +32,27 @@ export interface Appointment {
   status: string;
   staff: string;
   customerId?: string;
-  serviceId: string;
-  staffId: string;
+  serviceId?: string;
+  staffId?: string;
   notes?: string;
+  // New fields for multi-service appointments
+  services?: Array<{
+    serviceId: string;
+    serviceName: string;
+    staffIds: string[];
+    staffNames: string[];
+    price: number;
+    duration: number;
+  }>;
+  staffSalaryData?: Array<{
+    staffId: string;
+    staffName: string;
+    serviceId: string;
+    serviceName: string;
+    commissionRate?: number;
+    fixedAmount?: number;
+    servicePrice: number;
+  }>;
 }
 
 // Initial data

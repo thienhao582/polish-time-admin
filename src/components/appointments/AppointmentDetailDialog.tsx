@@ -1,4 +1,3 @@
-
 import { CalendarIcon, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -22,6 +21,23 @@ interface Appointment {
   serviceId?: string;
   staffId?: string;
   notes?: string;
+  services?: Array<{
+    serviceId: string;
+    serviceName: string;
+    staffIds: string[];
+    staffNames: string[];
+    price: number;
+    duration: number;
+  }>;
+  staffSalaryData?: Array<{
+    staffId: string;
+    staffName: string;
+    serviceId: string;
+    serviceName: string;
+    commissionRate?: number;
+    fixedAmount?: number;
+    servicePrice: number;
+  }>;
 }
 
 interface AppointmentDetailDialogProps {
@@ -62,13 +78,12 @@ export function AppointmentDetailDialog({
 
   if (!appointment) return null;
 
-  // Get detailed service and staff information
-  const serviceDetails = appointment.serviceId ? services.find(s => s.id === appointment.serviceId) : null;
-  const staffDetails = appointment.staffId ? employees.find(e => e.id === appointment.staffId) : null;
+  // Check if this is a multi-service appointment
+  const isMultiServiceAppointment = appointment.services && appointment.services.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5" />
@@ -99,37 +114,50 @@ export function AppointmentDetailDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {isMultiServiceAppointment ? (
+            // Multi-service appointment display
             <div>
-              <label className="text-sm font-medium text-gray-600">Dịch vụ</label>
-              <p className="text-sm">{serviceDetails?.name || appointment.service}</p>
-              {serviceDetails && (
-                <p className="text-xs text-gray-500 mt-1">
-                  {serviceDetails.duration} phút - {serviceDetails.price.toLocaleString('vi-VN')}đ
-                </p>
-              )}
+              <label className="text-sm font-medium text-gray-600 mb-3 block">Dịch vụ đã chọn</label>
+              <div className="space-y-3">
+                {appointment.services?.map((service, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{service.serviceName}</p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Nhân viên: {service.staffNames.join(", ")}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {service.duration} phút • {service.price.toLocaleString('vi-VN')}đ
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">Nhân viên</label>
-              <p className="text-sm">{staffDetails?.name || appointment.staff}</p>
-              {staffDetails && staffDetails.specialties && staffDetails.specialties.length > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Chuyên môn: {staffDetails.specialties.join(", ")}
-                </p>
-              )}
+          ) : (
+            // Single service appointment display (legacy)
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-600">Dịch vụ</label>
+                <p className="text-sm">{appointment.service}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Nhân viên</label>
+                <p className="text-sm">{appointment.staff}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">Thời lượng</label>
-              <p className="text-sm">{serviceDetails ? `${serviceDetails.duration} phút` : appointment.duration}</p>
+              <label className="text-sm font-medium text-gray-600">Tổng thời lượng</label>
+              <p className="text-sm">{appointment.duration}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Giá</label>
-              <p className="text-sm font-medium text-green-600">
-                {serviceDetails ? `${serviceDetails.price.toLocaleString('vi-VN')}đ` : appointment.price}
-              </p>
+              <label className="text-sm font-medium text-gray-600">Tổng giá</label>
+              <p className="text-sm font-medium text-green-600">{appointment.price}</p>
             </div>
           </div>
 

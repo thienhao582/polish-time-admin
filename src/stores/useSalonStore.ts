@@ -158,8 +158,6 @@ export const useSalonStore = create<SalonState>()(
       // Appointment actions
       addAppointment: (appointmentData) => {
         const state = get();
-        const service = state.services.find(s => s.id === appointmentData.serviceId);
-        const employee = state.employees.find(e => e.id === appointmentData.staffId);
 
         // Add customer if it's a new customer
         let customerId = appointmentData.customerId;
@@ -172,31 +170,93 @@ export const useSalonStore = create<SalonState>()(
           customerId = newCustomer.id;
         }
 
-        const newAppointment: Appointment = {
-          id: state.nextAppointmentId,
-          date: appointmentData.date.toISOString().split('T')[0],
-          time: appointmentData.time,
-          customer: appointmentData.customerName,
-          phone: appointmentData.customerPhone,
-          service: service?.name || "Unknown Service",
-          duration: `${service?.duration || 0} phút`,
-          price: `${service?.price.toLocaleString() || 0}đ`,
-          status: "confirmed",
-          staff: employee?.name || "Unknown Staff",
-          customerId,
-          serviceId: appointmentData.serviceId,
-          staffId: appointmentData.staffId,
-          notes: appointmentData.notes,
-          // New salary calculation data
-          staffSalaryData: appointmentData.staffSalaryData
-        };
+        // Handle multi-service appointments
+        if (appointmentData.serviceStaffItems && appointmentData.serviceStaffItems.length > 0) {
+          // Create a single appointment with multiple services
+          const totalPrice = appointmentData.serviceStaffItems.reduce((sum: number, item: any) => sum + item.price, 0);
+          const totalDuration = appointmentData.serviceStaffItems.reduce((sum: number, item: any) => sum + item.duration, 0);
+          
+          // Get all unique staff names
+          const allStaffNames = Array.from(new Set(
+            appointmentData.serviceStaffItems.flatMap((item: any) => item.staffNames)
+          ));
+          
+          // Get all service names
+          const allServiceNames = appointmentData.serviceStaffItems.map((item: any) => item.serviceName);
 
-        set((state) => ({
-          appointments: [...state.appointments, newAppointment],
-          nextAppointmentId: state.nextAppointmentId + 1
-        }));
+          // Prepare staff salary data
+          const staffSalaryData = appointmentData.serviceStaffItems.flatMap((item: any) => 
+            item.staffSalaryInfo?.map((staffInfo: any) => ({
+              staffId: staffInfo.staffId,
+              staffName: staffInfo.staffName,
+              serviceId: item.serviceId,
+              serviceName: item.serviceName,
+              commissionRate: staffInfo.commissionRate || 0.3,
+              fixedAmount: staffInfo.fixedAmount || 0,
+              servicePrice: item.price
+            })) || []
+          );
 
-        return newAppointment;
+          const newAppointment: Appointment = {
+            id: state.nextAppointmentId,
+            date: appointmentData.date.toISOString().split('T')[0],
+            time: appointmentData.time,
+            customer: appointmentData.customerName,
+            phone: appointmentData.customerPhone,
+            service: allServiceNames.join(" + "), // Combined service names
+            duration: `${totalDuration} phút`,
+            price: `${totalPrice.toLocaleString()}đ`,
+            status: "confirmed",
+            staff: allStaffNames.join(", "), // Combined staff names
+            customerId,
+            notes: appointmentData.notes,
+            services: appointmentData.serviceStaffItems.map((item: any) => ({
+              serviceId: item.serviceId,
+              serviceName: item.serviceName,
+              staffIds: item.staffIds,
+              staffNames: item.staffNames,
+              price: item.price,
+              duration: item.duration
+            })),
+            staffSalaryData
+          };
+
+          set((state) => ({
+            appointments: [...state.appointments, newAppointment],
+            nextAppointmentId: state.nextAppointmentId + 1
+          }));
+
+          return newAppointment;
+        } else {
+          // Handle single service appointment (legacy support)
+          const service = state.services.find(s => s.id === appointmentData.serviceId);
+          const employee = state.employees.find(e => e.id === appointmentData.staffId);
+
+          const newAppointment: Appointment = {
+            id: state.nextAppointmentId,
+            date: appointmentData.date.toISOString().split('T')[0],
+            time: appointmentData.time,
+            customer: appointmentData.customerName,
+            phone: appointmentData.customerPhone,
+            service: service?.name || "Unknown Service",
+            duration: `${service?.duration || 0} phút`,
+            price: `${service?.price.toLocaleString() || 0}đ`,
+            status: "confirmed",
+            staff: employee?.name || "Unknown Staff",
+            customerId,
+            serviceId: appointmentData.serviceId,
+            staffId: appointmentData.staffId,
+            notes: appointmentData.notes,
+            staffSalaryData: appointmentData.staffSalaryData
+          };
+
+          set((state) => ({
+            appointments: [...state.appointments, newAppointment],
+            nextAppointmentId: state.nextAppointmentId + 1
+          }));
+
+          return newAppointment;
+        }
       },
 
       updateAppointment: (id, appointment) => set((state) => ({
@@ -318,16 +378,18 @@ export const useSalonStore = create<SalonState>()(
         return records.reduce((total, record) => total + (record.totalHours || 0), 0);
       },
 
-      // New method for calculating staff salary from appointments
+      // Updated method for calculating staff salary from appointments
       calculateStaffSalary: (employeeId, startDate, endDate) => {
         const state = get();
+        const employee = state.employees.find(e => e.id === employeeId);
+        if (!employee) return { totalCommission: 0, totalFixedAmount: 0, totalSalary: 0, appointmentCount: 0, appointments: [] };
+
         const appointments = state.appointments.filter(apt => {
-          const employee = state.employees.find(e => e.id === employeeId);
-          return employee && 
-                 apt.staff.includes(employee.name) &&
-                 apt.date >= startDate && 
+          return apt.date >= startDate && 
                  apt.date <= endDate &&
-                 apt.status === 'completed';
+                 apt.status === 'completed' &&
+                 (apt.staff.includes(employee.name) || 
+                  apt.staffSalaryData?.some(salary => salary.staffId === employeeId));
         });
 
         let totalCommission = 0;
@@ -336,6 +398,14 @@ export const useSalonStore = create<SalonState>()(
 
         appointments.forEach(apt => {
           if (apt.staffSalaryData) {
+            const employeeSalaryData = apt.staffSalaryData.filter(salary => salary.staffId === employeeId);
+            employeeSalaryData.forEach(salaryData => {
+              totalCommission += salaryData.servicePrice * (salaryData.commissionRate || 0.3);
+              totalFixedAmount += salaryData.fixedAmount || 0;
+            });
+            appointmentCount++;
+          } else if (apt.staffSalaryData) {
+            // Legacy single service appointment
             const staffSalary = apt.staffSalaryData;
             const priceNumber = parseFloat(apt.price.replace(/[^\d]/g, ''));
             

@@ -1,430 +1,219 @@
-
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { CalendarIcon, ClockIcon, UserRound } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { format } from "date-fns";
-import { CalendarIcon, Clock, User, Scissors } from "lucide-react";
+import * as z from "zod";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { toast } from "@/hooks/use-toast";
-import { useSalonStore } from "@/stores/useSalonStore";
+import { Textarea } from "@/components/ui/textarea";
 import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
+import { useSalonStore } from "@/stores/useSalonStore";
 
-const appointmentSchema = z.object({
+const appointmentFormSchema = z.object({
   date: z.date({
-    required_error: "Vui lòng chọn ngày.",
+    required_error: "Vui lòng chọn ngày",
   }),
-  time: z.string().min(1, "Vui lòng chọn giờ."),
-  customerId: z.string().optional(),
-  customerName: z.string().min(1, "Vui lòng nhập tên khách hàng."),
-  customerPhone: z.string().min(10, "Số điện thoại phải có ít nhất 10 số."),
-  customerEmail: z.string().email("Email không hợp lệ.").optional().or(z.literal("")),
+  time: z.string({
+    required_error: "Vui lòng chọn giờ",
+  }),
+  customerName: z.string().min(2, {
+    message: "Tên khách hàng phải có ít nhất 2 ký tự",
+  }),
+  customerPhone: z.string().min(10, {
+    message: "Số điện thoại phải có ít nhất 10 ký tự",
+  }),
+  customerEmail: z.string().email().optional(),
   notes: z.string().optional(),
 });
 
-type AppointmentFormData = z.infer<typeof appointmentSchema>;
-
-interface ServiceStaffItem {
-  id: string;
-  serviceId: string;
-  serviceName: string;
-  staffIds: string[];
-  staffNames: string[];
-  price: number;
-  duration: number;
-  staffSalaryInfo?: Array<{
-    staffId: string;
-    staffName: string;
-    commissionRate?: number;
-    fixedAmount?: number;
-  }>;
-}
-
-interface Appointment {
-  id: number;
-  date: string;
-  time: string;
-  customer: string;
-  phone: string;
-  service: string;
-  duration: string;
-  price: string;
-  status: string;
-  staff: string;
-}
+type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 
 interface AppointmentFormProps {
   onClose: () => void;
-  onSubmit: (data: AppointmentFormData) => void;
-  editData?: Appointment;
+  onSubmit: (data: any) => void;
+  editData?: any;
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const [isNewCustomer, setIsNewCustomer] = useState(true);
-  const [selectedServiceStaffItems, setSelectedServiceStaffItems] = useState<ServiceStaffItem[]>([]);
+  const { addAppointment } = useSalonStore();
+  const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
 
-  // Get data from Zustand store
-  const { 
-    customers, 
-    services, 
-    employees, 
-    addAppointment, 
-    updateAppointment
-  } = useSalonStore();
-
-  const timeSlots = [
-    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-    "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-    "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
-  ];
-
-  const form = useForm<AppointmentFormData>({
-    resolver: zodResolver(appointmentSchema),
+  const form = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
+      date: editData?.date ? new Date(editData.date) : new Date(),
+      time: editData?.time || "08:00",
       customerName: editData?.customer || "",
       customerPhone: editData?.phone || "",
-      customerEmail: "",
-      notes: "",
-      date: editData ? new Date(editData.date) : undefined,
-      time: editData?.time || "",
+      customerEmail: editData?.email || "",
+      notes: editData?.notes || "",
     },
   });
 
-  useEffect(() => {
-    if (editData) {
-      // Parse existing service and staff data for editing
-      const service = services.find(s => s.name === editData.service);
-      const employee = employees.find(e => e.name === editData.staff);
-      
-      if (service && employee) {
-        const editItem: ServiceStaffItem = {
-          id: `${service.id}-${employee.id}-edit`,
-          serviceId: service.id,
-          serviceName: service.name,
-          staffIds: [employee.id],
-          staffNames: [employee.name],
-          price: service.price,
-          duration: service.duration,
-          staffSalaryInfo: [{
-            staffId: employee.id,
-            staffName: employee.name,
-            commissionRate: 0.3,
-            fixedAmount: 0
-          }]
-        };
-        setSelectedServiceStaffItems([editItem]);
-      }
-    }
-  }, [editData, services, employees]);
-
-  const handleFormSubmit = (data: AppointmentFormData) => {
-    if (selectedServiceStaffItems.length === 0) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng chọn ít nhất một dịch vụ và nhân viên",
-        variant: "destructive"
-      });
+  const handleSubmit = (data: any) => {
+    console.log("Form data submitted:", data);
+    console.log("Service staff items:", serviceStaffItems);
+    
+    if (serviceStaffItems.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một dịch vụ");
       return;
     }
 
-    console.log("Appointment data:", data);
-    console.log("Selected services and staff:", selectedServiceStaffItems);
-    
-    if (editData) {
-      // For editing, use the first selected service/staff combination
-      const firstItem = selectedServiceStaffItems[0];
-      const firstStaffId = firstItem.staffIds[0]; // Take first staff for backward compatibility
-      const updateData = {
-        ...data,
-        date: format(data.date, "yyyy-MM-dd"),
-        serviceId: firstItem.serviceId,
-        staffId: firstStaffId,
-        staffSalaryData: firstItem.staffSalaryInfo // Store salary calculation data
-      };
-      updateAppointment(editData.id, updateData);
-      toast({
-        title: "Lịch hẹn đã được cập nhật!",
-        description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
-      });
-    } else {
-      // For new appointments, create multiple appointments for each service-staff combination
-      selectedServiceStaffItems.forEach((item, index) => {
-        item.staffIds.forEach((staffId, staffIndex) => {
-          const staffName = item.staffNames[staffIndex];
-          const appointmentData = {
-            ...data,
-            serviceId: item.serviceId,
-            staffId: staffId,
-            staffSalaryData: item.staffSalaryInfo?.find(s => s.staffId === staffId) // Individual staff salary data
-          };
-          
-          addAppointment(appointmentData);
-        });
-        
-        if (index === 0) {
-          const totalAppointments = selectedServiceStaffItems.reduce((sum, item) => sum + item.staffIds.length, 0);
-          toast({
-            title: "Lịch hẹn đã được tạo!",
-            description: `${totalAppointments > 1 ? `Đã tạo ${totalAppointments} lịch hẹn` : 'Lịch hẹn'} cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
-          });
-        }
-      });
-    }
-    
-    onSubmit(data);
-  };
+    const appointmentData = {
+      ...data,
+      serviceStaffItems, // Send the complete service-staff items array
+      date: data.date,
+      time: data.time,
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      customerEmail: data.customerEmail,
+      notes: data.notes
+    };
 
-  const handleCustomerSelect = (customerId: string) => {
-    const customer = customers.find(c => c.id === customerId);
-    if (customer) {
-      form.setValue("customerId", customerId);
-      form.setValue("customerName", customer.name);
-      form.setValue("customerPhone", customer.phone);
-      form.setValue("customerEmail", customer.email || "");
+    try {
+      const result = addAppointment(appointmentData);
+      console.log("Appointment created:", result);
+      toast.success("Tạo lịch hẹn thành công!");
+      onSubmit(appointmentData);
+      onClose();
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      toast.error("Có lỗi xảy ra khi tạo lịch hẹn");
     }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Date and Time */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CalendarIcon className="w-4 h-4" />
-              Thời gian
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className="text-sm">Ngày</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal h-9",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Chọn ngày</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm">Giờ</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Chọn giờ" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Customer Information */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="w-4 h-4" />
-              Khách hàng
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {!editData && (
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={!isNewCustomer ? "default" : "outline"}
-                  onClick={() => setIsNewCustomer(false)}
-                  className="flex-1 h-8 text-sm"
-                  size="sm"
-                >
-                  Khách cũ
-                </Button>
-                <Button
-                  type="button"
-                  variant={isNewCustomer ? "default" : "outline"}
-                  onClick={() => setIsNewCustomer(true)}
-                  className="flex-1 h-8 text-sm"
-                  size="sm"
-                >
-                  Khách mới
-                </Button>
-              </div>
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label htmlFor="date" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Ngày
+          </Label>
+          <Controller
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !field.value && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date > new Date()
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             )}
-
-            {!isNewCustomer && !editData && (
-              <div>
-                <Label className="text-sm">Chọn khách hàng</Label>
-                <Select onValueChange={handleCustomerSelect}>
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue placeholder="Chọn khách hàng có sẵn" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        <div>
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-gray-500">{customer.phone}</div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm">Tên khách hàng</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập tên" className="h-9" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="customerPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm">Số điện thoại</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nhập SĐT" className="h-9" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="customerEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm">Email (tùy chọn)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập email" className="h-9" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Service and Staff Selection */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Scissors className="w-4 h-4" />
-              Dịch vụ & Nhân viên
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ServiceStaffSelector
-              selectedItems={selectedServiceStaffItems}
-              onItemsChange={setSelectedServiceStaffItems}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Notes */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Ghi chú</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <textarea
-                      placeholder="Ghi chú thêm về lịch hẹn..."
-                      className="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none text-sm"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t">
-          <Button type="button" variant="outline" onClick={onClose} className="h-9">
-            Hủy
-          </Button>
-          <Button type="submit" className="bg-pink-600 hover:bg-pink-700 h-9">
-            {editData ? "Cập nhật lịch hẹn" : "Tạo lịch hẹn"}
-          </Button>
+          />
+          {form.formState.errors.date && (
+            <p className="text-sm text-red-500 mt-1">{form.formState.errors.date.message}</p>
+          )}
         </div>
-      </form>
-    </Form>
+
+        <div>
+          <Label htmlFor="time" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Giờ
+          </Label>
+          <Controller
+            control={form.control}
+            name="time"
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn giờ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 15 }, (_, i) => i + 8).map((hour) => (
+                    <SelectItem key={`${hour}:00`} value={`${hour}:00`}>{`${hour}:00`}</SelectItem>
+                  ))}
+                  {Array.from({ length: 15 }, (_, i) => i + 8).map((hour) => (
+                    <SelectItem key={`${hour}:30`} value={`${hour}:30`}>{`${hour}:30`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {form.formState.errors.time && (
+            <p className="text-sm text-red-500 mt-1">{form.formState.errors.time.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label htmlFor="customerName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Tên khách hàng
+          </Label>
+          <Input id="customerName" type="text" placeholder="Nhập tên khách hàng" {...form.register("customerName")} />
+          {form.formState.errors.customerName && (
+            <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerName.message}</p>
+          )}
+        </div>
+
+        <div>
+          <Label htmlFor="customerPhone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Số điện thoại
+          </Label>
+          <Input id="customerPhone" type="tel" placeholder="Nhập số điện thoại" {...form.register("customerPhone")} />
+          {form.formState.errors.customerPhone && (
+            <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerPhone.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="customerEmail" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+          Địa chỉ email (tùy chọn)
+        </Label>
+        <Input id="customerEmail" type="email" placeholder="Nhập địa chỉ email" {...form.register("customerEmail")} />
+        {form.formState.errors.customerEmail && (
+          <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerEmail.message}</p>
+        )}
+      </div>
+
+      <div>
+        <ServiceStaffSelector
+          selectedItems={serviceStaffItems}
+          onItemsChange={setServiceStaffItems}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="notes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+          Ghi chú (tùy chọn)
+        </Label>
+        <Textarea id="notes" placeholder="Nhập ghi chú" {...form.register("notes")} />
+      </div>
+
+      <div className="flex justify-end gap-4">
+        <Button variant="outline" onClick={onClose}>
+          Hủy bỏ
+        </Button>
+        <Button type="submit">
+          Xác nhận
+        </Button>
+      </div>
+    </form>
   );
 }
