@@ -20,13 +20,15 @@ interface AppointmentDayViewProps {
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
   displayMode: "customer" | "staff";
+  showFullView: boolean;
 }
 
 export function AppointmentDayView({
   selectedDate,
   filteredAppointments,
   handleAppointmentClick,
-  displayMode
+  displayMode,
+  showFullView
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -44,12 +46,13 @@ export function AppointmentDayView({
     return dayAppointments.filter(apt => apt.time === timeSlot);
   };
 
-  // Filter time slots to only show those with appointments when filtering is active
-  const timeSlots = allTimeSlots.filter(timeSlot => {
-    const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
-    // Always show time slots if no specific filters are applied, otherwise only show slots with appointments
-    return timeSlotAppointments.length > 0 || filteredAppointments.length === 0;
-  });
+  // Filter time slots based on showFullView setting
+  const timeSlots = showFullView 
+    ? allTimeSlots 
+    : allTimeSlots.filter(timeSlot => {
+        const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
+        return timeSlotAppointments.length > 0;
+      });
 
   return (
     <div className="w-full">

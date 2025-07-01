@@ -17,6 +17,8 @@ interface AppointmentFiltersProps {
   setSelectedStaffIds: (ids: string[]) => void;
   filteredAppointmentsCount: number;
   onMaximize: () => void;
+  showFullView: boolean;
+  setShowFullView: (show: boolean) => void;
 }
 
 export function AppointmentFilters({
@@ -25,7 +27,9 @@ export function AppointmentFilters({
   selectedStaffIds,
   setSelectedStaffIds,
   filteredAppointmentsCount,
-  onMaximize
+  onMaximize,
+  showFullView,
+  setShowFullView
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
   const { t } = useLanguage();
@@ -52,7 +56,7 @@ export function AppointmentFilters({
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{t('appointments.display_by')}</span>
               <Select value={displayMode} onValueChange={(value: "customer" | "staff") => setDisplayMode(value)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -117,6 +121,18 @@ export function AppointmentFilters({
                 </div>
               </PopoverContent>
             </Popover>
+
+            {/* Full View Toggle */}
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="fullView"
+                checked={showFullView}
+                onCheckedChange={(checked) => setShowFullView(checked as boolean)}
+              />
+              <label htmlFor="fullView" className="text-sm font-medium cursor-pointer">
+                {t('appointments.show_full_view')}
+              </label>
+            </div>
 
             {/* Appointment Count */}
             <div className="flex items-center gap-2 text-sm text-gray-600">

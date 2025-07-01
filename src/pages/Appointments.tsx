@@ -42,9 +42,13 @@ const Appointments = () => {
   const [displayMode, setDisplayMode] = useState<"customer" | "staff">("customer");
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [showFullView, setShowFullView] = useState(true);
 
   // Get appointments from Zustand store
   const { appointments, deleteAppointment, employees } = useSalonStore();
+
+  // Check if any filters are actually applied
+  const hasActiveFilters = searchQuery.trim() !== "" || selectedStaffIds.length > 0;
 
   // Filter appointments based on search query, staff filter, and date range
   const getFilteredAppointments = () => {
@@ -192,6 +196,8 @@ const Appointments = () => {
         setSelectedStaffIds={setSelectedStaffIds}
         filteredAppointmentsCount={filteredAppointments.length}
         onMaximize={handleMaximize}
+        showFullView={showFullView}
+        setShowFullView={setShowFullView}
       />
 
       {/* View Controls */}
@@ -217,6 +223,7 @@ const Appointments = () => {
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
               displayMode={displayMode}
+              showFullView={showFullView || !hasActiveFilters}
             />
           )}
           {viewMode === "week" && (
@@ -225,6 +232,7 @@ const Appointments = () => {
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
               displayMode={displayMode}
+              showFullView={showFullView || !hasActiveFilters}
             />
           )}
           {viewMode === "day" && (
@@ -233,6 +241,7 @@ const Appointments = () => {
               filteredAppointments={filteredAppointments}
               handleAppointmentClick={handleAppointmentClick}
               displayMode={displayMode}
+              showFullView={showFullView || !hasActiveFilters}
             />
           )}
         </CardContent>

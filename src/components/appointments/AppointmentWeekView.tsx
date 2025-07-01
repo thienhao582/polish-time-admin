@@ -21,13 +21,15 @@ interface AppointmentWeekViewProps {
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
   displayMode: "customer" | "staff";
+  showFullView: boolean;
 }
 
 export function AppointmentWeekView({
   selectedDate,
   filteredAppointments,
   handleAppointmentClick,
-  displayMode
+  displayMode,
+  showFullView
 }: AppointmentWeekViewProps) {
   const { t } = useLanguage();
 
@@ -48,12 +50,13 @@ export function AppointmentWeekView({
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
   const allWeekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
   
-  // Filter out days with no appointments when filtering is active
-  const weekDays = allWeekDays.filter(day => {
-    const dayAppointments = getAppointmentsForDate(day);
-    // Always show days if no specific filters are applied, otherwise only show days with appointments
-    return dayAppointments.length > 0 || filteredAppointments.length === 0;
-  });
+  // Filter out days with no appointments when showFullView is false
+  const weekDays = showFullView 
+    ? allWeekDays 
+    : allWeekDays.filter(day => {
+        const dayAppointments = getAppointmentsForDate(day);
+        return dayAppointments.length > 0;
+      });
 
   return (
     <div className="w-full">
