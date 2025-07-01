@@ -33,6 +33,11 @@ export function AppointmentWeekView({
     return filteredAppointments.filter(apt => apt.date === dateString);
   };
 
+  const getDayName = (day: Date) => {
+    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    return dayNames[day.getDay()];
+  };
+
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -44,7 +49,7 @@ export function AppointmentWeekView({
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0">
             <div className="font-medium text-gray-600">
-              {format(day, "EEEE", { locale: { localize: { day: () => ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][day.getDay()] } } })}
+              {getDayName(day)}
             </div>
             <div className={`text-sm ${isSameDay(day, new Date()) ? 'bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto' : 'text-gray-900'}`}>
               {format(day, "d")}
