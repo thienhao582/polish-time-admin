@@ -397,21 +397,15 @@ export const useSalonStore = create<SalonState>()(
         let appointmentCount = 0;
 
         appointments.forEach(apt => {
-          if (apt.staffSalaryData) {
+          if (apt.staffSalaryData && Array.isArray(apt.staffSalaryData)) {
             const employeeSalaryData = apt.staffSalaryData.filter(salary => salary.staffId === employeeId);
             employeeSalaryData.forEach(salaryData => {
               totalCommission += salaryData.servicePrice * (salaryData.commissionRate || 0.3);
               totalFixedAmount += salaryData.fixedAmount || 0;
             });
-            appointmentCount++;
-          } else if (apt.staffSalaryData) {
-            // Legacy single service appointment
-            const staffSalary = apt.staffSalaryData;
-            const priceNumber = parseFloat(apt.price.replace(/[^\d]/g, ''));
-            
-            totalCommission += priceNumber * (staffSalary.commissionRate || 0.3);
-            totalFixedAmount += staffSalary.fixedAmount || 0;
-            appointmentCount++;
+            if (employeeSalaryData.length > 0) {
+              appointmentCount++;
+            }
           }
         });
 
