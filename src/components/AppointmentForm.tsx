@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CalendarIcon, ClockIcon, UserRound } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
@@ -43,8 +42,10 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { addAppointment } = useSalonStore();
+  const { addAppointment, customers } = useSalonStore();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
+  const [customerType, setCustomerType] = useState<"new" | "existing">("new");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -58,6 +59,16 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     },
   });
 
+  const handleCustomerChange = (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      form.setValue("customerName", customer.name);
+      form.setValue("customerPhone", customer.phone);
+      form.setValue("customerEmail", customer.email || "");
+    }
+  };
+
   const handleSubmit = (data: any) => {
     console.log("Form data submitted:", data);
     console.log("Service staff items:", serviceStaffItems);
@@ -69,7 +80,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
 
     const appointmentData = {
       ...data,
-      serviceStaffItems, // Send the complete service-staff items array
+      serviceStaffItems,
+      customerId: customerType === "existing" ? selectedCustomerId : undefined,
       date: data.date,
       time: data.time,
       customerName: data.customerName,
@@ -162,12 +174,73 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         </div>
       </div>
 
+      {/* Customer Type Selection */}
+      <div>
+        <Label className="text-sm font-medium leading-none mb-3 block">
+          Loại khách hàng
+        </Label>
+        <div className="flex gap-4">
+          <Button
+            type="button"
+            variant={customerType === "new" ? "default" : "outline"}
+            onClick={() => {
+              setCustomerType("new");
+              setSelectedCustomerId("");
+              form.setValue("customerName", "");
+              form.setValue("customerPhone", "");
+              form.setValue("customerEmail", "");
+            }}
+            className="flex-1"
+          >
+            <UserRound className="w-4 h-4 mr-2" />
+            Khách mới
+          </Button>
+          <Button
+            type="button"
+            variant={customerType === "existing" ? "default" : "outline"}
+            onClick={() => setCustomerType("existing")}
+            className="flex-1"
+          >
+            <UserRound className="w-4 h-4 mr-2" />
+            Khách cũ
+          </Button>
+        </div>
+      </div>
+
+      {/* Existing Customer Selection */}
+      {customerType === "existing" && (
+        <div>
+          <Label className="text-sm font-medium leading-none mb-2 block">
+            Chọn khách hàng
+          </Label>
+          <Select onValueChange={handleCustomerChange} value={selectedCustomerId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn khách hàng" />
+            </SelectTrigger>
+            <SelectContent>
+              {customers.map((customer) => (
+                <SelectItem key={customer.id} value={customer.id}>
+                  {customer.name} - {customer.phone}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Customer Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="customerName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
             Tên khách hàng
           </Label>
-          <Input id="customerName" type="text" placeholder="Nhập tên khách hàng" {...form.register("customerName")} />
+          <Input 
+            id="customerName" 
+            type="text" 
+            placeholder="Nhập tên khách hàng" 
+            {...form.register("customerName")}
+            disabled={customerType === "existing" && selectedCustomerId !== ""}
+          />
           {form.formState.errors.customerName && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerName.message}</p>
           )}
@@ -177,7 +250,13 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           <Label htmlFor="customerPhone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
             Số điện thoại
           </Label>
-          <Input id="customerPhone" type="tel" placeholder="Nhập số điện thoại" {...form.register("customerPhone")} />
+          <Input 
+            id="customerPhone" 
+            type="tel" 
+            placeholder="Nhập số điện thoại" 
+            {...form.register("customerPhone")}
+            disabled={customerType === "existing" && selectedCustomerId !== ""}
+          />
           {form.formState.errors.customerPhone && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerPhone.message}</p>
           )}
@@ -188,7 +267,13 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         <Label htmlFor="customerEmail" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
           Địa chỉ email (tùy chọn)
         </Label>
-        <Input id="customerEmail" type="email" placeholder="Nhập địa chỉ email" {...form.register("customerEmail")} />
+        <Input 
+          id="customerEmail" 
+          type="email" 
+          placeholder="Nhập địa chỉ email" 
+          {...form.register("customerEmail")}
+          disabled={customerType === "existing" && selectedCustomerId !== ""}
+        />
         {form.formState.errors.customerEmail && (
           <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerEmail.message}</p>
         )}
