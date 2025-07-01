@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, ChevronLeft, ChevronRight, Edit, Trash2, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AppointmentForm } from "@/components/AppointmentForm";
@@ -31,18 +33,36 @@ const Appointments = () => {
   const [isStaffManagerOpen, setIsStaffManagerOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Get appointments from Zustand store
   const { appointments, deleteAppointment } = useSalonStore();
 
+  // Filter appointments based on search query
+  const filteredAppointments = appointments.filter(apt => 
+    apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    apt.staff.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const handleAppointmentCreate = (appointmentData: any) => {
     setIsFormOpen(false);
+  };
+
+  const handleAppointmentEdit = (appointmentData: any) => {
+    setIsEditMode(false);
+    setIsAppointmentDetailOpen(false);
   };
 
   const handleAppointmentClick = (appointment: Appointment, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedAppointment(appointment);
     setIsAppointmentDetailOpen(true);
+  };
+
+  const handleEditClick = () => {
+    setIsAppointmentDetailOpen(false);
+    setIsEditMode(true);
   };
 
   const handleDeleteAppointment = (appointmentId: number) => {
@@ -71,7 +91,15 @@ const Appointments = () => {
 
   const getAppointmentsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
-    return appointments.filter(apt => apt.date === dateString);
+    return filteredAppointments.filter(apt => apt.date === dateString);
+  };
+
+  const getAppointmentsForTimeSlot = (date: Date, hour: number) => {
+    const appointments = getAppointmentsForDate(date);
+    return appointments.filter(apt => {
+      const [appointmentHour] = apt.time.split(':').map(Number);
+      return appointmentHour === hour;
+    });
   };
 
   const renderMonthView = () => {
@@ -81,9 +109,7 @@ const Appointments = () => {
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
     const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-    // Calculate if we need 6 rows (42 days) for consistent layout
     const weeksInMonth = getWeeksInMonth(selectedDate, { weekStartsOn: 1 });
-    const totalDays = weeksInMonth * 7;
 
     return (
       <div className="w-full">
@@ -109,7 +135,7 @@ const Appointments = () => {
                 key={day.toISOString()}
                 className={`min-h-[160px] border-r border-b last:border-r-0 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
-                } ${isSelected ? 'ring-2 ring-pink-500 ring-inset' : ''}`}
+                } ${isSelected ? 'border-4 border-pink-500' : ''}`}
                 onClick={() => setSelectedDate(day)}
               >
                 {/* Date number */}
@@ -175,7 +201,11 @@ const Appointments = () => {
               </div>
               <div className="space-y-1">
                 {dayAppointments.map((apt) => (
-                  <div key={apt.id} className="text-xs p-1 bg-pink-50 border-l-2 border-pink-400 rounded">
+                  <div 
+                    key={apt.id} 
+                    className="text-xs p-1 bg-pink-50 border-l-2 border-pink-400 rounded cursor-pointer hover:bg-pink-100"
+                    onClick={(e) => handleAppointmentClick(apt, e)}
+                  >
                     <div className="font-medium">{apt.time}</div>
                     <div className="text-gray-600">{apt.customer}</div>
                     <div className="text-gray-500">{apt.staff}</div>
@@ -190,43 +220,52 @@ const Appointments = () => {
   };
 
   const renderDayView = () => {
-    const dayAppointments = getAppointmentsForDate(selectedDate);
+    const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7 AM to 8 PM
     
     return (
-      <div className="space-y-4">
-        <div className="text-center py-4">
-          <h3 className="text-lg font-semibold">
-            {format(selectedDate, "EEEE, dd MMMM yyyy", { locale: vi })}
-          </h3>
-        </div>
-        <div className="space-y-2">
-          {dayAppointments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Không có lịch hẹn nào trong ngày này
+      <div className="flex h-[600px]">
+        {/* Time column */}
+        <div className="w-20 border-r">
+          <div className="h-12 border-b"></div> {/* Header spacer */}
+          {hours.map((hour) => (
+            <div key={hour} className="h-12 border-b flex items-center justify-center text-sm text-gray-600">
+              {hour}:00
             </div>
-          ) : (
-            dayAppointments.map((apt) => (
-              <Card key={apt.id} className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium text-lg">{apt.time}</span>
-                      {getStatusBadge(apt.status)}
+          ))}
+        </div>
+
+        {/* Day content */}
+        <div className="flex-1">
+          {/* Header */}
+          <div className="h-12 border-b flex items-center justify-center bg-gray-50 font-medium">
+            {format(selectedDate, "EEEE, dd MMMM yyyy", { locale: vi })}
+          </div>
+          
+          {/* Timeline */}
+          <div className="relative">
+            {hours.map((hour) => {
+              const appointments = getAppointmentsForTimeSlot(selectedDate, hour);
+              return (
+                <div key={hour} className="h-12 border-b relative hover:bg-gray-50">
+                  {appointments.map((apt, index) => (
+                    <div
+                      key={apt.id}
+                      className="absolute left-2 right-2 bg-pink-100 border-l-4 border-pink-500 rounded p-1 cursor-pointer hover:bg-pink-200 z-10"
+                      style={{
+                        top: `${index * 25}px`,
+                        height: '22px'
+                      }}
+                      onClick={(e) => handleAppointmentClick(apt, e)}
+                    >
+                      <div className="text-xs font-medium truncate">
+                        {apt.customer} - {apt.service}
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="font-medium">{apt.customer}</p>
-                      <p className="text-gray-600">{apt.service}</p>
-                      <p className="text-sm text-gray-500">Nhân viên: {apt.staff}</p>
-                      <p className="text-sm text-gray-500">Thời lượng: {apt.duration}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-green-600">{apt.price}</p>
-                  </div>
+                  ))}
                 </div>
-              </Card>
-            ))
-          )}
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -286,6 +325,21 @@ const Appointments = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm theo tên khách hàng hoặc nhân viên..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* View Controls */}
       <Card>
@@ -437,10 +491,7 @@ const Appointments = () => {
                 
                 <Button 
                   className="bg-pink-600 hover:bg-pink-700"
-                  onClick={() => {
-                    setIsAppointmentDetailOpen(false);
-                    // TODO: Open edit form with pre-filled data
-                  }}
+                  onClick={handleEditClick}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Chỉnh sửa
@@ -448,6 +499,24 @@ const Appointments = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Appointment Dialog */}
+      <Dialog open={isEditMode} onOpenChange={setIsEditMode}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa lịch hẹn</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+            {selectedAppointment && (
+              <AppointmentForm 
+                onClose={() => setIsEditMode(false)} 
+                onSubmit={handleAppointmentEdit}
+                editData={selectedAppointment}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
