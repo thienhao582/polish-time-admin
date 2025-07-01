@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useSalonStore } from "@/stores/useSalonStore";
 
 interface Appointment {
   id: number;
@@ -18,6 +19,9 @@ interface Appointment {
   price: string;
   status: string;
   staff: string;
+  serviceId?: string;
+  staffId?: string;
+  notes?: string;
 }
 
 interface AppointmentDetailDialogProps {
@@ -35,6 +39,8 @@ export function AppointmentDetailDialog({
   onEdit,
   onDelete
 }: AppointmentDetailDialogProps) {
+  const { services, employees } = useSalonStore();
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       confirmed: { label: "Xác nhận", variant: "default" as const },
@@ -55,6 +61,10 @@ export function AppointmentDetailDialog({
   };
 
   if (!appointment) return null;
+
+  // Get detailed service and staff information
+  const serviceDetails = appointment.serviceId ? services.find(s => s.id === appointment.serviceId) : null;
+  const staffDetails = appointment.staffId ? employees.find(e => e.id === appointment.staffId) : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -92,22 +102,34 @@ export function AppointmentDetailDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-600">Dịch vụ</label>
-              <p className="text-sm">{appointment.service}</p>
+              <p className="text-sm">{serviceDetails?.name || appointment.service}</p>
+              {serviceDetails && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {serviceDetails.duration} phút - {serviceDetails.price.toLocaleString('vi-VN')}đ
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Nhân viên</label>
-              <p className="text-sm">{appointment.staff}</p>
+              <p className="text-sm">{staffDetails?.name || appointment.staff}</p>
+              {staffDetails && staffDetails.specialties && staffDetails.specialties.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Chuyên môn: {staffDetails.specialties.join(", ")}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-600">Thời lượng</label>
-              <p className="text-sm">{appointment.duration}</p>
+              <p className="text-sm">{serviceDetails ? `${serviceDetails.duration} phút` : appointment.duration}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Giá</label>
-              <p className="text-sm font-medium text-green-600">{appointment.price}</p>
+              <p className="text-sm font-medium text-green-600">
+                {serviceDetails ? `${serviceDetails.price.toLocaleString('vi-VN')}đ` : appointment.price}
+              </p>
             </div>
           </div>
 
@@ -117,6 +139,13 @@ export function AppointmentDetailDialog({
               {getStatusBadge(appointment.status)}
             </div>
           </div>
+
+          {appointment.notes && (
+            <div>
+              <label className="text-sm font-medium text-gray-600">Ghi chú</label>
+              <p className="text-sm bg-gray-50 p-3 rounded-md">{appointment.notes}</p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4 border-t">
             <AlertDialog>

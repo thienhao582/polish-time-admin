@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useSalonStore } from "@/stores/useSalonStore";
+import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
 
 const appointmentSchema = z.object({
   date: z.date({
@@ -26,12 +27,20 @@ const appointmentSchema = z.object({
   customerName: z.string().min(1, "Vui lòng nhập tên khách hàng."),
   customerPhone: z.string().min(10, "Số điện thoại phải có ít nhất 10 số."),
   customerEmail: z.string().email("Email không hợp lệ.").optional().or(z.literal("")),
-  serviceId: z.string().min(1, "Vui lòng chọn dịch vụ."),
-  staffId: z.string().min(1, "Vui lòng chọn nhân viên."),
   notes: z.string().optional(),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
+
+interface ServiceStaffItem {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  staffId: string;
+  staffName: string;
+  price: number;
+  duration: number;
+}
 
 interface Appointment {
   id: number;
@@ -54,19 +63,16 @@ interface AppointmentFormProps {
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
-  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+  const [selectedServiceStaffItems, setSelectedServiceStaffItems] = useState<ServiceStaffItem[]>([]);
 
-  // Get data from Zustand store - using employees instead of staff
+  // Get data from Zustand store
   const { 
     customers, 
     services, 
     employees, 
     addAppointment, 
-    updateAppointment,
-    getAvailableEmployeesForService 
+    updateAppointment
   } = useSalonStore();
-
-  const [availableEmployees, setAvailableEmployees] = useState(employees);
 
   const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
@@ -89,45 +95,46 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
 
   useEffect(() => {
     if (editData) {
-      // Find service and staff IDs from editData
+      // Parse existing service and staff data for editing
       const service = services.find(s => s.name === editData.service);
       const employee = employees.find(e => e.name === editData.staff);
       
-      if (service) {
-        setSelectedServiceId(service.id);
-        form.setValue("serviceId", service.id);
-      }
-      if (employee) {
-        form.setValue("staffId", employee.id);
+      if (service && employee) {
+        const editItem: ServiceStaffItem = {
+          id: `${service.id}-${employee.id}-edit`,
+          serviceId: service.id,
+          serviceName: service.name,
+          staffId: employee.id,
+          staffName: employee.name,
+          price: service.price,
+          duration: service.duration
+        };
+        setSelectedServiceStaffItems([editItem]);
       }
     }
-  }, [editData, services, employees, form]);
-
-  useEffect(() => {
-    // Update available employees when service changes
-    if (selectedServiceId) {
-      const employeesForService = getAvailableEmployeesForService(selectedServiceId);
-      setAvailableEmployees(employeesForService);
-      
-      // Reset staff selection if current selection is not available for the new service
-      const currentStaffId = form.getValues("staffId");
-      if (currentStaffId && !employeesForService.find(e => e.id === currentStaffId)) {
-        form.setValue("staffId", "");
-      }
-    } else {
-      setAvailableEmployees([]);
-      form.setValue("staffId", "");
-    }
-  }, [selectedServiceId, form, getAvailableEmployeesForService]);
+  }, [editData, services, employees]);
 
   const handleFormSubmit = (data: AppointmentFormData) => {
+    if (selectedServiceStaffItems.length === 0) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn ít nhất một dịch vụ và nhân viên",
+        variant: "destructive"
+      });
+      return;
+    }
+
     console.log("Appointment data:", data);
+    console.log("Selected services and staff:", selectedServiceStaffItems);
     
     if (editData) {
-      // Update existing appointment - convert Date to string format
+      // For editing, use the first selected service/staff combination
+      const firstItem = selectedServiceStaffItems[0];
       const updateData = {
         ...data,
-        date: format(data.date, "yyyy-MM-dd") // Convert Date to string
+        date: format(data.date, "yyyy-MM-dd"),
+        serviceId: firstItem.serviceId,
+        staffId: firstItem.staffId
       };
       updateAppointment(editData.id, updateData);
       toast({
@@ -135,11 +142,22 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
       });
     } else {
-      // Save new appointment to Zustand store
-      const newAppointment = addAppointment(data);
-      toast({
-        title: "Lịch hẹn đã được tạo!",
-        description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
+      // For new appointments, create multiple appointments if multiple services are selected
+      selectedServiceStaffItems.forEach((item, index) => {
+        const appointmentData = {
+          ...data,
+          serviceId: item.serviceId,
+          staffId: item.staffId
+        };
+        
+        addAppointment(appointmentData);
+        
+        if (index === 0) {
+          toast({
+            title: "Lịch hẹn đã được tạo!",
+            description: `${selectedServiceStaffItems.length > 1 ? `Đã tạo ${selectedServiceStaffItems.length} lịch hẹn` : 'Lịch hẹn'} cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
+          });
+        }
       });
     }
     
@@ -154,11 +172,6 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       form.setValue("customerPhone", customer.phone);
       form.setValue("customerEmail", customer.email || "");
     }
-  };
-
-  const handleServiceSelect = (serviceId: string) => {
-    setSelectedServiceId(serviceId);
-    form.setValue("serviceId", serviceId);
   };
 
   return (
@@ -342,7 +355,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           </CardContent>
         </Card>
 
-        {/* Service and Staff */}
+        {/* Service and Staff Selection */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -350,74 +363,11 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
               Dịch vụ & Nhân viên
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="serviceId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm">Chọn dịch vụ</FormLabel>
-                    <Select onValueChange={handleServiceSelect} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Chọn dịch vụ" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {services.filter(service => service.status === 'active').map((service) => (
-                          <SelectItem key={service.id} value={service.id}>
-                            <div>
-                              <div className="font-medium text-sm">{service.name}</div>
-                              <div className="text-xs text-gray-500">
-                                {service.duration} phút - {service.price.toLocaleString()}đ
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="staffId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm">Chọn nhân viên</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Chọn nhân viên" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableEmployees.length > 0 ? (
-                          availableEmployees.map((employee) => (
-                            <SelectItem key={employee.id} value={employee.id}>
-                              <div>
-                                <div className="font-medium text-sm">{employee.name}</div>
-                                <div className="text-xs text-gray-500">
-                                  {employee.specialties.join(", ")}
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-staff" disabled>
-                            {selectedServiceId ? "Không có nhân viên cho dịch vụ này" : "Vui lòng chọn dịch vụ trước"}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <CardContent>
+            <ServiceStaffSelector
+              selectedItems={selectedServiceStaffItems}
+              onItemsChange={setSelectedServiceStaffItems}
+            />
           </CardContent>
         </Card>
 
