@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,12 +33,26 @@ const appointmentSchema = z.object({
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
+interface Appointment {
+  id: number;
+  date: string;
+  time: string;
+  customer: string;
+  phone: string;
+  service: string;
+  duration: string;
+  price: string;
+  status: string;
+  staff: string;
+}
+
 interface AppointmentFormProps {
   onClose: () => void;
   onSubmit: (data: AppointmentFormData) => void;
+  editData?: Appointment;
 }
 
-export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
+export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
 
@@ -47,6 +62,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
     services, 
     employees, 
     addAppointment, 
+    updateAppointment,
     getAvailableEmployeesForService 
   } = useSalonStore();
 
@@ -62,12 +78,30 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      customerName: "",
-      customerPhone: "",
+      customerName: editData?.customer || "",
+      customerPhone: editData?.phone || "",
       customerEmail: "",
       notes: "",
+      date: editData ? new Date(editData.date) : undefined,
+      time: editData?.time || "",
     },
   });
+
+  useEffect(() => {
+    if (editData) {
+      // Find service and staff IDs from editData
+      const service = services.find(s => s.name === editData.service);
+      const employee = employees.find(e => e.name === editData.staff);
+      
+      if (service) {
+        setSelectedServiceId(service.id);
+        form.setValue("serviceId", service.id);
+      }
+      if (employee) {
+        form.setValue("staffId", employee.id);
+      }
+    }
+  }, [editData, services, employees, form]);
 
   useEffect(() => {
     // Update available employees when service changes
@@ -89,13 +123,22 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   const handleFormSubmit = (data: AppointmentFormData) => {
     console.log("Appointment data:", data);
     
-    // Save to Zustand store
-    const newAppointment = addAppointment(data);
+    if (editData) {
+      // Update existing appointment
+      updateAppointment(editData.id, data);
+      toast({
+        title: "Lịch hẹn đã được cập nhật!",
+        description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
+      });
+    } else {
+      // Save new appointment to Zustand store
+      const newAppointment = addAppointment(data);
+      toast({
+        title: "Lịch hẹn đã được tạo!",
+        description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
+      });
+    }
     
-    toast({
-      title: "Lịch hẹn đã được tạo!",
-      description: `Lịch hẹn cho ${data.customerName} vào ${format(data.date, "dd/MM/yyyy")} lúc ${data.time}`,
-    });
     onSubmit(data);
   };
 
@@ -117,112 +160,118 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Date and Time */}
+        {/* Date and Time - Compact Layout */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <CalendarIcon className="w-5 h-5" />
               Thời gian
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Ngày</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Chọn ngày</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Ngày</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy")
+                            ) : (
+                              <span>Chọn ngày</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="time"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Giờ</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn giờ" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {timeSlots.map((time) => (
-                        <SelectItem key={time} value={time}>
-                          {time}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Giờ</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn giờ" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeSlots.map((time) => (
+                          <SelectItem key={time} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Customer */}
+        {/* Customer Information - Compact Layout */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <User className="w-5 h-5" />
               Khách hàng
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={!isNewCustomer ? "default" : "outline"}
-                onClick={() => setIsNewCustomer(false)}
-                className="flex-1"
-              >
-                Khách cũ
-              </Button>
-              <Button
-                type="button"
-                variant={isNewCustomer ? "default" : "outline"}
-                onClick={() => setIsNewCustomer(true)}
-                className="flex-1"
-              >
-                Khách mới
-              </Button>
-            </div>
+            {!editData && (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={!isNewCustomer ? "default" : "outline"}
+                  onClick={() => setIsNewCustomer(false)}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Khách cũ
+                </Button>
+                <Button
+                  type="button"
+                  variant={isNewCustomer ? "default" : "outline"}
+                  onClick={() => setIsNewCustomer(true)}
+                  className="flex-1"
+                  size="sm"
+                >
+                  Khách mới
+                </Button>
+              </div>
+            )}
 
-            {!isNewCustomer && (
+            {!isNewCustomer && !editData && (
               <div>
                 <Label>Chọn khách hàng</Label>
                 <Select onValueChange={handleCustomerSelect}>
@@ -243,33 +292,35 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
               </div>
             )}
 
-            <FormField
-              control={form.control}
-              name="customerName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tên khách hàng</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập tên khách hàng" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="customerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tên khách hàng</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập tên khách hàng" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="customerPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Số điện thoại</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nhập số điện thoại" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="customerPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Số điện thoại</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nhập số điện thoại" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -287,16 +338,16 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
           </CardContent>
         </Card>
 
-        {/* Service and Staff */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scissors className="w-5 h-5" />
-                Dịch vụ
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+        {/* Service and Staff - Compact Layout */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Scissors className="w-5 h-5" />
+              Dịch vụ & Nhân viên
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="serviceId"
@@ -326,17 +377,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Nhân viên
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
               <FormField
                 control={form.control}
                 name="staffId"
@@ -372,14 +413,14 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Notes */}
+        {/* Notes - Compact */}
         <Card>
-          <CardHeader>
-            <CardTitle>Ghi chú</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Ghi chú</CardTitle>
           </CardHeader>
           <CardContent>
             <FormField
@@ -390,7 +431,7 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
                   <FormControl>
                     <textarea
                       placeholder="Ghi chú thêm về lịch hẹn..."
-                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      className="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -402,12 +443,12 @@ export function AppointmentForm({ onClose, onSubmit }: AppointmentFormProps) {
         </Card>
 
         {/* Actions */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onClose}>
             Hủy
           </Button>
           <Button type="submit" className="bg-pink-600 hover:bg-pink-700">
-            Tạo lịch hẹn
+            {editData ? "Cập nhật lịch hẹn" : "Tạo lịch hẹn"}
           </Button>
         </div>
       </form>
