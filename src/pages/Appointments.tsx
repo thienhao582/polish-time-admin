@@ -13,6 +13,8 @@ import { AppointmentMonthView } from "@/components/appointments/AppointmentMonth
 import { AppointmentWeekView } from "@/components/appointments/AppointmentWeekView";
 import { AppointmentDayView } from "@/components/appointments/AppointmentDayView";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
 interface Appointment {
   id: number;
@@ -28,6 +30,7 @@ interface Appointment {
 }
 
 const Appointments = () => {
+  const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -41,24 +44,58 @@ const Appointments = () => {
   const [isMaximized, setIsMaximized] = useState(false);
 
   // Get appointments from Zustand store
-  const { appointments, deleteAppointment } = useSalonStore();
+  const { appointments, deleteAppointment, employees } = useSalonStore();
 
-  // Filter appointments based on search query and staff filter
-  const filteredAppointments = appointments.filter(apt => {
-    // Search filter
-    const searchMatch = searchQuery === "" || 
-      apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.staff.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Staff filter
-    const staffMatch = selectedStaffIds.length === 0 || 
-      selectedStaffIds.some(staffId => {
-        const staff = useSalonStore.getState().employees.find(e => e.id === staffId);
-        return staff && apt.staff.includes(staff.name);
-      });
-    
-    return searchMatch && staffMatch;
-  });
+  // Filter appointments based on search query, staff filter, and date range
+  const getFilteredAppointments = () => {
+    let filtered = appointments;
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(apt => 
+        apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        apt.staff.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply staff filter
+    if (selectedStaffIds.length > 0) {
+      filtered = filtered.filter(apt => 
+        selectedStaffIds.some(staffId => {
+          const staff = employees.find(e => e.id === staffId);
+          return staff && apt.staff.includes(staff.name);
+        })
+      );
+    }
+
+    // Apply date range filter based on view mode
+    const currentDate = selectedDate;
+    let startDate: Date;
+    let endDate: Date;
+
+    if (viewMode === "month") {
+      startDate = startOfMonth(currentDate);
+      endDate = endOfMonth(currentDate);
+    } else if (viewMode === "week") {
+      startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+      endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+    } else {
+      // day view
+      startDate = currentDate;
+      endDate = currentDate;
+    }
+
+    const startDateString = format(startDate, "yyyy-MM-dd");
+    const endDateString = format(endDate, "yyyy-MM-dd");
+
+    filtered = filtered.filter(apt => {
+      return apt.date >= startDateString && apt.date <= endDateString;
+    });
+
+    return filtered;
+  };
+
+  const filteredAppointments = getFilteredAppointments();
 
   const handleAppointmentCreate = (appointmentData: any) => {
     setIsFormOpen(false);
@@ -105,14 +142,14 @@ const Appointments = () => {
     <div className={`space-y-6 ${isMaximized ? 'fixed inset-0 z-50 bg-white p-6 overflow-auto' : ''}`}>
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Quản lý Lịch Hẹn</h1>
-          <p className="text-gray-600 mt-1">Theo dõi và quản lý tất cả lịch hẹn</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t('appointments.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="border-pink-600 text-pink-600 hover:bg-pink-50">
-                Quản lý nhân viên
+                {t('appointments.manage_staff')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-6xl max-h-[90vh]">
@@ -129,7 +166,7 @@ const Appointments = () => {
             <DialogTrigger asChild>
               <Button className="bg-pink-600 hover:bg-pink-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Thêm lịch hẹn
+                {t('appointments.add')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh]">

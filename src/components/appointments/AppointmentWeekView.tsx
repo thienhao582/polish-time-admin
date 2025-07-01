@@ -1,6 +1,7 @@
 
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { AppointmentOverflow } from "./AppointmentOverflow";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Appointment {
   id: number;
@@ -28,24 +29,36 @@ export function AppointmentWeekView({
   handleAppointmentClick,
   displayMode
 }: AppointmentWeekViewProps) {
+  const { t } = useLanguage();
+
   const getAppointmentsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
     return filteredAppointments.filter(apt => apt.date === dateString);
   };
 
   const getDayName = (day: Date) => {
-    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    const dayNames = [
+      t('day.sun'), t('day.mon'), t('day.tue'), t('day.wed'), 
+      t('day.thu'), t('day.fri'), t('day.sat')
+    ];
     return dayNames[day.getDay()];
   };
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  const allWeekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  
+  // Filter out days with no appointments when filtering is active
+  const weekDays = allWeekDays.filter(day => {
+    const dayAppointments = getAppointmentsForDate(day);
+    // Always show days if no specific filters are applied, otherwise only show days with appointments
+    return dayAppointments.length > 0 || filteredAppointments.length === 0;
+  });
 
   return (
     <div className="w-full">
       {/* Header with day names */}
-      <div className="grid grid-cols-7 border-b bg-gray-50">
+      <div className={`grid grid-cols-${weekDays.length} border-b bg-gray-50`}>
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-3 text-center border-r last:border-r-0">
             <div className="font-medium text-gray-600">
@@ -59,7 +72,7 @@ export function AppointmentWeekView({
       </div>
 
       {/* Week grid */}
-      <div className="grid grid-cols-7 border-l border-t">
+      <div className={`grid grid-cols-${weekDays.length} border-l border-t`}>
         {weekDays.map((day) => {
           const dayAppointments = getAppointmentsForDate(day);
           const isToday = isSameDay(day, new Date());

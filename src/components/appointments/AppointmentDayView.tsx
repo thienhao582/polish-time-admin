@@ -32,17 +32,24 @@ export function AppointmentDayView({
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
 
   // Create time slots from 7 AM to 8 PM
-  const timeSlots = [];
+  const allTimeSlots = [];
   for (let hour = 7; hour <= 20; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    allTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
     if (hour < 20) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+      allTimeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
   }
 
   const getAppointmentsForTimeSlot = (timeSlot: string) => {
     return dayAppointments.filter(apt => apt.time === timeSlot);
   };
+
+  // Filter time slots to only show those with appointments when filtering is active
+  const timeSlots = allTimeSlots.filter(timeSlot => {
+    const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
+    // Always show time slots if no specific filters are applied, otherwise only show slots with appointments
+    return timeSlotAppointments.length > 0 || filteredAppointments.length === 0;
+  });
 
   return (
     <div className="w-full">

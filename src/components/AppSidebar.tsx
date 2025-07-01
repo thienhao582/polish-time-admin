@@ -1,5 +1,5 @@
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 const AppSidebar = () => {
   const location = useLocation();
   const { hasPermission } = useAuth();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const menuItems = [
     {
@@ -69,7 +71,7 @@ const AppSidebar = () => {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
           <Scissors className="h-6 w-6 text-pink-600" />
-          <span className="font-bold text-lg">Nail Salon</span>
+          {!isCollapsed && <span className="font-bold text-lg">Nail Salon</span>}
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -84,7 +86,7 @@ const AppSidebar = () => {
                   >
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      {!isCollapsed && <span>{item.title}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -94,9 +96,11 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-4 py-2 text-xs text-gray-500">
-          © 2024 Nail Salon Management
-        </div>
+        {!isCollapsed && (
+          <div className="px-4 py-2 text-xs text-gray-500">
+            © 2024 Nail Salon Management
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

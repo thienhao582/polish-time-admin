@@ -1,6 +1,7 @@
 
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { AppointmentOverflow } from "./AppointmentOverflow";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Appointment {
   id: number;
@@ -30,6 +31,8 @@ export function AppointmentMonthView({
   handleAppointmentClick,
   displayMode
 }: AppointmentMonthViewProps) {
+  const { t } = useLanguage();
+
   const getAppointmentsForDate = (date: Date) => {
     const dateString = format(date, "yyyy-MM-dd");
     return filteredAppointments.filter(apt => apt.date === dateString);
@@ -39,13 +42,26 @@ export function AppointmentMonthView({
   const monthEnd = endOfMonth(selectedDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  const allCalendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  // Filter days to only show those with appointments when filtering is active
+  const calendarDays = allCalendarDays.filter(day => {
+    const dayAppointments = getAppointmentsForDate(day);
+    const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
+    // Always show current month days, and other days only if they have appointments or no filters are applied
+    return isCurrentMonth || dayAppointments.length > 0 || filteredAppointments.length === 0;
+  });
+
+  const dayHeaders = [
+    t('day.monday'), t('day.tuesday'), t('day.wednesday'), 
+    t('day.thursday'), t('day.friday'), t('day.saturday'), t('day.sunday')
+  ];
 
   return (
     <div className="w-full">
       {/* Header with day names */}
       <div className="grid grid-cols-7 border-b bg-gray-50">
-        {["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"].map((day) => (
+        {dayHeaders.map((day) => (
           <div key={day} className="p-3 text-center font-medium text-gray-600 border-r last:border-r-0">
             {day}
           </div>

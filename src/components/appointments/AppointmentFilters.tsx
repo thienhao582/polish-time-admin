@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useSalonStore } from "@/stores/useSalonStore";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentFiltersProps {
   displayMode: "customer" | "staff";
@@ -27,6 +28,7 @@ export function AppointmentFilters({
   onMaximize
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
+  const { t } = useLanguage();
   const [isStaffFilterOpen, setIsStaffFilterOpen] = useState(false);
 
   const handleStaffSelection = (staffId: string, checked: boolean) => {
@@ -48,22 +50,22 @@ export function AppointmentFilters({
           <div className="flex items-center gap-4">
             {/* Display Mode */}
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Hiển thị theo:</span>
+              <span className="text-sm font-medium">{t('appointments.display_by')}</span>
               <Select value={displayMode} onValueChange={(value: "customer" | "staff") => setDisplayMode(value)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      Tên khách
+                      {t('appointments.customer_name')}
                     </div>
                   </SelectItem>
                   <SelectItem value="staff">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Tên nhân viên
+                      {t('appointments.staff_name')}
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -75,7 +77,7 @@ export function AppointmentFilters({
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <Filter className="w-4 h-4" />
-                  Lọc nhân viên
+                  {t('appointments.filter_staff')}
                   {selectedStaffIds.length > 0 && (
                     <Badge variant="secondary" className="ml-1">
                       {selectedStaffIds.length}
@@ -118,9 +120,9 @@ export function AppointmentFilters({
 
             {/* Appointment Count */}
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>Tổng:</span>
+              <span>{t('appointments.total')}</span>
               <Badge variant="outline" className="font-medium">
-                {filteredAppointmentsCount} lịch hẹn
+                {filteredAppointmentsCount} {t('appointments.appointments')}
               </Badge>
             </div>
           </div>
@@ -128,7 +130,7 @@ export function AppointmentFilters({
           {/* Maximize Button */}
           <Button variant="outline" size="sm" onClick={onMaximize} className="gap-2">
             <Maximize2 className="w-4 h-4" />
-            Phóng to
+            {t('appointments.maximize')}
           </Button>
         </div>
       </CardContent>
