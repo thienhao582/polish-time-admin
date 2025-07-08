@@ -155,9 +155,10 @@ export const useSalonStore = create<SalonState>()(
         return 'Mới';
       },
 
-      // Appointment actions
+      // Fixed appointment actions
       addAppointment: (appointmentData) => {
         const state = get();
+        console.log("Adding appointment with data:", appointmentData);
 
         // Add customer if it's a new customer
         let customerId = appointmentData.customerId;
@@ -197,9 +198,14 @@ export const useSalonStore = create<SalonState>()(
             })) || []
           );
 
+          // Format date properly - ensure it's in yyyy-MM-dd format
+          const formattedDate = appointmentData.date instanceof Date 
+            ? appointmentData.date.toISOString().split('T')[0]
+            : appointmentData.date;
+
           const newAppointment: Appointment = {
             id: state.nextAppointmentId,
-            date: appointmentData.date.toISOString().split('T')[0],
+            date: formattedDate,
             time: appointmentData.time,
             customer: appointmentData.customerName,
             phone: appointmentData.customerPhone,
@@ -221,6 +227,8 @@ export const useSalonStore = create<SalonState>()(
             staffSalaryData
           };
 
+          console.log("New appointment created:", newAppointment);
+
           set((state) => ({
             appointments: [...state.appointments, newAppointment],
             nextAppointmentId: state.nextAppointmentId + 1
@@ -232,9 +240,14 @@ export const useSalonStore = create<SalonState>()(
           const service = state.services.find(s => s.id === appointmentData.serviceId);
           const employee = state.employees.find(e => e.id === appointmentData.staffId);
 
+          // Format date properly - ensure it's in yyyy-MM-dd format
+          const formattedDate = appointmentData.date instanceof Date 
+            ? appointmentData.date.toISOString().split('T')[0]
+            : appointmentData.date;
+
           const newAppointment: Appointment = {
             id: state.nextAppointmentId,
-            date: appointmentData.date.toISOString().split('T')[0],
+            date: formattedDate,
             time: appointmentData.time,
             customer: appointmentData.customerName,
             phone: appointmentData.customerPhone,
@@ -249,6 +262,8 @@ export const useSalonStore = create<SalonState>()(
             notes: appointmentData.notes,
             staffSalaryData: appointmentData.staffSalaryData
           };
+
+          console.log("New appointment created:", newAppointment);
 
           set((state) => ({
             appointments: [...state.appointments, newAppointment],
@@ -267,7 +282,6 @@ export const useSalonStore = create<SalonState>()(
         appointments: state.appointments.filter(a => a.id !== id)
       })),
 
-      // Employee actions  
       addEmployee: (employee) => set((state) => ({
         employees: [...state.employees, { ...employee, id: state.nextEmployeeId.toString() }],
         nextEmployeeId: state.nextEmployeeId + 1
@@ -281,7 +295,6 @@ export const useSalonStore = create<SalonState>()(
         employees: state.employees.filter(e => e.id !== id)
       })),
 
-      // Time tracking actions
       checkIn: (employeeId) => {
         const today = new Date().toISOString().split('T')[0];
         const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
@@ -378,7 +391,6 @@ export const useSalonStore = create<SalonState>()(
         return records.reduce((total, record) => total + (record.totalHours || 0), 0);
       },
 
-      // Updated method for calculating staff salary from appointments
       calculateStaffSalary: (employeeId, startDate, endDate) => {
         const state = get();
         const employee = state.employees.find(e => e.id === employeeId);
@@ -418,14 +430,12 @@ export const useSalonStore = create<SalonState>()(
         };
       },
 
-      // Utility functions
       getAvailableEmployeesForService: (serviceId) => {
         return get().employees.filter(employee => 
           employee.assignedServices.includes(serviceId) && employee.status === 'đang làm'
         );
       },
 
-      // Initialize data
       initializeData: () => set({
         services: [...initialServices],
         customers: [...initialCustomers],

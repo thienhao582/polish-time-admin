@@ -1,5 +1,5 @@
 
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { AppointmentOverflow } from "./AppointmentOverflow";
 
 interface Appointment {
@@ -32,16 +32,21 @@ export function AppointmentDayView({
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   
-  // Filter appointments for the selected day
+  // Filter appointments for the selected day with improved date parsing
   const dayAppointments = filteredAppointments.filter(apt => {
-    // Handle both date formats - compare the date part only
-    const aptDate = new Date(apt.date);
-    return isSameDay(aptDate, selectedDate);
+    try {
+      // Handle both date string formats
+      const aptDate = apt.date.includes('T') ? parseISO(apt.date) : parseISO(apt.date + 'T00:00:00');
+      return isSameDay(aptDate, selectedDate);
+    } catch (error) {
+      console.error("Error parsing appointment date:", apt.date, error);
+      return false;
+    }
   });
 
   console.log("AppointmentDayView - Selected date:", dateString);
   console.log("AppointmentDayView - All filtered appointments:", filteredAppointments);
-  console.log("AppointmentDayView - Day appointments:", dayAppointments);
+  console.log("AppointmentDayView - Day appointments after filtering:", dayAppointments);
 
   // Create time slots from 8 AM to 9 PM (to match the time selector in the form)
   const allTimeSlots = [];
