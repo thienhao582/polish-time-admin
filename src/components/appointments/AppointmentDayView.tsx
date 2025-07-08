@@ -31,19 +31,31 @@ export function AppointmentDayView({
   showFullView
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
-  const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
+  
+  // Filter appointments for the selected day
+  const dayAppointments = filteredAppointments.filter(apt => {
+    // Handle both date formats - compare the date part only
+    const aptDate = new Date(apt.date);
+    return isSameDay(aptDate, selectedDate);
+  });
 
-  // Create time slots from 7 AM to 8 PM
+  console.log("AppointmentDayView - Selected date:", dateString);
+  console.log("AppointmentDayView - All filtered appointments:", filteredAppointments);
+  console.log("AppointmentDayView - Day appointments:", dayAppointments);
+
+  // Create time slots from 8 AM to 9 PM (to match the time selector in the form)
   const allTimeSlots = [];
-  for (let hour = 7; hour <= 20; hour++) {
+  for (let hour = 8; hour <= 21; hour++) {
     allTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 20) {
+    if (hour < 21) {
       allTimeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
   }
 
   const getAppointmentsForTimeSlot = (timeSlot: string) => {
-    return dayAppointments.filter(apt => apt.time === timeSlot);
+    const appointments = dayAppointments.filter(apt => apt.time === timeSlot);
+    console.log(`Time slot ${timeSlot} appointments:`, appointments);
+    return appointments;
   };
 
   // Filter time slots based on showFullView setting
@@ -99,6 +111,27 @@ export function AppointmentDayView({
           })}
         </div>
       </div>
+
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+          <h4 className="font-medium text-yellow-800">Debug Info:</h4>
+          <p className="text-sm text-yellow-700">Selected Date: {dateString}</p>
+          <p className="text-sm text-yellow-700">Total Filtered Appointments: {filteredAppointments.length}</p>
+          <p className="text-sm text-yellow-700">Day Appointments: {dayAppointments.length}</p>
+          <p className="text-sm text-yellow-700">Time Slots: {timeSlots.length}</p>
+          {dayAppointments.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm text-yellow-700">Appointments for this day:</p>
+              {dayAppointments.map(apt => (
+                <p key={apt.id} className="text-xs text-yellow-600 ml-2">
+                  {apt.time} - {apt.customer} - {apt.service}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
