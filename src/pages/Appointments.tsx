@@ -46,6 +46,9 @@ const Appointments = () => {
 
   // Get appointments from Zustand store
   const { appointments, deleteAppointment, employees } = useSalonStore();
+  
+  console.log("Appointments page - Total appointments:", appointments.length);
+  console.log("Appointments page - All appointments:", appointments);
 
   // Check if any filters are actually applied
   const hasActiveFilters = searchQuery.trim() !== "" || selectedStaffIds.length > 0;

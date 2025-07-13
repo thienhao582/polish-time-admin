@@ -159,6 +159,7 @@ export const useSalonStore = create<SalonState>()(
       addAppointment: (appointmentData) => {
         const state = get();
         console.log("Adding appointment with data:", appointmentData);
+        console.log("Current appointments count:", state.appointments.length);
 
         // Add customer if it's a new customer
         let customerId = appointmentData.customerId;
@@ -229,10 +230,15 @@ export const useSalonStore = create<SalonState>()(
 
           console.log("New appointment created:", newAppointment);
 
-          set((state) => ({
-            appointments: [...state.appointments, newAppointment],
-            nextAppointmentId: state.nextAppointmentId + 1
-          }));
+          set((state) => {
+            const newState = {
+              appointments: [...state.appointments, newAppointment],
+              nextAppointmentId: state.nextAppointmentId + 1
+            };
+            console.log("Updated appointments count:", newState.appointments.length);
+            console.log("All appointments:", newState.appointments);
+            return newState;
+          });
 
           return newAppointment;
         } else {
@@ -265,10 +271,15 @@ export const useSalonStore = create<SalonState>()(
 
           console.log("New appointment created:", newAppointment);
 
-          set((state) => ({
-            appointments: [...state.appointments, newAppointment],
-            nextAppointmentId: state.nextAppointmentId + 1
-          }));
+          set((state) => {
+            const newState = {
+              appointments: [...state.appointments, newAppointment],
+              nextAppointmentId: state.nextAppointmentId + 1
+            };
+            console.log("Updated appointments count:", newState.appointments.length);
+            console.log("All appointments:", newState.appointments);
+            return newState;
+          });
 
           return newAppointment;
         }
