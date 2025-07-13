@@ -153,46 +153,70 @@ export function AppointmentDayView({
             });
             
             return (
-              <div key={timeSlot} className="h-16 p-2 border-b bg-white hover:bg-gray-50 relative">
-                {startingAppointments.map((apt, aptIndex) => {
-                  const durationMinutes = parseDuration(apt.duration);
-                  const slotsSpanned = Math.ceil(durationMinutes / 30);
-                  const heightInPixels = slotsSpanned * 64; // 64px per slot (h-16)
-                  
-                  return (
-                    <div
-                      key={`${apt.id}-${aptIndex}`}
-                      className="absolute left-2 right-2 bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors z-10"
-                      style={{
-                        top: 0,
-                        height: `${heightInPixels - 8}px`, // Subtract border spacing
-                        minHeight: '56px' // Minimum height for readability
-                      }}
-                      onClick={(e) => handleAppointmentClick(apt, e)}
-                    >
-                      <div className="text-xs font-medium text-blue-800 truncate">
-                        {displayMode === "customer" ? apt.customer : apt.staff}
-                      </div>
-                      <div className="text-xs text-blue-600 truncate">
-                        {apt.service}
-                      </div>
-                      <div className="text-xs text-blue-500">
-                        {apt.time} ({apt.duration})
-                      </div>
-                      {apt.phone && (
-                        <div className="text-xs text-blue-500 truncate">
-                          {apt.phone}
+              <div key={timeSlot} className="h-16 border-b bg-white hover:bg-gray-50 relative">
+                {startingAppointments.length > 0 ? (
+                  <div className="flex gap-1 p-1 h-full">
+                    {startingAppointments.map((apt, aptIndex) => {
+                      const durationMinutes = parseDuration(apt.duration);
+                      const slotsSpanned = Math.ceil(durationMinutes / 30);
+                      const heightInPixels = slotsSpanned * 64; // 64px per slot (h-16)
+                      const widthPercentage = 100 / startingAppointments.length; // Divide width equally
+                      
+                      return (
+                        <div
+                          key={`${apt.id}-${aptIndex}`}
+                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors z-10 animate-fade-in"
+                          style={{
+                            top: '4px',
+                            left: `${aptIndex * widthPercentage + 1}%`,
+                            width: `${widthPercentage - 2}%`,
+                            height: `${heightInPixels - 8}px`,
+                            minHeight: '56px'
+                          }}
+                          onClick={(e) => handleAppointmentClick(apt, e)}
+                        >
+                          <div className="text-xs font-medium text-blue-800 truncate">
+                            {displayMode === "customer" ? apt.customer : apt.staff}
+                          </div>
+                          <div className="text-xs text-blue-600 truncate">
+                            {apt.service}
+                          </div>
+                          <div className="text-xs text-blue-500">
+                            {apt.time}
+                          </div>
+                          <div className="text-xs text-blue-500 truncate">
+                            ({apt.duration})
+                          </div>
+                          {apt.phone && startingAppointments.length === 1 && (
+                            <div className="text-xs text-blue-500 truncate">
+                              {apt.phone}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-                
-                {/* Show continuation slots for overlapping appointments */}
-                {timeSlotAppointments.length > startingAppointments.length && (
-                  <div className="absolute top-0 left-2 right-2 h-full">
-                    {/* Visual indicator that appointment continues here */}
-                    <div className="h-full bg-blue-50 border-l-2 border-blue-200 opacity-30"></div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Show continuation indicators for appointments that started earlier
+                  <div className="h-full">
+                    {timeSlotAppointments.filter(apt => {
+                      const aptStartMinutes = timeToMinutes(apt.time);
+                      const slotStartMinutes = timeToMinutes(timeSlot);
+                      return aptStartMinutes < slotStartMinutes;
+                    }).map((apt, index) => (
+                      <div
+                        key={`continuation-${apt.id}-${index}`}
+                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-30"
+                        style={{
+                          left: `${index * 50}%`,
+                          width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`
+                        }}
+                      >
+                        <div className="text-xs text-blue-400 p-1 truncate">
+                          {displayMode === "customer" ? apt.customer : apt.staff}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

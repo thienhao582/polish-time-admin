@@ -70,6 +70,15 @@ export const useSalonStore = create<SalonState>()(
 
       // Customer actions
       addCustomer: (customer) => {
+        // Check if customer with same phone already exists
+        const state = get();
+        const existingCustomer = state.customers.find(c => c.phone === customer.phone);
+        
+        if (existingCustomer) {
+          console.log("Customer with phone", customer.phone, "already exists");
+          return existingCustomer;
+        }
+        
         const newCustomer: Customer = {
           ...customer,
           id: get().nextCustomerId.toString()
@@ -81,6 +90,20 @@ export const useSalonStore = create<SalonState>()(
         }));
         
         return newCustomer;
+      },
+
+      // Helper function to deduplicate customers
+      deduplicateCustomers: () => {
+        set((state) => {
+          const uniqueCustomers = state.customers.reduce((acc: Customer[], current) => {
+            const exists = acc.find(c => c.phone === current.phone);
+            if (!exists) acc.push(current);
+            return acc;
+          }, []);
+          
+          console.log("Deduplicated customers:", uniqueCustomers.length, "from", state.customers.length);
+          return { customers: uniqueCustomers };
+        });
       },
 
       updateCustomer: (id, customer) => set((state) => ({

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarIcon, ClockIcon, UserRound } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,7 +42,7 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { addAppointment, customers } = useSalonStore();
+  const { addAppointment, customers, deduplicateCustomers } = useSalonStore();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -58,6 +58,11 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       notes: editData?.notes || "",
     },
   });
+
+  // Deduplicate customers when component loads
+  useEffect(() => {
+    deduplicateCustomers();
+  }, [deduplicateCustomers]);
 
   const handleCustomerChange = (customerId: string) => {
     setSelectedCustomerId(customerId);

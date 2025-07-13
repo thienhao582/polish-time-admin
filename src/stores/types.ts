@@ -87,6 +87,7 @@ export interface SalonState {
   addCustomer: (customer: Omit<Customer, 'id'>) => Customer;
   updateCustomer: (id: string, customer: Partial<Customer>) => void;
   deleteCustomer: (id: string) => void;
+  deduplicateCustomers: () => void;
   
   // Enhanced customer actions
   addEnhancedCustomer: (customer: Omit<CustomerEnhanced, 'id' | 'points' | 'memberLevel' | 'totalSpent' | 'visitCount' | 'joinDate' | 'visitHistory'>) => void;
