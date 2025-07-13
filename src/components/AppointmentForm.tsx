@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
 import { useSalonStore } from "@/stores/useSalonStore";
+import { useSupabaseData } from "@/hooks/useSupabaseData";
 
 const appointmentFormSchema = z.object({
   date: z.date({
@@ -42,7 +43,8 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { addAppointment, enhancedCustomers, deduplicateCustomers } = useSalonStore();
+  const { enhancedCustomers, deduplicateCustomers, services, employees } = useSalonStore();
+  const { createAppointment, createCustomer } = useSupabaseData();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -74,7 +76,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     }
   };
 
-  const handleSubmit = (data: any) => {
+  const handleSubmit = async (data: any) => {
     console.log("Form data submitted:", data);
     console.log("Service staff items:", serviceStaffItems);
     
@@ -83,23 +85,61 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       return;
     }
 
-    const appointmentData = {
-      ...data,
-      serviceStaffItems,
-      customerId: customerType === "existing" ? selectedCustomerId : undefined,
-      date: data.date,
-      time: data.time,
-      customerName: data.customerName,
-      customerPhone: data.customerPhone,
-      customerEmail: data.customerEmail,
-      notes: data.notes
-    };
-
     try {
-      const result = addAppointment(appointmentData);
-      console.log("Appointment created:", result);
+      // Create customer if new customer
+      let customerId = customerType === "existing" ? selectedCustomerId : undefined;
+      
+      if (customerType === "new") {
+        // Check if customer with same phone already exists
+        const existingCustomer = enhancedCustomers.find(c => c.phone === data.customerPhone);
+        
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+        } else {
+          const newCustomer = await createCustomer({
+            name: data.customerName,
+            phone: data.customerPhone,
+            email: data.customerEmail || undefined
+          });
+          customerId = newCustomer.id;
+        }
+      }
+
+      // For multiple services, create separate appointments for each service
+      const appointments = [];
+      
+      for (const serviceStaffItem of serviceStaffItems) {
+        const service = services.find(s => s.id === serviceStaffItem.serviceId);
+        const employee = employees.find(e => serviceStaffItem.staffIds.includes(e.id));
+        
+        // Format date to YYYY-MM-DD
+        const formattedDate = data.date instanceof Date 
+          ? `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`
+          : data.date;
+
+        const appointmentData = {
+          appointment_date: formattedDate,
+          appointment_time: data.time,
+          customer_id: customerId,
+          customer_name: data.customerName,
+          customer_phone: data.customerPhone,
+          service_id: serviceStaffItem.serviceId,
+          service_name: serviceStaffItem.serviceName || service?.name || "Unknown Service",
+          employee_id: employee?.id,
+          employee_name: employee?.name || serviceStaffItem.staffNames[0] || "Unknown Staff",
+          duration_minutes: serviceStaffItem.duration || service?.duration || 0,
+          price: serviceStaffItem.price || service?.price || 0,
+          status: "confirmed",
+          notes: data.notes
+        };
+
+        const createdAppointment = await createAppointment(appointmentData);
+        appointments.push(createdAppointment);
+      }
+
+      console.log("Appointments created:", appointments);
       toast.success("Tạo lịch hẹn thành công!");
-      onSubmit(appointmentData);
+      onSubmit({ appointments });
       onClose();
     } catch (error) {
       console.error("Error creating appointment:", error);
