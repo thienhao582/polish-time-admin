@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Users, Plus, Search, Phone, Mail, MessageSquare, Calendar, Star, Gift } from "lucide-react";
+import { Users, Plus, Search, Phone, Mail, MessageSquare, Calendar, Star, Gift, Edit, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,14 +25,16 @@ import {
 import { useSalonStore, CustomerEnhanced } from "@/stores/useSalonStore";
 import { CustomerForm } from "./CustomerForm";
 import { CustomerDetails } from "./CustomerDetails";
+import { toast } from "sonner";
 
 export const CustomerManagement = () => {
-  const { enhancedCustomers } = useSalonStore();
+  const { enhancedCustomers, updateEnhancedCustomer, deleteEnhancedCustomer } = useSalonStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [filterLevel, setFilterLevel] = useState("all");
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerEnhanced | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<CustomerEnhanced | null>(null);
 
   const filteredCustomers = enhancedCustomers.filter((customer) => {
     const matchesSearch = 
@@ -100,6 +102,13 @@ export const CustomerManagement = () => {
     return stats;
   };
 
+  const handleDeleteCustomer = (customerId: string, customerName: string) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa khách hàng "${customerName}"?`)) {
+      deleteEnhancedCustomer(customerId);
+      toast.success("Đã xóa khách hàng thành công!");
+    }
+  };
+
   const stats = getMemberLevelStats();
 
   if (selectedCustomer) {
@@ -116,6 +125,16 @@ export const CustomerManagement = () => {
       <CustomerForm
         onBack={() => setShowAddForm(false)}
         onSave={() => setShowAddForm(false)}
+      />
+    );
+  }
+
+  if (editingCustomer) {
+    return (
+      <CustomerForm
+        customer={editingCustomer}
+        onBack={() => setEditingCustomer(null)}
+        onSave={() => setEditingCustomer(null)}
       />
     );
   }
@@ -266,6 +285,7 @@ export const CustomerManagement = () => {
                 <TableHead>Cấp độ</TableHead>
                 <TableHead>Lần cuối</TableHead>
                 <TableHead>Tổng chi tiêu</TableHead>
+                <TableHead>Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -332,6 +352,31 @@ export const CustomerManagement = () => {
                   </TableCell>
                   <TableCell className="font-medium text-green-600">
                     {customer.totalSpent.toLocaleString()}đ
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCustomer(customer);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCustomer(customer.id, customer.name);
+                        }}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -42,7 +42,7 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { addAppointment, customers, deduplicateCustomers } = useSalonStore();
+  const { addAppointment, enhancedCustomers, deduplicateCustomers } = useSalonStore();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -66,7 +66,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
 
   const handleCustomerChange = (customerId: string) => {
     setSelectedCustomerId(customerId);
-    const customer = customers.find(c => c.id === customerId);
+    const customer = enhancedCustomers.find(c => c.id === customerId);
     if (customer) {
       form.setValue("customerName", customer.name);
       form.setValue("customerPhone", customer.phone);
@@ -223,7 +223,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
               <SelectValue placeholder="Chọn khách hàng" />
             </SelectTrigger>
             <SelectContent>
-              {customers.map((customer) => (
+              {enhancedCustomers.map((customer) => (
                 <SelectItem key={customer.id} value={customer.id}>
                   {customer.name} - {customer.phone}
                 </SelectItem>
