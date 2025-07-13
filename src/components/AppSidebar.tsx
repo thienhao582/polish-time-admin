@@ -98,7 +98,7 @@ const AppSidebar = () => {
       <SidebarFooter>
         {!isCollapsed && (
           <div className="px-4 py-2 text-xs text-gray-500">
-            © 2024 Nail Salon Management
+            © 2025 Nail Salon Management
           </div>
         )}
       </SidebarFooter>
