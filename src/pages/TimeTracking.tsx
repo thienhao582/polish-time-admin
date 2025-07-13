@@ -26,7 +26,7 @@ const TimeTracking = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
 
   const activeEmployees = employees.filter(e => e.status === "đang làm");
-  const today = new Date().toISOString().split('T')[0];
+  const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
   
   const getTodayRecord = (employeeId: string) => {
     return timeRecords.find(r => r.employeeId === employeeId && r.date === today);

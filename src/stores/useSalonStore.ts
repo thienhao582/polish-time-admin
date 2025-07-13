@@ -100,7 +100,7 @@ export const useSalonStore = create<SalonState>()(
           memberLevel: 'Mới' as const,
           totalSpent: 0,
           visitCount: 0,
-          joinDate: new Date().toISOString().split('T')[0],
+          joinDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
           visitHistory: []
         }],
         nextEnhancedCustomerId: state.nextEnhancedCustomerId + 1
@@ -125,7 +125,7 @@ export const useSalonStore = create<SalonState>()(
 
         const newVisit = {
           id: `v${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
+          date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
           services,
           amount,
           pointsEarned: points
@@ -140,7 +140,7 @@ export const useSalonStore = create<SalonState>()(
                   totalSpent: newTotalSpent,
                   visitCount: newVisitCount,
                   memberLevel: newMemberLevel,
-                  lastVisit: new Date().toISOString().split('T')[0],
+                  lastVisit: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
                   visitHistory: [...c.visitHistory, newVisit]
                 }
               : c
@@ -199,9 +199,9 @@ export const useSalonStore = create<SalonState>()(
             })) || []
           );
 
-          // Format date properly - ensure it's in yyyy-MM-dd format
+          // Format date properly - preserve local timezone
           const formattedDate = appointmentData.date instanceof Date 
-            ? appointmentData.date.toISOString().split('T')[0]
+            ? `${appointmentData.date.getFullYear()}-${String(appointmentData.date.getMonth() + 1).padStart(2, '0')}-${String(appointmentData.date.getDate()).padStart(2, '0')}`
             : appointmentData.date;
 
           const newAppointment: Appointment = {
@@ -246,9 +246,9 @@ export const useSalonStore = create<SalonState>()(
           const service = state.services.find(s => s.id === appointmentData.serviceId);
           const employee = state.employees.find(e => e.id === appointmentData.staffId);
 
-          // Format date properly - ensure it's in yyyy-MM-dd format
+          // Format date properly - preserve local timezone
           const formattedDate = appointmentData.date instanceof Date 
-            ? appointmentData.date.toISOString().split('T')[0]
+            ? `${appointmentData.date.getFullYear()}-${String(appointmentData.date.getMonth() + 1).padStart(2, '0')}-${String(appointmentData.date.getDate()).padStart(2, '0')}`
             : appointmentData.date;
 
           const newAppointment: Appointment = {
@@ -307,7 +307,7 @@ export const useSalonStore = create<SalonState>()(
       })),
 
       checkIn: (employeeId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
         const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
         const state = get();
         const employee = state.employees.find(e => e.id === employeeId);
@@ -346,7 +346,7 @@ export const useSalonStore = create<SalonState>()(
       },
 
       checkOut: (employeeId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
         const now = new Date().toLocaleTimeString('vi-VN', { hour12: false });
         
         set((state) => ({
