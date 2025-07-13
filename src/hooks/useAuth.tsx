@@ -1,5 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 interface User {
@@ -126,6 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       localStorage.removeItem('nail_salon_session');
       setUser(null);
+      // Redirect to login page
+      window.location.href = '/login';
     }
   };
 
