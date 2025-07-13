@@ -99,7 +99,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           const newCustomer = await createCustomer({
             name: data.customerName,
             phone: data.customerPhone,
-            email: data.customerEmail || undefined
+            email: data.customerEmail || null
           });
           customerId = newCustomer.id;
         }
