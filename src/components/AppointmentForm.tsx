@@ -117,21 +117,29 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           ? `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`
           : data.date;
 
-        const appointmentData = {
+        const appointmentData: any = {
           appointment_date: formattedDate,
           appointment_time: data.time,
-          customer_id: customerId,
           customer_name: data.customerName,
           customer_phone: data.customerPhone,
-          service_id: serviceStaffItem.serviceId,
           service_name: serviceStaffItem.serviceName || service?.name || "Unknown Service",
-          employee_id: employee?.id,
           employee_name: employee?.name || serviceStaffItem.staffNames[0] || "Unknown Staff",
           duration_minutes: serviceStaffItem.duration || service?.duration || 0,
           price: serviceStaffItem.price || service?.price || 0,
           status: "confirmed",
           notes: data.notes
         };
+
+        // Only add UUID fields if they exist and are valid
+        if (customerId && customerId.length > 10) {
+          appointmentData.customer_id = customerId;
+        }
+        if (serviceStaffItem.serviceId && serviceStaffItem.serviceId.length > 10) {
+          appointmentData.service_id = serviceStaffItem.serviceId;
+        }
+        if (employee?.id && employee.id.length > 10) {
+          appointmentData.employee_id = employee.id;
+        }
 
         const createdAppointment = await createAppointment(appointmentData);
         appointments.push(createdAppointment);
