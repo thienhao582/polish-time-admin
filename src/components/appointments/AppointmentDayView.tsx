@@ -58,7 +58,12 @@ export function AppointmentDayView({
   }
 
   const getAppointmentsForTimeSlot = (timeSlot: string) => {
-    const appointments = dayAppointments.filter(apt => apt.time === timeSlot);
+    const appointments = dayAppointments.filter(apt => {
+      // Normalize both times to handle "9:00" vs "09:00" format
+      const aptTime = apt.time.padStart(5, '0'); // "9:00" -> "09:00"
+      const slotTime = timeSlot.padStart(5, '0'); // Already "09:00"
+      return aptTime === slotTime;
+    });
     console.log(`Time slot ${timeSlot} appointments:`, appointments);
     return appointments;
   };
