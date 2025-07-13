@@ -164,12 +164,21 @@ export const useSalonStore = create<SalonState>()(
         // Add customer if it's a new customer
         let customerId = appointmentData.customerId;
         if (!customerId && appointmentData.customerName) {
-          const newCustomer = get().addCustomer({
-            name: appointmentData.customerName,
-            phone: appointmentData.customerPhone,
-            email: appointmentData.customerEmail || undefined
-          });
-          customerId = newCustomer.id;
+          // Check if customer already exists (by phone number)
+          const existingCustomer = state.customers.find(c => c.phone === appointmentData.customerPhone);
+          
+          if (existingCustomer) {
+            customerId = existingCustomer.id;
+            console.log("Found existing customer:", existingCustomer);
+          } else {
+            const newCustomer = get().addCustomer({
+              name: appointmentData.customerName,
+              phone: appointmentData.customerPhone,
+              email: appointmentData.customerEmail || undefined
+            });
+            customerId = newCustomer.id;
+            console.log("Created new customer:", newCustomer);
+          }
         }
 
         // Handle multi-service appointments
