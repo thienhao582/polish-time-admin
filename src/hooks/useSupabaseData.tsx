@@ -65,6 +65,7 @@ interface SupabaseAppointment {
 export const useSupabaseData = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const demoData = useDemoData();
 
   // Services
   const fetchServices = async (): Promise<SupabaseService[]> => {

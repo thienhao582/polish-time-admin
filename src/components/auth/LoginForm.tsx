@@ -8,6 +8,8 @@ import { Loader2, Mail, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/contexts/DemoModeContext";
+import { indexedDBService } from "@/services/indexedDBService";
 
 interface LoginFormProps {
   onLoginSuccess: (user: any) => void;
@@ -20,6 +22,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [error, setError] = useState("");
   const { toast } = useToast();
   const { login } = useAuth();
+  const { isDemoMode } = useDemoMode();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +30,52 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setIsLoading(true);
 
     try {
+      if (isDemoMode) {
+        // Demo mode login
+        if (email !== 'admin@example.com' || pin !== '1234') {
+          setError('Demo mode: Sử dụng admin@example.com / 1234');
+          setIsLoading(false);
+          return;
+        }
+
+        // Initialize demo data
+        await indexedDBService.initDemoData();
+
+        const demoUser = {
+          id: 'demo-user-1',
+          email: 'admin@example.com',
+          full_name: 'Demo Admin',
+          role: 'owner' as const,
+          is_active: true
+        };
+
+        // Create session token
+        const sessionToken = btoa(JSON.stringify({
+          userId: demoUser.id,
+          email: demoUser.email,
+          timestamp: Date.now(),
+          isDemoMode: true
+        }));
+
+        localStorage.setItem('nail_salon_session', JSON.stringify({
+          sessionToken,
+          user: demoUser,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          isDemoMode: true
+        }));
+
+        login(demoUser);
+
+        toast({
+          title: "Đăng nhập demo thành công",
+          description: `Chào mừng ${demoUser.full_name}! (Demo Mode)`,
+        });
+
+        onLoginSuccess(demoUser);
+        return;
+      }
+
+      // Original Supabase login logic
       console.log('Attempting login with:', { email: email.toLowerCase().trim(), pin });
 
       // Validate PIN format

@@ -3,10 +3,14 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useDemoMode } from "@/contexts/DemoModeContext";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { isDemoMode, toggleDemoMode } = useDemoMode();
 
   useEffect(() => {
     if (!loading && user) {
@@ -35,6 +39,25 @@ const Login = () => {
           <p className="text-gray-600">
             Hệ thống quản lý chuyên nghiệp
           </p>
+        </div>
+
+        {/* Demo Mode Toggle */}
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="demo-mode" className="text-sm font-medium text-yellow-800">
+                Demo Flow
+              </Label>
+              <p className="text-xs text-yellow-600 mt-1">
+                {isDemoMode ? 'Sử dụng dữ liệu demo (admin@example.com / 1234)' : 'Kết nối với Supabase'}
+              </p>
+            </div>
+            <Switch
+              id="demo-mode"
+              checked={isDemoMode}
+              onCheckedChange={toggleDemoMode}
+            />
+          </div>
         </div>
         
         <LoginForm 
