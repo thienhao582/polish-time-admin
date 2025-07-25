@@ -26,9 +26,11 @@ import { useSalonStore, CustomerEnhanced } from "@/stores/useSalonStore";
 import { CustomerForm } from "./CustomerForm";
 import { CustomerDetails } from "./CustomerDetails";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const CustomerManagement = () => {
   const { enhancedCustomers, updateEnhancedCustomer, deleteEnhancedCustomer } = useSalonStore();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [filterLevel, setFilterLevel] = useState("all");
@@ -143,15 +145,15 @@ export const CustomerManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Quản lý Khách Hàng</h1>
-          <p className="text-gray-600 mt-1">Theo dõi thông tin, tích điểm và gửi SMS khách hàng</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t('customers.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('customers.subtitle')}</p>
         </div>
         <Button 
           onClick={() => setShowAddForm(true)}
           className="bg-pink-600 hover:bg-pink-700"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Thêm khách hàng
+          {t('customers.add_customer')}
         </Button>
       </div>
 
@@ -161,7 +163,7 @@ export const CustomerManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Tổng khách hàng</p>
+                <p className="text-sm text-gray-600">{t('customers.total_customers')}</p>
                 <p className="text-2xl font-bold text-gray-800">{enhancedCustomers.length}</p>
               </div>
               <Users className="w-8 h-8 text-blue-600" />
@@ -194,7 +196,7 @@ export const CustomerManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Thành viên</p>
+                <p className="text-sm text-gray-600">{t('customers.members')}</p>
                 <p className="text-2xl font-bold text-blue-600">{stats["Thành viên"]}</p>
               </div>
               <Users className="w-8 h-8 text-blue-600" />
@@ -205,7 +207,7 @@ export const CustomerManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Khách mới</p>
+                <p className="text-sm text-gray-600">{t('customers.new_customers')}</p>
                 <p className="text-2xl font-bold text-green-600">{stats.Mới}</p>
               </div>
               <Plus className="w-8 h-8 text-green-600" />
@@ -221,7 +223,7 @@ export const CustomerManagement = () => {
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Tìm kiếm theo tên, SĐT, email..."
+                placeholder={t('customers.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -229,12 +231,12 @@ export const CustomerManagement = () => {
             </div>
             <Select value={filterLevel} onValueChange={setFilterLevel}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Lọc theo cấp độ" />
+                <SelectValue placeholder={t('customers.filter_level')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả cấp độ</SelectItem>
-                <SelectItem value="Mới">Khách mới</SelectItem>
-                <SelectItem value="Thành viên">Thành viên</SelectItem>
+                <SelectItem value="all">{t('customers.all_levels')}</SelectItem>
+                <SelectItem value="Mới">{t('customers.new')}</SelectItem>
+                <SelectItem value="Thành viên">{t('customers.member')}</SelectItem>
                 <SelectItem value="VIP">VIP</SelectItem>
                 <SelectItem value="VVIP">VVIP</SelectItem>
               </SelectContent>
@@ -266,7 +268,7 @@ export const CustomerManagement = () => {
       {/* Customers Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách khách hàng</CardTitle>
+          <CardTitle>{t('customers.customer_list')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -278,14 +280,14 @@ export const CustomerManagement = () => {
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
-                <TableHead>Khách hàng</TableHead>
-                <TableHead>Liên hệ</TableHead>
-                <TableHead>Sinh nhật</TableHead>
-                <TableHead>Điểm tích lũy</TableHead>
-                <TableHead>Cấp độ</TableHead>
-                <TableHead>Lần cuối</TableHead>
-                <TableHead>Tổng chi tiêu</TableHead>
-                <TableHead>Thao tác</TableHead>
+                <TableHead>{t('customers.customer')}</TableHead>
+                <TableHead>{t('customers.contact')}</TableHead>
+                <TableHead>{t('customers.birthday')}</TableHead>
+                <TableHead>{t('customers.points')}</TableHead>
+                <TableHead>{t('customers.level')}</TableHead>
+                <TableHead>{t('customers.last_visit')}</TableHead>
+                <TableHead>{t('customers.total_spent')}</TableHead>
+                <TableHead>{t('customers.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

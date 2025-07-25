@@ -6,10 +6,12 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useInvoiceStore } from "@/stores/useInvoiceStore";
 import { subDays, format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Dashboard = () => {
   const { customers, employees, appointments } = useSalonStore();
   const { invoices } = useInvoiceStore();
+  const { t } = useLanguage();
 
   // Calculate revenue for the last 30 days
   const thirtyDaysAgo = subDays(new Date(), 30);
@@ -27,28 +29,28 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: "Tổng khách hàng",
+      title: t('dashboard.total_customers'),
       value: customers.length.toString(),
       icon: Users,
       change: "+12%",
       changeType: "positive" as const,
     },
     {
-      title: "Lịch hẹn hôm nay",
+      title: t('dashboard.today_appointments'),
       value: todayAppointments.length.toString(),
       icon: Calendar,
       change: "+8%", 
       changeType: "positive" as const,
     },
     {
-      title: "Doanh thu 30 ngày",
+      title: t('dashboard.revenue_30_days'),
       value: new Intl.NumberFormat('vi-VN').format(totalRevenue) + 'đ',
       icon: DollarSign,
       change: "+23%",
       changeType: "positive" as const,
     },
     {
-      title: "Nhân viên",
+      title: t('dashboard.employees'),
       value: employees.length.toString(),
       icon: User,
       change: "0%",
@@ -60,9 +62,9 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Tổng quan</h1>
+          <h1 className="text-3xl font-bold text-gray-800">{t('dashboard.title')}</h1>
           <p className="text-gray-600 mt-1">
-            Chào mừng trở lại! Đây là tổng quan về tiệm nail của bạn.
+            {t('dashboard.subtitle')}
           </p>
         </div>
       </div>
@@ -86,7 +88,7 @@ const Dashboard = () => {
                 }>
                   {stat.change}
                 </span>
-                {' '}so với tháng trước
+                {' '}{t('dashboard.vs_last_month')}
               </p>
             </CardContent>
           </Card>
@@ -106,7 +108,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
-              <span>Lịch hẹn gần đây</span>
+              <span>{t('dashboard.recent_appointments')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -136,25 +138,25 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5" />
-              <span>Thống kê nhanh</span>
+              <span>{t('dashboard.quick_stats')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Dịch vụ phổ biến nhất</span>
+                <span className="text-gray-600">{t('dashboard.most_popular_service')}</span>
                 <span className="font-medium">Sơn gel</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Thời gian trung bình</span>
+                <span className="text-gray-600">{t('dashboard.average_time')}</span>
                 <span className="font-medium">90 phút</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Khách hàng quay lại</span>
+                <span className="text-gray-600">{t('dashboard.returning_customers')}</span>
                 <span className="font-medium">78%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Đánh giá trung bình</span>
+                <span className="text-gray-600">{t('dashboard.average_rating')}</span>
                 <span className="font-medium">4.8/5</span>
               </div>
             </div>

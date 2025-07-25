@@ -1,8 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentCalendarHeaderProps {
   viewMode: "month" | "week" | "day";
@@ -19,6 +19,8 @@ export function AppointmentCalendarHeader({
   handleDateNavigation,
   setSelectedDate
 }: AppointmentCalendarHeaderProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center space-x-2">
@@ -27,21 +29,21 @@ export function AppointmentCalendarHeader({
           onClick={() => setViewMode("month")}
           className={viewMode === "month" ? "bg-pink-600 hover:bg-pink-700" : ""}
         >
-          Tháng
+          {t('appointments.month')}
         </Button>
         <Button
           variant={viewMode === "week" ? "default" : "outline"}
           onClick={() => setViewMode("week")}
           className={viewMode === "week" ? "bg-pink-600 hover:bg-pink-700" : ""}
         >
-          Tuần
+          {t('appointments.week')}
         </Button>
         <Button
           variant={viewMode === "day" ? "default" : "outline"}
           onClick={() => setViewMode("day")}
           className={viewMode === "day" ? "bg-pink-600 hover:bg-pink-700" : ""}
         >
-          Ngày
+          {t('appointments.day')}
         </Button>
       </div>
 
@@ -60,7 +62,7 @@ export function AppointmentCalendarHeader({
           </Button>
         </div>
         <Button variant="outline" onClick={() => setSelectedDate(new Date())}>
-          Hôm nay
+          {t('appointments.today')}
         </Button>
       </div>
     </div>
