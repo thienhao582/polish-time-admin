@@ -76,6 +76,7 @@ const AppSidebar = () => {
     }
   ];
 
+  // Employee submenu items definition
   const employeeSubMenuItems = [
     {
       titleKey: "employee.general",
