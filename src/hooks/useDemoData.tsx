@@ -7,7 +7,7 @@ export const useDemoData = () => {
   const { isDemoMode } = useDemoMode();
   const { toast } = useToast();
 
-  const handleDemoOperation = useCallback(async <T>(
+  const handleDemoOperation = useCallback(async <T,>(
     operation: () => Promise<T>,
     successMessage?: string
   ): Promise<T | null> => {
