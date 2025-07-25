@@ -14,13 +14,14 @@ import { CalendarIcon, ClockIcon, UserIcon } from "lucide-react";
 export const ServiceHistory = () => {
   const { appointments, customers } = useSalonStore();
   const { language } = useLanguage();
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("all");
   
   const translations = {
     vi: {
       title: "Lịch sử làm nail",
       subtitle: "Xem lịch sử sử dụng dịch vụ của khách hàng",
       selectCustomer: "Chọn khách hàng",
+      allCustomers: "Tất cả khách hàng",
       date: "Ngày",
       time: "Giờ",
       service: "Dịch vụ",
@@ -28,7 +29,6 @@ export const ServiceHistory = () => {
       price: "Giá",
       status: "Trạng thái",
       noData: "Không có lịch sử dịch vụ",
-      noCustomerSelected: "Vui lòng chọn khách hàng để xem lịch sử",
       totalVisits: "Tổng lượt",
       totalSpent: "Tổng chi tiêu",
       lastVisit: "Lần cuối"
@@ -37,6 +37,7 @@ export const ServiceHistory = () => {
       title: "Nail Service History",
       subtitle: "View customer service usage history",
       selectCustomer: "Select Customer",
+      allCustomers: "All Customers",
       date: "Date",
       time: "Time",
       service: "Service",
@@ -44,7 +45,6 @@ export const ServiceHistory = () => {
       price: "Price",
       status: "Status",
       noData: "No service history",
-      noCustomerSelected: "Please select a customer to view history",
       totalVisits: "Total Visits",
       totalSpent: "Total Spent",
       lastVisit: "Last Visit"
@@ -54,16 +54,17 @@ export const ServiceHistory = () => {
   const text = translations[language];
   const locale = language === 'vi' ? vi : enUS;
 
-  // Filter appointments for selected customer
-  const customerAppointments = appointments.filter(
-    apt => apt.customerId === selectedCustomerId || apt.customer === customers.find(c => c.id === selectedCustomerId)?.name
-  ).sort((a, b) => {
+  // Filter appointments based on selected customer
+  const customerAppointments = appointments.filter(apt => {
+    if (selectedCustomerId === "all") return true;
+    return apt.customerId === selectedCustomerId || apt.customer === customers.find(c => c.id === selectedCustomerId)?.name;
+  }).sort((a, b) => {
     const dateA = new Date(`${a.date} ${a.time}`);
     const dateB = new Date(`${b.date} ${b.time}`);
     return dateB.getTime() - dateA.getTime(); // Most recent first
   });
 
-  // Calculate customer stats
+  // Calculate customer stats (only for specific customer)
   const customerStats = {
     totalVisits: customerAppointments.length,
     totalSpent: customerAppointments.reduce((sum, apt) => {
@@ -108,6 +109,14 @@ export const ServiceHistory = () => {
               <SelectValue placeholder={text.selectCustomer} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">ALL</span>
+                  </div>
+                  <span className="font-medium">{text.allCustomers}</span>
+                </div>
+              </SelectItem>
               {customers.map((customer) => (
                 <SelectItem key={customer.id} value={customer.id}>
                   <div className="flex items-center gap-2">
@@ -130,123 +139,122 @@ export const ServiceHistory = () => {
         </CardContent>
       </Card>
 
-      {selectedCustomerId && (
-        <>
-          {/* Customer Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{text.totalVisits}</p>
-                    <p className="text-2xl font-bold">{customerStats.totalVisits}</p>
-                  </div>
-                  <CalendarIcon className="h-8 w-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{text.totalSpent}</p>
-                    <p className="text-2xl font-bold">{customerStats.totalSpent.toLocaleString()}đ</p>
-                  </div>
-                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-sm">₫</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{text.lastVisit}</p>
-                    <p className="text-2xl font-bold">
-                      {customerStats.lastVisit 
-                        ? format(new Date(customerStats.lastVisit), 'dd/MM', { locale })
-                        : '-'
-                      }
-                    </p>
-                  </div>
-                  <ClockIcon className="h-8 w-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Service History Table */}
+      {/* Customer Stats - Only show when specific customer is selected */}
+      {selectedCustomerId && selectedCustomerId !== "all" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>{text.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {customerAppointments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {text.noData}
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{text.totalVisits}</p>
+                  <p className="text-2xl font-bold">{customerStats.totalVisits}</p>
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{text.date}</TableHead>
-                      <TableHead>{text.time}</TableHead>
-                      <TableHead>{text.service}</TableHead>
-                      <TableHead>{text.employee}</TableHead>
-                      <TableHead>{text.price}</TableHead>
-                      <TableHead>{text.status}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customerAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell>
-                          {format(new Date(appointment.date), 'dd/MM/yyyy', { locale })}
-                        </TableCell>
-                        <TableCell>
-                          {formatTimeRange(appointment.time, appointment.duration)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {appointment.service}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs">
-                                {appointment.staff?.charAt(0).toUpperCase() || 'N'}
-                              </AvatarFallback>
-                            </Avatar>
-                            {appointment.staff || 'N/A'}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {(typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price)?.toLocaleString()}đ
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(appointment.status || 'confirmed')}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                <CalendarIcon className="h-8 w-8 text-blue-600" />
+              </div>
             </CardContent>
           </Card>
-        </>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{text.totalSpent}</p>
+                  <p className="text-2xl font-bold">{customerStats.totalSpent.toLocaleString()}đ</p>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <span className="text-green-600 font-bold text-sm">₫</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{text.lastVisit}</p>
+                  <p className="text-2xl font-bold">
+                    {customerStats.lastVisit 
+                      ? format(new Date(customerStats.lastVisit), 'dd/MM', { locale })
+                      : '-'
+                    }
+                  </p>
+                </div>
+                <ClockIcon className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {!selectedCustomerId && (
-        <Card>
-          <CardContent className="p-8">
-            <div className="text-center text-gray-500">
-              {text.noCustomerSelected}
+      {/* Service History Table - Always show */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{text.title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {customerAppointments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              {text.noData}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{text.date}</TableHead>
+                  <TableHead>{text.time}</TableHead>
+                  <TableHead>Khách hàng</TableHead>
+                  <TableHead>{text.service}</TableHead>
+                  <TableHead>{text.employee}</TableHead>
+                  <TableHead>{text.price}</TableHead>
+                  <TableHead>{text.status}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customerAppointments.map((appointment) => (
+                  <TableRow key={appointment.id}>
+                    <TableCell>
+                      {format(new Date(appointment.date), 'dd/MM/yyyy', { locale })}
+                    </TableCell>
+                    <TableCell>
+                      {formatTimeRange(appointment.time, appointment.duration)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs">
+                            {appointment.customer?.charAt(0).toUpperCase() || 'K'}
+                          </AvatarFallback>
+                        </Avatar>
+                        {appointment.customer}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {appointment.service}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback className="text-xs">
+                            {appointment.staff?.charAt(0).toUpperCase() || 'N'}
+                          </AvatarFallback>
+                        </Avatar>
+                        {appointment.staff || 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {(typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price)?.toLocaleString()}đ
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(appointment.status || 'confirmed')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
