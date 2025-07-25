@@ -30,7 +30,20 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center p-4 relative">
+      {/* Demo Mode Toggle - Top Right */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-lg border border-gray-200">
+        <Label htmlFor="demo-mode" className="text-xs font-medium text-gray-700">
+          Demo Flow
+        </Label>
+        <Switch
+          id="demo-mode"
+          checked={isDemoMode}
+          onCheckedChange={toggleDemoMode}
+          className="scale-75"
+        />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -39,25 +52,6 @@ const Login = () => {
           <p className="text-gray-600">
             Hệ thống quản lý chuyên nghiệp
           </p>
-        </div>
-
-        {/* Demo Mode Toggle */}
-        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="demo-mode" className="text-sm font-medium text-yellow-800">
-                Demo Flow
-              </Label>
-              <p className="text-xs text-yellow-600 mt-1">
-                {isDemoMode ? 'Sử dụng dữ liệu demo (admin@example.com / 1234)' : 'Kết nối với Supabase'}
-              </p>
-            </div>
-            <Switch
-              id="demo-mode"
-              checked={isDemoMode}
-              onCheckedChange={toggleDemoMode}
-            />
-          </div>
         </div>
         
         <LoginForm 
