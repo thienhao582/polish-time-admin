@@ -22,8 +22,10 @@ export function calculateEndTime(startTime: string, duration: string): string {
 }
 
 export function formatTimeRange(startTime: string, duration: string): string {
-  const endTime = calculateEndTime(startTime, duration);
-  return `${startTime} - ${endTime}`;
+  // Format start time to HH:MM (remove seconds if present)
+  const formattedStartTime = startTime.substring(0, 5);
+  const endTime = calculateEndTime(formattedStartTime, duration);
+  return `${formattedStartTime} - ${endTime}`;
 }
 
 // Generate time options with 15-minute intervals
