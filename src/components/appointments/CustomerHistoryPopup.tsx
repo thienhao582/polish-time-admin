@@ -113,15 +113,15 @@ export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHisto
                 Chưa có lịch sử làm nail
               </div>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="w-[100px]">Ngày</TableHead>
-                      <TableHead className="w-[100px]">Giờ</TableHead>
-                      <TableHead>Dịch vụ</TableHead>
-                      <TableHead>Nhân viên</TableHead>
-                      <TableHead className="w-[80px]">Giá</TableHead>
+                      <TableHead className="w-[100px] min-w-[100px]">Ngày</TableHead>
+                      <TableHead className="w-[120px] min-w-[120px]">Giờ</TableHead>
+                      <TableHead className="min-w-[200px]">Dịch vụ</TableHead>
+                      <TableHead className="min-w-[150px]">Nhân viên</TableHead>
+                      <TableHead className="w-[80px] min-w-[80px]">Giá</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -135,21 +135,21 @@ export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHisto
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Scissors className="h-4 w-4 text-pink-500" />
-                            <span className="text-sm font-medium truncate max-w-[150px]">
+                            <Scissors className="h-4 w-4 text-pink-500 flex-shrink-0" />
+                            <span className="text-sm font-medium whitespace-nowrap">
                               {appointment.service}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
+                            <Avatar className="h-6 w-6 flex-shrink-0">
                               <AvatarFallback className="text-xs">
-                                {appointment.staff?.charAt(0).toUpperCase() || 'N'}
+                                {appointment.staff?.charAt(0).toUpperCase() || "N"}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm truncate max-w-[100px]">
-                              {appointment.staff || 'N/A'}
+                            <span className="text-sm whitespace-nowrap">
+                              {appointment.staff || "N/A"}
                             </span>
                           </div>
                         </TableCell>
@@ -164,25 +164,6 @@ export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHisto
             )}
           </div>
 
-          {/* Recommendations */}
-          {(favoriteService || favoriteStaff) && (
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <h4 className="font-medium text-amber-800 mb-2">💡 Gợi ý cho lần hẹn tiếp theo</h4>
-              <div className="text-sm text-amber-700 space-y-1">
-                {favoriteService && (
-                  <div>• Dịch vụ ưa thích: <span className="font-medium">{favoriteService}</span></div>
-                )}
-                {favoriteStaff && (
-                  <div>• Nhân viên quen: <span className="font-medium">{favoriteStaff}</span></div>
-                )}
-                {lastVisit && (
-                  <div>• Lần cuối làm: <span className="font-medium">
-                    {format(new Date(lastVisit), 'dd/MM/yyyy', { locale: vi })}
-                  </span></div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
