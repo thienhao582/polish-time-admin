@@ -53,8 +53,8 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     
     /* Custom colors for appointments */
-    --customer-name: 205 100% 40%; /* Easy-on-eyes blue */
-    --staff-name: 355 75% 45%; /* Easy-on-eyes red */
+    --customer-name: 205 100% 35%; /* Darker blue for better contrast */
+    --staff-name: 355 85% 35%; /* Darker red for better contrast */
   }
 
   .dark {

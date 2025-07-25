@@ -176,19 +176,19 @@ export function AppointmentDayView({
                           onClick={(e) => handleAppointmentClick(apt, e)}
                         >
                           {displayMode === "customer" ? (
-                            <div className="text-xs font-medium text-blue-800 truncate">
+                            <div className="text-xs font-bold text-customer-name truncate">
                               {apt.customer}
                             </div>
                           ) : displayMode === "staff" ? (
-                            <div className="text-xs font-medium text-blue-800 truncate">
+                            <div className="text-xs font-bold text-staff-name truncate">
                               {apt.staff}
                             </div>
                           ) : (
                             <>
-                              <div className="text-xs font-medium text-blue-800 truncate">
+                              <div className="text-xs font-bold text-customer-name truncate">
                                 {apt.customer}
                               </div>
-                              <div className="text-xs text-blue-700 truncate">
+                              <div className="text-xs font-bold text-staff-name truncate">
                                 {apt.staff}
                               </div>
                             </>
@@ -229,13 +229,13 @@ export function AppointmentDayView({
                       >
                         <div className="text-xs text-blue-400 p-1">
                           {displayMode === "customer" ? (
-                            <div className="truncate">{apt.customer}</div>
+                            <div className="truncate font-bold text-customer-name">{apt.customer}</div>
                           ) : displayMode === "staff" ? (
-                            <div className="truncate">{apt.staff}</div>
+                            <div className="truncate font-bold text-staff-name">{apt.staff}</div>
                           ) : (
                             <>
-                              <div className="truncate">{apt.customer}</div>
-                              <div className="truncate">{apt.staff}</div>
+                              <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+                              <div className="truncate font-bold text-staff-name">{apt.staff}</div>
                             </>
                           )}
                         </div>
