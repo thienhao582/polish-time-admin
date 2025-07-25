@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,7 +9,7 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { formatTimeRange } from "@/utils/timeUtils";
-import { History, Calendar, User, Scissors } from "lucide-react";
+import { History, Calendar, User, Scissors, Search } from "lucide-react";
 
 interface CustomerHistoryPopupProps {
   customerId: string;
@@ -18,19 +19,31 @@ interface CustomerHistoryPopupProps {
 export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHistoryPopupProps) => {
   const { appointments, customers } = useSalonStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [employeeFilter, setEmployeeFilter] = useState("");
 
-  // Get customer appointments (last 10 most recent)
+  // Get all customer appointments with filters
   const customerAppointments = appointments
     .filter(apt => 
       apt.customerId === customerId || 
       apt.customer === customers.find(c => c.id === customerId)?.name
     )
+    .filter(apt => {
+      // Filter by service name
+      if (serviceFilter && !apt.service?.toLowerCase().includes(serviceFilter.toLowerCase())) {
+        return false;
+      }
+      // Filter by employee name
+      if (employeeFilter && !apt.staff?.toLowerCase().includes(employeeFilter.toLowerCase())) {
+        return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
       const dateA = new Date(`${a.date} ${a.time}`);
       const dateB = new Date(`${b.date} ${b.time}`);
       return dateB.getTime() - dateA.getTime();
-    })
-    .slice(0, 10); // Only show last 10 appointments
+    }); // Show all appointments, not limited
 
   // Calculate stats
   const totalVisits = customerAppointments.length;
@@ -101,16 +114,47 @@ export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHisto
             </div>
           </div>
 
+          {/* Filters */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Tìm kiếm
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Input
+                  placeholder="Tìm theo tên dịch vụ..."
+                  value={serviceFilter}
+                  onChange={(e) => setServiceFilter(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Tìm theo tên nhân viên..."
+                  value={employeeFilter}
+                  onChange={(e) => setEmployeeFilter(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Recent History */}
           <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Lịch sử gần đây
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Lịch sử đầy đủ
+              </div>
+              <Badge variant="secondary" className="text-sm">
+                {customerAppointments.length} kết quả
+              </Badge>
             </h3>
             
             {customerAppointments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                Chưa có lịch sử làm nail
+                Không tìm thấy lịch sử phù hợp
               </div>
             ) : (
               <div className="border rounded-lg overflow-x-auto">
