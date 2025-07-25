@@ -61,7 +61,9 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				'customer-name': 'hsl(var(--customer-name))',
+				'staff-name': 'hsl(var(--staff-name))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

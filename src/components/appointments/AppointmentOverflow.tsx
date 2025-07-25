@@ -44,13 +44,13 @@ export function AppointmentOverflow({
           >
             <div className="font-medium">{apt.time}</div>
             {displayMode === "customer" ? (
-              <div className="truncate">{apt.customer}</div>
+              <div className="truncate font-bold text-customer-name">{apt.customer}</div>
             ) : displayMode === "staff" ? (
-              <div className="truncate">{apt.staff}</div>
+              <div className="truncate font-bold text-staff-name">{apt.staff}</div>
             ) : (
               <>
-                <div className="truncate">{apt.customer}</div>
-                <div className="truncate text-gray-600">{apt.staff}</div>
+                <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+                <div className="truncate font-bold text-staff-name">{apt.staff}</div>
               </>
             )}
           </div>
@@ -73,13 +73,13 @@ export function AppointmentOverflow({
         >
           <div className="font-medium">{apt.time}</div>
           {displayMode === "customer" ? (
-            <div className="truncate">{apt.customer}</div>
+            <div className="truncate font-bold text-customer-name">{apt.customer}</div>
           ) : displayMode === "staff" ? (
-            <div className="truncate">{apt.staff}</div>
+            <div className="truncate font-bold text-staff-name">{apt.staff}</div>
           ) : (
             <>
-              <div className="truncate">{apt.customer}</div>
-              <div className="truncate text-gray-600">{apt.staff}</div>
+              <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+              <div className="truncate font-bold text-staff-name">{apt.staff}</div>
             </>
           )}
         </div>
@@ -112,11 +112,11 @@ export function AppointmentOverflow({
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-medium text-sm">{apt.time}</div>
-                    <div className="text-sm text-gray-700">{apt.customer}</div>
+                    <div className="text-sm font-bold text-customer-name">{apt.customer}</div>
                     <div className="text-xs text-gray-500">{apt.service}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-medium">{apt.staff}</div>
+                    <div className="text-sm font-bold text-staff-name">{apt.staff}</div>
                     <Badge variant="outline" className="text-xs">
                       {apt.status}
                     </Badge>
