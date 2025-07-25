@@ -31,18 +31,20 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center p-4 relative">
-      {/* Demo Mode Toggle - Top Right */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-lg border border-gray-200">
-        <Label htmlFor="demo-mode" className="text-xs font-medium text-gray-700">
-          Demo Flow
-        </Label>
-        <Switch
-          id="demo-mode"
-          checked={isDemoMode}
-          onCheckedChange={toggleDemoMode}
-          className="scale-75"
-        />
-      </div>
+      {/* Demo Mode Toggle - Top Right - Only show when no user is logged in */}
+      {!user && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-lg border border-gray-200">
+          <Label htmlFor="demo-mode" className="text-xs font-medium text-gray-700">
+            Demo Flow
+          </Label>
+          <Switch
+            id="demo-mode"
+            checked={isDemoMode}
+            onCheckedChange={toggleDemoMode}
+            className="scale-75"
+          />
+        </div>
+      )}
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">

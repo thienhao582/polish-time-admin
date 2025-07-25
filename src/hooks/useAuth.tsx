@@ -46,12 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { sessionToken, user: userData, expiresAt } = JSON.parse(sessionData);
+      const { sessionToken, user: userData, expiresAt, isDemoMode } = JSON.parse(sessionData);
       
       // Check if session is expired
       if (new Date() > new Date(expiresAt)) {
         console.log('Session expired');
         localStorage.removeItem('nail_salon_session');
+        setLoading(false);
+        return;
+      }
+
+      // If demo mode, skip Supabase verification
+      if (isDemoMode) {
+        console.log('Demo mode session found, skipping database verification');
+        setUser(userData);
         setLoading(false);
         return;
       }
