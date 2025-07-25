@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GeneralManagement } from "@/components/employee/GeneralManagement";
 import { SalaryManagement } from "@/components/employee/SalaryManagement";
+import { WorkScheduleManagement } from "@/components/employee/WorkScheduleManagement";
 
 const EmployeeManagement = () => {
   const { language } = useLanguage();
@@ -12,15 +13,17 @@ const EmployeeManagement = () => {
   const translations = {
     vi: {
       title: "Quản lý Nhân viên",
-      subtitle: "Quản lý thông tin và lương nhân viên",
+      subtitle: "Quản lý thông tin, lương và lịch làm việc nhân viên",
       general: "Thông tin chung",
-      salary: "Tính lương"
+      salary: "Tính lương",
+      schedule: "Lịch làm việc"
     },
     en: {
       title: "Employee Management",
-      subtitle: "Manage employee information and salary",
+      subtitle: "Manage employee information, salary and work schedule",
       general: "General",
-      salary: "Salary"
+      salary: "Salary",
+      schedule: "Schedule"
     }
   };
 
@@ -38,15 +41,19 @@ const EmployeeManagement = () => {
       <Card>
         <CardContent className="p-0">
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="general">{text.general}</TabsTrigger>
               <TabsTrigger value="salary">{text.salary}</TabsTrigger>
+              <TabsTrigger value="schedule">{text.schedule}</TabsTrigger>
             </TabsList>
             <TabsContent value="general" className="p-6">
               <GeneralManagement />
             </TabsContent>
             <TabsContent value="salary" className="p-6">
               <SalaryManagement />
+            </TabsContent>
+            <TabsContent value="schedule" className="p-6">
+              <WorkScheduleManagement />
             </TabsContent>
           </Tabs>
         </CardContent>
