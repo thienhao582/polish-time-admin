@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
+import { CustomerHistoryPopup } from "@/components/appointments/CustomerHistoryPopup";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { generateTimeOptions } from "@/utils/timeUtils";
@@ -266,18 +267,28 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           <Label className="text-sm font-medium leading-none mb-2 block">
             Chọn khách hàng
           </Label>
-          <Select onValueChange={handleCustomerChange} value={selectedCustomerId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Chọn khách hàng" />
-            </SelectTrigger>
-            <SelectContent>
-              {enhancedCustomers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.phone}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select onValueChange={handleCustomerChange} value={selectedCustomerId}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Chọn khách hàng" />
+              </SelectTrigger>
+              <SelectContent>
+                {enhancedCustomers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.name} - {customer.phone}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Customer History Button */}
+            {selectedCustomerId && (
+              <CustomerHistoryPopup 
+                customerId={selectedCustomerId}
+                customerName={enhancedCustomers.find(c => c.id === selectedCustomerId)?.name || ""}
+              />
+            )}
+          </div>
         </div>
       )}
 
