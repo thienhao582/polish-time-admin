@@ -43,11 +43,16 @@ export function AppointmentOverflow({
             onClick={(e) => onAppointmentClick(apt, e)}
           >
             <div className="font-medium">{apt.time}</div>
-            <div className="truncate">
-              {displayMode === "customer" ? apt.customer : 
-               displayMode === "staff" ? apt.staff :
-               `${apt.customer} / ${apt.staff}`}
-            </div>
+            {displayMode === "customer" ? (
+              <div className="truncate">{apt.customer}</div>
+            ) : displayMode === "staff" ? (
+              <div className="truncate">{apt.staff}</div>
+            ) : (
+              <>
+                <div className="truncate">{apt.customer}</div>
+                <div className="truncate text-gray-600">{apt.staff}</div>
+              </>
+            )}
           </div>
         ))}
       </>
@@ -67,11 +72,16 @@ export function AppointmentOverflow({
           onClick={(e) => onAppointmentClick(apt, e)}
         >
           <div className="font-medium">{apt.time}</div>
-          <div className="truncate">
-            {displayMode === "customer" ? apt.customer : 
-             displayMode === "staff" ? apt.staff :
-             `${apt.customer} / ${apt.staff}`}
-          </div>
+          {displayMode === "customer" ? (
+            <div className="truncate">{apt.customer}</div>
+          ) : displayMode === "staff" ? (
+            <div className="truncate">{apt.staff}</div>
+          ) : (
+            <>
+              <div className="truncate">{apt.customer}</div>
+              <div className="truncate text-gray-600">{apt.staff}</div>
+            </>
+          )}
         </div>
       ))}
       

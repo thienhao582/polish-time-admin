@@ -175,11 +175,24 @@ export function AppointmentDayView({
                           }}
                           onClick={(e) => handleAppointmentClick(apt, e)}
                         >
-                          <div className="text-xs font-medium text-blue-800 truncate">
-                            {displayMode === "customer" ? apt.customer : 
-                             displayMode === "staff" ? apt.staff :
-                             `${apt.customer} / ${apt.staff}`}
-                          </div>
+                          {displayMode === "customer" ? (
+                            <div className="text-xs font-medium text-blue-800 truncate">
+                              {apt.customer}
+                            </div>
+                          ) : displayMode === "staff" ? (
+                            <div className="text-xs font-medium text-blue-800 truncate">
+                              {apt.staff}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-xs font-medium text-blue-800 truncate">
+                                {apt.customer}
+                              </div>
+                              <div className="text-xs text-blue-700 truncate">
+                                {apt.staff}
+                              </div>
+                            </>
+                          )}
                           <div className="text-xs text-blue-600 truncate">
                             {apt.service}
                           </div>
@@ -214,10 +227,17 @@ export function AppointmentDayView({
                           width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`
                         }}
                       >
-                        <div className="text-xs text-blue-400 p-1 truncate">
-                          {displayMode === "customer" ? apt.customer : 
-                           displayMode === "staff" ? apt.staff :
-                           `${apt.customer} / ${apt.staff}`}
+                        <div className="text-xs text-blue-400 p-1">
+                          {displayMode === "customer" ? (
+                            <div className="truncate">{apt.customer}</div>
+                          ) : displayMode === "staff" ? (
+                            <div className="truncate">{apt.staff}</div>
+                          ) : (
+                            <>
+                              <div className="truncate">{apt.customer}</div>
+                              <div className="truncate">{apt.staff}</div>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
