@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { indexedDBService } from "@/services/indexedDBService";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LoginFormProps {
   onLoginSuccess: (user: any) => void;
@@ -23,6 +24,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const { toast } = useToast();
   const { login } = useAuth();
   const { isDemoMode } = useDemoMode();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +69,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
         login(demoUser);
 
         toast({
-          title: "Đăng nhập demo thành công",
-          description: `Chào mừng ${demoUser.full_name}! (Demo Mode)`,
+          title: t('login.demo_success'),
+          description: `${t('login.success')} ${demoUser.full_name}! (Demo Mode)`,
         });
 
         onLoginSuccess(demoUser);
@@ -191,8 +193,8 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       console.log('Login successful for user:', userData.email);
 
       toast({
-        title: "Đăng nhập thành công!",
-        description: `Chào mừng ${userData.full_name}`,
+        title: t('login.success'),
+        description: `${t('login.success')} ${userData.full_name}`,
       });
 
       // Update auth context
@@ -210,21 +212,21 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Đăng nhập</CardTitle>
+        <CardTitle className="text-2xl text-center">{t('login.form.title')}</CardTitle>
         <CardDescription className="text-center">
-          Nhập email và mã PIN để truy cập hệ thống
+          {t('login.form.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('login.email')}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="Nhập email của bạn"
+                placeholder={t('login.email_placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-9"
@@ -234,7 +236,7 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pin">Mã PIN (4 số)</Label>
+            <Label htmlFor="pin">{t('login.pin')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -261,10 +263,10 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang đăng nhập...
+                {t('login.button_loading')}
               </>
             ) : (
-              "Đăng nhập"
+              t('login.button')
             )}
           </Button>
         </form>

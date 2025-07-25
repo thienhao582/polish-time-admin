@@ -27,6 +27,13 @@ const translations = {
     'login.form.title': 'Đăng nhập',
     'login.form.subtitle': 'Nhập email và mã PIN để truy cập hệ thống',
     'login.loading': 'Đang kiểm tra phiên đăng nhập...',
+    'login.email': 'Email',
+    'login.pin': 'Mã PIN (4 số)',
+    'login.email_placeholder': 'Nhập email của bạn',
+    'login.button': 'Đăng nhập',
+    'login.button_loading': 'Đang đăng nhập...',
+    'login.success': 'Đăng nhập thành công!',
+    'login.demo_success': 'Đăng nhập demo thành công',
     
     // Appointments
     'appointments.title': 'Quản lý lịch hẹn',
@@ -79,6 +86,13 @@ const translations = {
     'login.form.title': 'Login',
     'login.form.subtitle': 'Enter email and PIN to access the system',
     'login.loading': 'Checking login session...',
+    'login.email': 'Email',
+    'login.pin': 'PIN Code (4 digits)',
+    'login.email_placeholder': 'Enter your email',
+    'login.button': 'Login',
+    'login.button_loading': 'Logging in...',
+    'login.success': 'Login successful!',
+    'login.demo_success': 'Demo login successful',
     
     // Appointments
     'appointments.title': 'Appointment Management',
