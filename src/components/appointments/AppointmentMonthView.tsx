@@ -21,7 +21,7 @@ interface AppointmentMonthViewProps {
   setSelectedDate: (date: Date) => void;
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
-  displayMode: "customer" | "staff";
+  displayMode: "customer" | "staff" | "both";
   showFullView: boolean;
 }
 

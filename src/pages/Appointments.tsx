@@ -42,7 +42,7 @@ const Appointments = () => {
   const [isAppointmentDetailOpen, setIsAppointmentDetailOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [displayMode, setDisplayMode] = useState<"customer" | "staff">("customer");
+  const [displayMode, setDisplayMode] = useState<"customer" | "staff" | "both">("both");
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showFullView, setShowFullView] = useState(true);

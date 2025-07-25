@@ -20,7 +20,7 @@ interface Appointment {
 interface AppointmentOverflowProps {
   appointments: Appointment[];
   maxVisible: number;
-  displayMode: "customer" | "staff";
+  displayMode: "customer" | "staff" | "both";
   onAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
 }
 
@@ -44,7 +44,9 @@ export function AppointmentOverflow({
           >
             <div className="font-medium">{apt.time}</div>
             <div className="truncate">
-              {displayMode === "customer" ? apt.customer : apt.staff}
+              {displayMode === "customer" ? apt.customer : 
+               displayMode === "staff" ? apt.staff :
+               `${apt.customer} / ${apt.staff}`}
             </div>
           </div>
         ))}
@@ -66,7 +68,9 @@ export function AppointmentOverflow({
         >
           <div className="font-medium">{apt.time}</div>
           <div className="truncate">
-            {displayMode === "customer" ? apt.customer : apt.staff}
+            {displayMode === "customer" ? apt.customer : 
+             displayMode === "staff" ? apt.staff :
+             `${apt.customer} / ${apt.staff}`}
           </div>
         </div>
       ))}

@@ -11,8 +11,8 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentFiltersProps {
-  displayMode: "customer" | "staff";
-  setDisplayMode: (mode: "customer" | "staff") => void;
+  displayMode: "customer" | "staff" | "both";
+  setDisplayMode: (mode: "customer" | "staff" | "both") => void;
   selectedStaffIds: string[];
   setSelectedStaffIds: (ids: string[]) => void;
   filteredAppointmentsCount: number;
@@ -55,11 +55,17 @@ export function AppointmentFilters({
             {/* Display Mode */}
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{t('appointments.display_by')}</span>
-              <Select value={displayMode} onValueChange={(value: "customer" | "staff") => setDisplayMode(value)}>
+              <Select value={displayMode} onValueChange={(value: "customer" | "staff" | "both") => setDisplayMode(value)}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="both">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      {t('appointments.both')}
+                    </div>
+                  </SelectItem>
                   <SelectItem value="customer">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
@@ -92,10 +98,10 @@ export function AppointmentFilters({
               <PopoverContent className="w-80" align="start">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Chọn nhân viên</h4>
+                    <h4 className="font-medium">{t('appointments.select_staff')}</h4>
                     {selectedStaffIds.length > 0 && (
                       <Button variant="ghost" size="sm" onClick={clearStaffFilter}>
-                        Xóa tất cả
+                        {t('appointments.clear_all')}
                       </Button>
                     )}
                   </div>

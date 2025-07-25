@@ -3,59 +3,61 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AppSidebar = () => {
   const location = useLocation();
   const { hasPermission } = useAuth();
   const { state } = useSidebar();
+  const { t } = useLanguage();
   const isCollapsed = state === "collapsed";
 
   const menuItems = [
     {
-      title: "Dashboard",
+      titleKey: "sidebar.dashboard",
       url: "/",
       icon: BarChart3,
     },
     {
-      title: "Lịch hẹn",
+      titleKey: "sidebar.appointments",
       url: "/appointments",
       icon: Calendar,
     },
     {
-      title: "Khách hàng",
+      titleKey: "sidebar.customers",
       url: "/customers",
       icon: Users,
     },
     {
-      title: "Dịch vụ",
+      titleKey: "sidebar.services",
       url: "/services",
       icon: Scissors,
       requiresPermission: "manage_services"
     },
     {
-      title: "Hóa đơn",
+      titleKey: "sidebar.invoices",
       url: "/invoices",
       icon: Receipt,
     },
     {
-      title: "Nhân viên",
+      titleKey: "sidebar.employees",
       url: "/employees",
       icon: UserCog,
       requiresPermission: "manage_employees"
     },
     {
-      title: "Chấm công",
+      titleKey: "sidebar.timetracking",
       url: "/timetracking",
       icon: Clock,
     },
     {
-      title: "Quản lý tài khoản",
+      titleKey: "sidebar.accounts",
       url: "/accounts",
       icon: UserCog,
       requiresPermission: "create_user"
     },
     {
-      title: "Cài đặt",
+      titleKey: "sidebar.settings",
       url: "/settings",
       icon: Settings,
       requiresPermission: "manage_settings"
@@ -79,14 +81,14 @@ const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === item.url}
                   >
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span>{t(item.titleKey)}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

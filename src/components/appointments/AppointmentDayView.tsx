@@ -19,7 +19,7 @@ interface AppointmentDayViewProps {
   selectedDate: Date;
   filteredAppointments: Appointment[];
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
-  displayMode: "customer" | "staff";
+  displayMode: "customer" | "staff" | "both";
   showFullView: boolean;
 }
 
@@ -176,7 +176,9 @@ export function AppointmentDayView({
                           onClick={(e) => handleAppointmentClick(apt, e)}
                         >
                           <div className="text-xs font-medium text-blue-800 truncate">
-                            {displayMode === "customer" ? apt.customer : apt.staff}
+                            {displayMode === "customer" ? apt.customer : 
+                             displayMode === "staff" ? apt.staff :
+                             `${apt.customer} / ${apt.staff}`}
                           </div>
                           <div className="text-xs text-blue-600 truncate">
                             {apt.service}
@@ -213,7 +215,9 @@ export function AppointmentDayView({
                         }}
                       >
                         <div className="text-xs text-blue-400 p-1 truncate">
-                          {displayMode === "customer" ? apt.customer : apt.staff}
+                          {displayMode === "customer" ? apt.customer : 
+                           displayMode === "staff" ? apt.staff :
+                           `${apt.customer} / ${apt.staff}`}
                         </div>
                       </div>
                     ))}
