@@ -1,88 +1,131 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 import { formatTimeRange } from "@/utils/timeUtils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, ClockIcon, UserIcon } from "lucide-react";
+import { CalendarIcon, Filter } from "lucide-react";
 
 export const ServiceHistory = () => {
-  const { appointments, customers } = useSalonStore();
+  const { appointments, customers, services, employees } = useSalonStore();
   const { language } = useLanguage();
+  
+  // Filter states
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("all");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("all");
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("all");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   
   const translations = {
     vi: {
       title: "Lịch sử làm nail",
       subtitle: "Xem lịch sử sử dụng dịch vụ của khách hàng",
-      selectCustomer: "Chọn khách hàng",
+      filters: "Bộ lọc",
       allCustomers: "Tất cả khách hàng",
+      allEmployees: "Tất cả nhân viên", 
+      allServices: "Tất cả dịch vụ",
+      allPeriods: "Tất cả thời gian",
+      last7Days: "7 ngày qua",
+      last30Days: "30 ngày qua",
+      last3Months: "3 tháng qua",
+      searchPlaceholder: "Tìm kiếm...",
       date: "Ngày",
       time: "Giờ",
+      customer: "Khách hàng",
       service: "Dịch vụ",
       employee: "Nhân viên",
       price: "Giá",
-      noData: "Không có lịch sử dịch vụ",
-      totalVisits: "Tổng lượt",
-      totalSpent: "Tổng chi tiêu",
-      lastVisit: "Lần cuối"
+      noData: "Không có lịch sử dịch vụ"
     },
     en: {
       title: "Nail Service History",
       subtitle: "View customer service usage history",
-      selectCustomer: "Select Customer",
+      filters: "Filters",
       allCustomers: "All Customers",
+      allEmployees: "All Employees",
+      allServices: "All Services", 
+      allPeriods: "All Time",
+      last7Days: "Last 7 Days",
+      last30Days: "Last 30 Days",
+      last3Months: "Last 3 Months",
+      searchPlaceholder: "Search...",
       date: "Date",
       time: "Time",
+      customer: "Customer",
       service: "Service",
       employee: "Employee",
       price: "Price",
-      noData: "No service history",
-      totalVisits: "Total Visits",
-      totalSpent: "Total Spent",
-      lastVisit: "Last Visit"
+      noData: "No service history"
     }
   };
 
   const text = translations[language];
   const locale = language === 'vi' ? vi : enUS;
 
-  // Filter appointments based on selected customer
-  const customerAppointments = appointments.filter(apt => {
-    if (selectedCustomerId === "all") return true;
-    return apt.customerId === selectedCustomerId || apt.customer === customers.find(c => c.id === selectedCustomerId)?.name;
+  // Filter appointments based on all criteria
+  const filteredAppointments = appointments.filter(apt => {
+    // Customer filter
+    if (selectedCustomerId !== "all") {
+      const matchCustomer = apt.customerId === selectedCustomerId || 
+                           apt.customer === customers.find(c => c.id === selectedCustomerId)?.name;
+      if (!matchCustomer) return false;
+    }
+
+    // Employee filter
+    if (selectedEmployeeId !== "all") {
+      const matchEmployee = apt.staffId === selectedEmployeeId ||
+                            apt.staff === employees.find(e => e.id === selectedEmployeeId)?.name;
+      if (!matchEmployee) return false;
+    }
+
+    // Service filter
+    if (selectedServiceId !== "all") {
+      const matchService = apt.serviceId === selectedServiceId ||
+                          apt.service === services.find(s => s.id === selectedServiceId)?.name;
+      if (!matchService) return false;
+    }
+
+    // Period filter
+    if (selectedPeriod !== "all") {
+      const appointmentDate = new Date(apt.date);
+      const now = new Date();
+      const daysDiff = (now.getTime() - appointmentDate.getTime()) / (1000 * 60 * 60 * 24);
+      
+      switch (selectedPeriod) {
+        case "7days":
+          if (daysDiff > 7) return false;
+          break;
+        case "30days":
+          if (daysDiff > 30) return false;
+          break;
+        case "3months":
+          if (daysDiff > 90) return false;
+          break;
+      }
+    }
+
+    // Search term filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchSearch = apt.customer?.toLowerCase().includes(searchLower) ||
+                         apt.service?.toLowerCase().includes(searchLower) ||
+                         apt.staff?.toLowerCase().includes(searchLower);
+      if (!matchSearch) return false;
+    }
+
+    return true;
   }).sort((a, b) => {
     const dateA = new Date(`${a.date} ${a.time}`);
     const dateB = new Date(`${b.date} ${b.time}`);
     return dateB.getTime() - dateA.getTime(); // Most recent first
   });
-
-  // Calculate customer stats (only for specific customer) - convert to USD
-  const customerStats = {
-    totalVisits: customerAppointments.length,
-    totalSpent: customerAppointments.reduce((sum, apt) => {
-      const price = typeof apt.price === 'string' ? parseFloat(apt.price) : apt.price;
-      return sum + ((price || 0) / 24000); // Convert VND to USD (approximate rate)
-    }, 0),
-    lastVisit: customerAppointments.length > 0 ? customerAppointments[0].date : null
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      confirmed: { variant: "default" as const, label: language === 'vi' ? 'Đã xác nhận' : 'Confirmed' },
-      completed: { variant: "secondary" as const, label: language === 'vi' ? 'Hoàn thành' : 'Completed' },
-      cancelled: { variant: "destructive" as const, label: language === 'vi' ? 'Đã hủy' : 'Cancelled' },
-      no_show: { variant: "outline" as const, label: language === 'vi' ? 'Không đến' : 'No Show' }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.confirmed;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   return (
     <div className="space-y-6">
@@ -93,105 +136,99 @@ export const ServiceHistory = () => {
         </div>
       </div>
 
-      {/* Customer Selection */}
+      {/* Compact Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5" />
-            {text.selectCustomer}
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            {text.filters}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={text.selectCustomer} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">ALL</span>
-                  </div>
-                  <span className="font-medium">{text.allCustomers}</span>
-                </div>
-              </SelectItem>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-xs">
-                        {customer.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{customer.name}</div>
-                      {customer.phone && (
-                        <div className="text-sm text-gray-500">{customer.phone}</div>
-                      )}
-                    </div>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <Input
+                placeholder={text.searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-9"
+              />
+            </div>
+
+            {/* Customer Filter */}
+            <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={text.allCustomers} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.allCustomers}</SelectItem>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Employee Filter */}
+            <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={text.allEmployees} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.allEmployees}</SelectItem>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Service Filter */}
+            <Select value={selectedServiceId} onValueChange={setSelectedServiceId}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={text.allServices} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.allServices}</SelectItem>
+                {services.map((service) => (
+                  <SelectItem key={service.id} value={service.id}>
+                    {service.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Period Filter */}
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={text.allPeriods} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{text.allPeriods}</SelectItem>
+                <SelectItem value="7days">{text.last7Days}</SelectItem>
+                <SelectItem value="30days">{text.last30Days}</SelectItem>
+                <SelectItem value="3months">{text.last3Months}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Customer Stats - Only show when specific customer is selected */}
-      {selectedCustomerId && selectedCustomerId !== "all" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{text.totalVisits}</p>
-                  <p className="text-2xl font-bold">{customerStats.totalVisits}</p>
-                </div>
-                <CalendarIcon className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{text.totalSpent}</p>
-                  <p className="text-2xl font-bold">${customerStats.totalSpent.toFixed(2)}</p>
-                </div>
-                <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-sm">$</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{text.lastVisit}</p>
-                  <p className="text-2xl font-bold">
-                    {customerStats.lastVisit 
-                      ? format(new Date(customerStats.lastVisit), 'dd/MM', { locale })
-                      : '-'
-                    }
-                  </p>
-                </div>
-                <ClockIcon className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Service History Table - Always show */}
+      {/* Service History Table */}
       <Card>
         <CardHeader>
-          <CardTitle>{text.title}</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>{text.title}</span>
+            <Badge variant="secondary" className="text-sm">
+              {filteredAppointments.length} kết quả
+            </Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {customerAppointments.length === 0 ? (
+          {filteredAppointments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               {text.noData}
             </div>
@@ -201,14 +238,14 @@ export const ServiceHistory = () => {
                 <TableRow>
                   <TableHead>{text.date}</TableHead>
                   <TableHead>{text.time}</TableHead>
-                  <TableHead>Khách hàng</TableHead>
+                  <TableHead>{text.customer}</TableHead>
                   <TableHead>{text.service}</TableHead>
                   <TableHead>{text.employee}</TableHead>
                   <TableHead>{text.price}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customerAppointments.map((appointment) => (
+                {filteredAppointments.map((appointment) => (
                   <TableRow key={appointment.id}>
                     <TableCell>
                       {format(new Date(appointment.date), 'dd/MM/yyyy', { locale })}
@@ -223,11 +260,11 @@ export const ServiceHistory = () => {
                             {appointment.customer?.charAt(0).toUpperCase() || 'K'}
                           </AvatarFallback>
                         </Avatar>
-                        {appointment.customer}
+                        <span className="truncate max-w-[120px]">{appointment.customer}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {appointment.service}
+                      <span className="truncate max-w-[150px] block">{appointment.service}</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -236,7 +273,7 @@ export const ServiceHistory = () => {
                             {appointment.staff?.charAt(0).toUpperCase() || 'N'}
                           </AvatarFallback>
                         </Avatar>
-                        {appointment.staff || 'N/A'}
+                        <span className="truncate max-w-[100px]">{appointment.staff || 'N/A'}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
