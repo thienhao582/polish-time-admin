@@ -35,7 +35,7 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="appointments" element={<Appointments />} />
-              <Route path="customers" element={<Customers />} />
+              <Route path="customers/*" element={<Customers />} />
               <Route path="services" element={
                 <ProtectedRoute requiredPermission="manage_services">
                   <Services />

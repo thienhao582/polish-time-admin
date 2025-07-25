@@ -1,6 +1,6 @@
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays } from "lucide-react";
+import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays, UserIcon, History } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +14,7 @@ const AppSidebar = () => {
   const isCollapsed = state === "collapsed";
   
   const isEmployeeSectionActive = location.pathname.startsWith('/employees');
+  const isCustomerSectionActive = location.pathname.startsWith('/customers');
 
   const menuItems = [
     {
@@ -25,11 +26,6 @@ const AppSidebar = () => {
       titleKey: "sidebar.appointments",
       url: "/appointments",
       icon: Calendar,
-    },
-    {
-      titleKey: "sidebar.customers",
-      url: "/customers",
-      icon: Users,
     },
     {
       titleKey: "sidebar.services",
@@ -65,6 +61,21 @@ const AppSidebar = () => {
     !item.requiresPermission || hasPermission(item.requiresPermission)
   );
 
+  const customerSubMenuItems = [
+    {
+      titleKey: "customer.general",
+      title: { vi: "Thông tin chung", en: "General Information" },
+      url: "/customers/general",
+      icon: UserIcon,
+    },
+    {
+      titleKey: "customer.history",
+      title: { vi: "Lịch sử làm nail", en: "Service History" },
+      url: "/customers/history",
+      icon: History,
+    }
+  ];
+
   const employeeSubMenuItems = [
     {
       titleKey: "employee.general",
@@ -98,7 +109,8 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredMenuItems.slice(0, 3).map((item) => (
+              {/* First 2 items: Dashboard and Appointments */}
+              {filteredMenuItems.slice(0, 2).map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 
@@ -112,6 +124,40 @@ const AppSidebar = () => {
                 </SidebarMenuItem>
               ))}
               
+              {/* Customer Management Accordion - Position 3 */}
+              <Collapsible defaultOpen={isCustomerSectionActive}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="flex items-center gap-2 justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        {!isCollapsed && <span>{t("sidebar.customers")}</span>}
+                      </div>
+                      {!isCollapsed && (
+                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      )}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {customerSubMenuItems.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.titleKey}>
+                          <SidebarMenuSubButton 
+                            asChild
+                            isActive={location.pathname === subItem.url}
+                          >
+                            <Link to={subItem.url} className="flex items-center gap-2">
+                              <subItem.icon className="h-4 w-4" />
+                              <span>{subItem.title[language]}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
               {/* Employee Management Accordion - Position 4 */}
               {hasPermission("manage_employees") && (
                 <Collapsible defaultOpen={isEmployeeSectionActive}>
@@ -148,8 +194,8 @@ const AppSidebar = () => {
                 </Collapsible>
               )}
 
-              {/* Remaining menu items */}
-              {filteredMenuItems.slice(3).map((item) => (
+              {/* Remaining menu items (skip customers which is now position 3) */}
+              {filteredMenuItems.slice(2).map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 
