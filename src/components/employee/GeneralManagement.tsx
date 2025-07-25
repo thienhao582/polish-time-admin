@@ -226,7 +226,13 @@ export function GeneralManagement() {
                   <TableCell>{getRoleBadge(employee.role)}</TableCell>
                   <TableCell>{getStatusBadge(employee.status)}</TableCell>
                   <TableCell>{employee.phone}</TableCell>
-                  <TableCell>{format(new Date(employee.start_date || employee.startDate), "dd/MM/yyyy", { locale: vi })}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const dateValue = employee.start_date || employee.startDate;
+                      const date = new Date(dateValue);
+                      return isNaN(date.getTime()) ? "Invalid date" : format(date, "dd/MM/yyyy", { locale: vi });
+                    })()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {employee.specialties.slice(0, 2).map((specialty, index) => (
