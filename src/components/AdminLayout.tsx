@@ -4,7 +4,6 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from "@/components/ui/sid
 import AppSidebar from "@/components/AppSidebar";
 import Header from "@/components/Header";
 import { SidebarToggle } from "@/components/SidebarToggle";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const AdminLayoutContent = () => {
   return (
@@ -27,11 +26,7 @@ const AdminLayoutContent = () => {
 };
 
 const AdminLayout = () => {
-  return (
-    <LanguageProvider>
-      <AdminLayoutContent />
-    </LanguageProvider>
-  );
+  return <AdminLayoutContent />;
 };
 
 export default AdminLayout;
