@@ -1,6 +1,7 @@
 
 import { format, isSameDay, parseISO } from "date-fns";
 import { AppointmentOverflow } from "./AppointmentOverflow";
+import { formatTimeRange } from "@/utils/timeUtils";
 
 interface Appointment {
   id: number;
@@ -197,7 +198,7 @@ export function AppointmentDayView({
                             {apt.service}
                           </div>
                           <div className="text-xs text-blue-500">
-                            {apt.time}
+                            {formatTimeRange(apt.time, apt.duration)}
                           </div>
                           <div className="text-xs text-blue-500 truncate">
                             ({apt.duration})

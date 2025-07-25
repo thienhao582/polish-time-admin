@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatTimeRange } from "@/utils/timeUtils";
 
 interface Appointment {
   id: number;
@@ -42,7 +43,7 @@ export function AppointmentOverflow({
             title={`${apt.time} - ${apt.customer} (${apt.service})`}
             onClick={(e) => onAppointmentClick(apt, e)}
           >
-            <div className="font-medium">{apt.time}</div>
+            <div className="font-medium">{formatTimeRange(apt.time, apt.duration)}</div>
             {displayMode === "customer" ? (
               <div className="truncate font-bold text-customer-name">{apt.customer}</div>
             ) : displayMode === "staff" ? (
@@ -71,7 +72,7 @@ export function AppointmentOverflow({
           title={`${apt.time} - ${apt.customer} (${apt.service})`}
           onClick={(e) => onAppointmentClick(apt, e)}
         >
-          <div className="font-medium">{apt.time}</div>
+          <div className="font-medium">{formatTimeRange(apt.time, apt.duration)}</div>
           {displayMode === "customer" ? (
             <div className="truncate font-bold text-customer-name">{apt.customer}</div>
           ) : displayMode === "staff" ? (
@@ -111,7 +112,7 @@ export function AppointmentOverflow({
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-medium text-sm">{apt.time}</div>
+                    <div className="font-medium text-sm">{formatTimeRange(apt.time, apt.duration)}</div>
                     <div className="text-sm font-bold text-customer-name">{apt.customer}</div>
                     <div className="text-xs text-gray-500">{apt.service}</div>
                   </div>

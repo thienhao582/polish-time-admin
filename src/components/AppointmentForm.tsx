@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { generateTimeOptions } from "@/utils/timeUtils";
 
 const appointmentFormSchema = z.object({
   date: z.date({
@@ -213,11 +214,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
                   <SelectValue placeholder="Chọn giờ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 15 }, (_, i) => i + 8).map((hour) => (
-                    <SelectItem key={`${hour}:00`} value={`${hour}:00`}>{`${hour}:00`}</SelectItem>
-                  ))}
-                  {Array.from({ length: 15 }, (_, i) => i + 8).map((hour) => (
-                    <SelectItem key={`${hour}:30`} value={`${hour}:30`}>{`${hour}:30`}</SelectItem>
+                  {generateTimeOptions().map((time) => (
+                    <SelectItem key={time} value={time}>{time}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
