@@ -21,6 +21,13 @@ const translations = {
     'sidebar.accounts': 'Quản lý tài khoản',
     'sidebar.settings': 'Cài đặt',
     
+    // Login page
+    'login.title': 'Quản lý Tiệm Nail',
+    'login.subtitle': 'Hệ thống quản lý chuyên nghiệp',
+    'login.form.title': 'Đăng nhập',
+    'login.form.subtitle': 'Nhập email và mã PIN để truy cập hệ thống',
+    'login.loading': 'Đang kiểm tra phiên đăng nhập...',
+    
     // Appointments
     'appointments.title': 'Quản lý lịch hẹn',
     'appointments.subtitle': 'Xem và quản lý tất cả các lịch hẹn',
@@ -66,6 +73,13 @@ const translations = {
     'sidebar.accounts': 'Account Management',
     'sidebar.settings': 'Settings',
     
+    // Login page
+    'login.title': 'Nail Salon Management',
+    'login.subtitle': 'Professional management system',
+    'login.form.title': 'Login',
+    'login.form.subtitle': 'Enter email and PIN to access the system',
+    'login.loading': 'Checking login session...',
+    
     // Appointments
     'appointments.title': 'Appointment Management',
     'appointments.subtitle': 'View and manage all appointments',
@@ -104,14 +118,23 @@ const translations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>(() => {
+    // Initialize from localStorage if available, otherwise default to 'en'
+    const savedLanguage = localStorage.getItem('nail_salon_language') as Language;
+    return savedLanguage || 'en';
+  });
+
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem('nail_salon_language', lang);
+  };
 
   const t = (key: string): string => {
     return translations[language][key as keyof typeof translations['vi']] || key;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
