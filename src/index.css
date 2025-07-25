@@ -52,9 +52,9 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* Custom colors for appointments */
-    --customer-name: 205 100% 35%; /* Darker blue for better contrast */
-    --staff-name: 355 85% 35%; /* Darker red for better contrast */
+    /* Custom colors for appointments - soft, eye-friendly colors */
+    --customer-name: 158 40% 35%; /* Soft sage green - calming and easy on eyes */
+    --staff-name: 25 60% 40%; /* Warm amber brown - comfortable for long viewing */
   }
 
   .dark {
@@ -94,9 +94,9 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* Custom colors for appointments */
-    --customer-name: 205 85% 60%; /* Lighter blue for dark mode */
-    --staff-name: 355 80% 60%; /* Lighter red for dark mode */
+    /* Custom colors for appointments - soft, eye-friendly colors */
+    --customer-name: 158 45% 50%; /* Lighter sage green for dark mode */
+    --staff-name: 25 70% 55%; /* Lighter amber brown for dark mode */
   }
 }
 
