@@ -22,6 +22,7 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     assignedServices: [] as string[],
     specialties: [] as string[],
     startDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
+    start_date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
   });
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         assignedServices: employee.assignedServices,
         specialties: employee.specialties,
         startDate: employee.startDate,
+        start_date: employee.start_date || employee.startDate,
       });
     }
   }, [employee]);

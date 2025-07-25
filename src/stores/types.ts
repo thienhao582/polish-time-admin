@@ -25,6 +25,8 @@ export interface Employee {
   assignedServices: string[];
   specialties: string[];
   startDate: string;
+  start_date?: string; // For Supabase compatibility
+  commission_rate?: number; // Commission rate as decimal (0.10 = 10%)
 }
 
 export interface TimeRecord {

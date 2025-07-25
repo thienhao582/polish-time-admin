@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomerEnhanced } from "@/stores/useSalonStore";
+import { formatCurrency } from "@/lib/currencyUtils";
 
 interface CustomerDetailsProps {
   customer: CustomerEnhanced;
@@ -151,7 +152,7 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
               <div>
                 <p className="text-sm text-gray-600">Tổng chi tiêu</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {customer.totalSpent.toLocaleString()}đ
+                  {formatCurrency(customer.totalSpent)}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-600" />
@@ -218,7 +219,7 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-green-600">
-                      {visit.amount.toLocaleString()}đ
+                      {formatCurrency(visit.amount)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">

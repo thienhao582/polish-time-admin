@@ -27,6 +27,7 @@ import { CustomerForm } from "./CustomerForm";
 import { CustomerDetails } from "./CustomerDetails";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatCurrency } from "@/lib/currencyUtils";
 
 export const CustomerManagement = () => {
   const { enhancedCustomers, updateEnhancedCustomer, deleteEnhancedCustomer } = useSalonStore();
@@ -353,7 +354,7 @@ export const CustomerManagement = () => {
                     {customer.lastVisit ? new Date(customer.lastVisit).toLocaleDateString('vi-VN') : 'Chưa có'}
                   </TableCell>
                   <TableCell className="font-medium text-green-600">
-                    {customer.totalSpent.toLocaleString()}đ
+                    {formatCurrency(customer.totalSpent)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center space-x-2">

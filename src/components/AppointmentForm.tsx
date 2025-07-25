@@ -95,6 +95,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         
         if (existingCustomer) {
           customerId = existingCustomer.id;
+          toast.info("Khách hàng đã tồn tại, sử dụng thông tin khách cũ");
         } else {
           const newCustomer = await createCustomer({
             name: data.customerName,
@@ -102,6 +103,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
             email: data.customerEmail || null
           });
           customerId = newCustomer.id;
+          toast.success("Đã thêm khách hàng mới vào hệ thống");
         }
       }
 

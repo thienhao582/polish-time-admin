@@ -132,6 +132,7 @@ export type Database = {
       employees: {
         Row: {
           assigned_services: string[] | null
+          commission_rate: number | null
           created_at: string | null
           id: string
           name: string
@@ -145,6 +146,7 @@ export type Database = {
         }
         Insert: {
           assigned_services?: string[] | null
+          commission_rate?: number | null
           created_at?: string | null
           id?: string
           name: string
@@ -158,6 +160,7 @@ export type Database = {
         }
         Update: {
           assigned_services?: string[] | null
+          commission_rate?: number | null
           created_at?: string | null
           id?: string
           name?: string
@@ -301,6 +304,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      salary_earnings: {
+        Row: {
+          appointment_id: string
+          base_service_price: number
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          earned_date: string
+          employee_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          base_service_price: number
+          commission_amount: number
+          commission_rate: number
+          created_at?: string
+          earned_date: string
+          employee_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          base_service_price?: number
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          earned_date?: string
+          employee_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
