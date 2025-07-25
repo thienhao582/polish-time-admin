@@ -98,7 +98,7 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredMenuItems.map((item) => (
+              {filteredMenuItems.slice(0, 3).map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 
@@ -112,7 +112,7 @@ const AppSidebar = () => {
                 </SidebarMenuItem>
               ))}
               
-              {/* Employee Management Accordion */}
+              {/* Employee Management Accordion - Position 4 */}
               {hasPermission("manage_employees") && (
                 <Collapsible defaultOpen={isEmployeeSectionActive}>
                   <SidebarMenuItem>
@@ -147,6 +147,21 @@ const AppSidebar = () => {
                   </SidebarMenuItem>
                 </Collapsible>
               )}
+
+              {/* Remaining menu items */}
+              {filteredMenuItems.slice(3).map((item) => (
+                <SidebarMenuItem key={item.titleKey}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === item.url}
+                  >
+                    <Link to={item.url} className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span>{t(item.titleKey)}</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
