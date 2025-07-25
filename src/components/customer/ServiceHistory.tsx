@@ -27,7 +27,6 @@ export const ServiceHistory = () => {
       service: "Dịch vụ",
       employee: "Nhân viên",
       price: "Giá",
-      status: "Trạng thái",
       noData: "Không có lịch sử dịch vụ",
       totalVisits: "Tổng lượt",
       totalSpent: "Tổng chi tiêu",
@@ -43,7 +42,6 @@ export const ServiceHistory = () => {
       service: "Service",
       employee: "Employee",
       price: "Price",
-      status: "Status",
       noData: "No service history",
       totalVisits: "Total Visits",
       totalSpent: "Total Spent",
@@ -64,12 +62,12 @@ export const ServiceHistory = () => {
     return dateB.getTime() - dateA.getTime(); // Most recent first
   });
 
-  // Calculate customer stats (only for specific customer)
+  // Calculate customer stats (only for specific customer) - convert to USD
   const customerStats = {
     totalVisits: customerAppointments.length,
     totalSpent: customerAppointments.reduce((sum, apt) => {
       const price = typeof apt.price === 'string' ? parseFloat(apt.price) : apt.price;
-      return sum + (price || 0);
+      return sum + ((price || 0) / 24000); // Convert VND to USD (approximate rate)
     }, 0),
     lastVisit: customerAppointments.length > 0 ? customerAppointments[0].date : null
   };
@@ -159,10 +157,10 @@ export const ServiceHistory = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{text.totalSpent}</p>
-                  <p className="text-2xl font-bold">{customerStats.totalSpent.toLocaleString()}đ</p>
+                  <p className="text-2xl font-bold">${customerStats.totalSpent.toFixed(2)}</p>
                 </div>
                 <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-sm">₫</span>
+                  <span className="text-green-600 font-bold text-sm">$</span>
                 </div>
               </div>
             </CardContent>
@@ -207,7 +205,6 @@ export const ServiceHistory = () => {
                   <TableHead>{text.service}</TableHead>
                   <TableHead>{text.employee}</TableHead>
                   <TableHead>{text.price}</TableHead>
-                  <TableHead>{text.status}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -243,10 +240,7 @@ export const ServiceHistory = () => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {(typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price)?.toLocaleString()}đ
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(appointment.status || 'confirmed')}
+                      ${((typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price) / 24000).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
