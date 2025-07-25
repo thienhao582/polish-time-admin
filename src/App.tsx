@@ -42,7 +42,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="invoices" element={<Invoices />} />
-              <Route path="employees" element={
+              <Route path="employees/*" element={
                 <ProtectedRoute requiredPermission="manage_employees">
                   <EmployeeManagement />
                 </ProtectedRoute>

@@ -1,6 +1,7 @@
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog } from "lucide-react";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
+import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,8 +10,10 @@ const AppSidebar = () => {
   const location = useLocation();
   const { hasPermission } = useAuth();
   const { state } = useSidebar();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isCollapsed = state === "collapsed";
+  
+  const isEmployeeSectionActive = location.pathname.startsWith('/employees');
 
   const menuItems = [
     {
@@ -40,12 +43,6 @@ const AppSidebar = () => {
       icon: Receipt,
     },
     {
-      titleKey: "sidebar.employees",
-      url: "/employees",
-      icon: UserCog,
-      requiresPermission: "manage_employees"
-    },
-    {
       titleKey: "sidebar.timetracking",
       url: "/timetracking",
       icon: Clock,
@@ -67,6 +64,27 @@ const AppSidebar = () => {
   const filteredMenuItems = menuItems.filter(item => 
     !item.requiresPermission || hasPermission(item.requiresPermission)
   );
+
+  const employeeSubMenuItems = [
+    {
+      titleKey: "employee.general",
+      title: { vi: "Thông tin chung", en: "General Information" },
+      url: "/employees/general",
+      icon: User,
+    },
+    {
+      titleKey: "employee.salary",
+      title: { vi: "Tính lương", en: "Salary Management" },
+      url: "/employees/salary",
+      icon: Calculator,
+    },
+    {
+      titleKey: "employee.schedule", 
+      title: { vi: "Lịch làm việc", en: "Work Schedule" },
+      url: "/employees/schedule",
+      icon: CalendarDays,
+    }
+  ];
 
   return (
     <Sidebar collapsible="icon">
@@ -93,6 +111,42 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Employee Management Accordion */}
+              {hasPermission("manage_employees") && (
+                <Collapsible defaultOpen={isEmployeeSectionActive}>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className="flex items-center gap-2 justify-between">
+                        <div className="flex items-center gap-2">
+                          <UserCog className="h-4 w-4" />
+                          {!isCollapsed && <span>{t("sidebar.employees")}</span>}
+                        </div>
+                        {!isCollapsed && (
+                          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        )}
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {employeeSubMenuItems.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.titleKey}>
+                            <SidebarMenuSubButton 
+                              asChild
+                              isActive={location.pathname === subItem.url}
+                            >
+                              <Link to={subItem.url} className="flex items-center gap-2">
+                                <subItem.icon className="h-4 w-4" />
+                                <span>{subItem.title[language]}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

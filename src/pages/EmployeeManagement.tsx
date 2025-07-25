@@ -1,7 +1,7 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GeneralManagement } from "@/components/employee/GeneralManagement";
 import { SalaryManagement } from "@/components/employee/SalaryManagement";
@@ -9,25 +9,28 @@ import { WorkScheduleManagement } from "@/components/employee/WorkScheduleManage
 
 const EmployeeManagement = () => {
   const { language } = useLanguage();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const translations = {
     vi: {
       title: "Quản lý Nhân viên",
-      subtitle: "Quản lý thông tin, lương và lịch làm việc nhân viên",
-      general: "Thông tin chung",
-      salary: "Tính lương",
-      schedule: "Lịch làm việc"
+      subtitle: "Quản lý thông tin, lương và lịch làm việc nhân viên"
     },
     en: {
-      title: "Employee Management",
-      subtitle: "Manage employee information, salary and work schedule",
-      general: "General",
-      salary: "Salary",
-      schedule: "Schedule"
+      title: "Employee Management", 
+      subtitle: "Manage employee information, salary and work schedule"
     }
   };
 
   const text = translations[language];
+
+  // Redirect from /employees to /employees/general
+  useEffect(() => {
+    if (location.pathname === '/employees') {
+      navigate('/employees/general', { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   return (
     <div className="space-y-6">
@@ -39,23 +42,13 @@ const EmployeeManagement = () => {
       </div>
 
       <Card>
-        <CardContent className="p-0">
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="general">{text.general}</TabsTrigger>
-              <TabsTrigger value="salary">{text.salary}</TabsTrigger>
-              <TabsTrigger value="schedule">{text.schedule}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="general" className="p-6">
-              <GeneralManagement />
-            </TabsContent>
-            <TabsContent value="salary" className="p-6">
-              <SalaryManagement />
-            </TabsContent>
-            <TabsContent value="schedule" className="p-6">
-              <WorkScheduleManagement />
-            </TabsContent>
-          </Tabs>
+        <CardContent className="p-6">
+          <Routes>
+            <Route path="/" element={<Navigate to="general" replace />} />
+            <Route path="general" element={<GeneralManagement />} />
+            <Route path="salary" element={<SalaryManagement />} />
+            <Route path="schedule" element={<WorkScheduleManagement />} />
+          </Routes>
         </CardContent>
       </Card>
     </div>
