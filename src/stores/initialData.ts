@@ -237,17 +237,26 @@ const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
 const currentMonth = currentDate.getMonth() + 1;
 
-// Generate appointments for last month, current month, and next month
-const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-const nextMonthYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+// Generate appointments for 6 months: 3 months ago to 3 months from now
+const generateAppointmentsForRange = () => {
+  const appointments: Appointment[] = [];
+  let appointmentId = 1;
+  
+  // Generate for 6 months: -3 to +3 from current month
+  for (let monthOffset = -3; monthOffset <= 3; monthOffset++) {
+    const targetDate = new Date(currentYear, currentMonth - 1 + monthOffset, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+    
+    const monthAppointments = generateAppointmentsForMonth(targetYear, targetMonth, appointmentId);
+    appointments.push(...monthAppointments);
+    appointmentId += monthAppointments.length;
+  }
+  
+  return appointments;
+};
 
-export const initialAppointments: Appointment[] = [
-  ...generateAppointmentsForMonth(lastMonthYear, lastMonth, 1),
-  ...generateAppointmentsForMonth(currentYear, currentMonth, 200),
-  ...generateAppointmentsForMonth(nextMonthYear, nextMonth, 400)
-];
+export const initialAppointments: Appointment[] = generateAppointmentsForRange();
 
 // Generate enhanced customers with more realistic data
 export const initialEnhancedCustomers: CustomerEnhanced[] = Array.from({ length: 100 }, (_, index) => {
