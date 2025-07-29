@@ -1,6 +1,6 @@
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays, UserIcon, History } from "lucide-react";
+import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays, UserIcon, History, ClipboardList } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,11 @@ const AppSidebar = () => {
       titleKey: "sidebar.appointments",
       url: "/appointments",
       icon: Calendar,
+    },
+    {
+      titleKey: "sidebar.tasks",
+      url: "/tasks",
+      icon: ClipboardList,
     },
     {
       titleKey: "sidebar.services",
@@ -110,8 +115,8 @@ const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* First 2 items: Dashboard and Appointments */}
-              {filteredMenuItems.slice(0, 2).map((item) => (
+              {/* First 3 items: Dashboard, Appointments, and Tasks */}
+              {filteredMenuItems.slice(0, 3).map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 
@@ -195,8 +200,8 @@ const AppSidebar = () => {
                 </Collapsible>
               )}
 
-              {/* Remaining menu items (skip customers which is now position 3) */}
-              {filteredMenuItems.slice(2).map((item) => (
+              {/* Remaining menu items (skip first 3 items and customers) */}
+              {filteredMenuItems.slice(3).map((item) => (
                 <SidebarMenuItem key={item.titleKey}>
                   <SidebarMenuButton 
                     asChild 

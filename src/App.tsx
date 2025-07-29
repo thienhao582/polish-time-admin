@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
+import TaskManagement from "./pages/TaskManagement";
 import Customers from "./pages/Customers";
 import Services from "./pages/Services";
 import EmployeeManagement from "./pages/EmployeeManagement";
@@ -35,6 +36,7 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="appointments" element={<Appointments />} />
+              <Route path="tasks" element={<TaskManagement />} />
               <Route path="customers/*" element={<Customers />} />
               <Route path="services" element={
                 <ProtectedRoute requiredPermission="manage_services">

@@ -13,6 +13,7 @@ const translations = {
     // Sidebar menu
     'sidebar.dashboard': 'Dashboard',
     'sidebar.appointments': 'Lịch hẹn',
+    'sidebar.tasks': 'Quản lý công việc',
     'sidebar.customers': 'Khách hàng',
     'sidebar.services': 'Dịch vụ',
     'sidebar.invoices': 'Hóa đơn',
@@ -119,6 +120,7 @@ const translations = {
     // Sidebar menu
     'sidebar.dashboard': 'Dashboard',
     'sidebar.appointments': 'Appointments',
+    'sidebar.tasks': 'Task Management',
     'sidebar.customers': 'Customers',
     'sidebar.services': 'Services',
     'sidebar.invoices': 'Invoices',
