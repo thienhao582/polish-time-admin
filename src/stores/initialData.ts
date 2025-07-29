@@ -150,25 +150,63 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
   const daysInMonth = new Date(year, month, 0).getDate();
   let currentId = startId;
   
-  // Generate 8-15 appointments per day
-  for (let day = 1; day <= daysInMonth; day++) {
-    const appointmentsPerDay = Math.floor(Math.random() * 8) + 8; // 8-15 appointments
+  // Target ~100 appointments per month (3-4 per day)
+  const targetAppointments = 100;
+  let appointmentsCreated = 0;
+  
+  // Distribute appointments across days (3-4 per day)
+  for (let day = 1; day <= daysInMonth && appointmentsCreated < targetAppointments; day++) {
+    const appointmentsPerDay = 3 + Math.floor(Math.random() * 2); // 3-4 appointments per day
     
-    for (let i = 0; i < appointmentsPerDay; i++) {
+    for (let i = 0; i < appointmentsPerDay && appointmentsCreated < targetAppointments; i++) {
       const serviceIndex = Math.floor(Math.random() * serviceNames.length);
       const customerIndex = Math.floor(Math.random() * 100) + 1;
-      const employeeIndex = Math.floor(Math.random() * 50) + 1;
       
-      // Generate random time between 8:00 and 18:00
-      const hour = Math.floor(Math.random() * 10) + 8; // 8-17
-      const minute = Math.random() > 0.5 ? 0 : 30;
+      // Find employees who can do this service
+      const availableEmployees = initialEmployees.filter(emp => 
+        emp.assignedServices.includes((serviceIndex + 1).toString())
+      );
+      const employee = availableEmployees.length > 0 
+        ? availableEmployees[Math.floor(Math.random() * availableEmployees.length)]
+        : initialEmployees[Math.floor(Math.random() * 50)];
+      
+      // Spread appointments throughout the day (8:00 - 18:00)
+      const baseHour = 8 + Math.floor((i / appointmentsPerDay) * 10); // Distribute across 10 hours
+      const randomOffset = Math.floor(Math.random() * 120); // Random 0-120 minutes
+      const totalMinutes = baseHour * 60 + randomOffset;
+      const hour = Math.min(18, Math.floor(totalMinutes / 60));
+      const minute = totalMinutes % 60;
       
       const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
       
-      // Get employee and customer names from our generated data
-      const employee = initialEmployees[employeeIndex - 1];
+      // Get customer from our generated data
       const customer = initialCustomers[customerIndex - 1];
+      
+      // Determine status based on month
+      let status: string;
+      const currentDate = new Date();
+      const appointmentDate = new Date(year, month - 1, day);
+      
+      if (appointmentDate < currentDate) {
+        status = "completed";
+      } else if (appointmentDate.getTime() - currentDate.getTime() < 24 * 60 * 60 * 1000) {
+        // Today's appointments
+        status = Math.random() > 0.7 ? "completed" : "confirmed";
+      } else {
+        status = Math.random() > 0.9 ? "cancelled" : "confirmed";
+      }
+      
+      // Create staff salary data
+      const staffSalaryData = [{
+        staffId: employee.id,
+        staffName: employee.name,
+        serviceId: (serviceIndex + 1).toString(),
+        serviceName: serviceNames[serviceIndex],
+        commissionRate: 0.3,
+        fixedAmount: 0,
+        servicePrice: servicePrices[serviceIndex]
+      }];
       
       appointments.push({
         id: currentId++,
@@ -177,15 +215,18 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         customer: customer.name,
         phone: customer.phone,
         service: serviceNames[serviceIndex],
-        duration: serviceDurations[serviceIndex].toString(),
-        price: servicePrices[serviceIndex].toString(),
-        status: month < new Date().getMonth() + 1 ? "completed" : 
-               (Math.random() > 0.8 ? "cancelled" : "confirmed"),
+        duration: `${serviceDurations[serviceIndex]} phút`,
+        price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
+        status,
         staff: employee.name,
         customerId: customerIndex.toString(),
         serviceId: (serviceIndex + 1).toString(),
-        staffId: employeeIndex.toString(),
+        staffId: employee.id,
+        notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
+        staffSalaryData
       });
+      
+      appointmentsCreated++;
     }
   }
   
@@ -204,8 +245,8 @@ const nextMonthYear = currentMonth === 12 ? currentYear + 1 : currentYear;
 
 export const initialAppointments: Appointment[] = [
   ...generateAppointmentsForMonth(lastMonthYear, lastMonth, 1),
-  ...generateAppointmentsForMonth(currentYear, currentMonth, 500),
-  ...generateAppointmentsForMonth(nextMonthYear, nextMonth, 1000)
+  ...generateAppointmentsForMonth(currentYear, currentMonth, 200),
+  ...generateAppointmentsForMonth(nextMonthYear, nextMonth, 400)
 ];
 
 // Generate enhanced customers with more realistic data
