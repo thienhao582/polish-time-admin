@@ -15,6 +15,7 @@ import { AppointmentWeekView } from "@/components/appointments/AppointmentWeekVi
 import { AppointmentDayView } from "@/components/appointments/AppointmentDayView";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { toast } from "sonner";
 
@@ -50,34 +51,55 @@ const Appointments = () => {
   const [loading, setLoading] = useState(true);
 
   // Get employees from Zustand store and fetch appointments from Supabase
-  const { employees, initializeData } = useSalonStore();
+  const { employees, initializeData, appointments: demoAppointments } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
+  const { isDemoMode, setDemoMode } = useDemoMode();
 
-  // Load appointments from Supabase on component mount
+  // Load appointments on component mount and when demo mode changes
   useEffect(() => {
     loadAppointments();
-  }, []);
+  }, [isDemoMode]);
 
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const supabaseAppointments = await fetchAppointments();
       
-      // Transform Supabase appointments to legacy format for components
-      const transformedAppointments: LegacyAppointment[] = supabaseAppointments.map((apt, index) => ({
-        id: parseInt(apt.id) || index + 1, // Convert string id to number
-        date: apt.appointment_date,
-        time: apt.appointment_time,
-        customer: apt.customer_name,
-        phone: apt.customer_phone || "",
-        service: apt.service_name,
-        duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
-        price: apt.price ? `${apt.price.toLocaleString()}đ` : "",
-        status: apt.status,
-        staff: apt.employee_name || ""
-      }));
-      
-      setAppointments(transformedAppointments);
+      if (isDemoMode) {
+        // Use demo data from store
+        const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
+          id: apt.id,
+          date: apt.date,
+          time: apt.time,
+          customer: apt.customer,
+          phone: apt.phone,
+          service: apt.service,
+          duration: apt.duration,
+          price: apt.price,
+          status: apt.status,
+          staff: apt.staff
+        }));
+        
+        setAppointments(transformedAppointments);
+      } else {
+        // Use Supabase data
+        const supabaseAppointments = await fetchAppointments();
+        
+        // Transform Supabase appointments to legacy format for components
+        const transformedAppointments: LegacyAppointment[] = supabaseAppointments.map((apt, index) => ({
+          id: parseInt(apt.id) || index + 1, // Convert string id to number
+          date: apt.appointment_date,
+          time: apt.appointment_time,
+          customer: apt.customer_name,
+          phone: apt.customer_phone || "",
+          service: apt.service_name,
+          duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
+          price: apt.price ? `${apt.price.toLocaleString()}đ` : "",
+          status: apt.status,
+          staff: apt.employee_name || ""
+        }));
+        
+        setAppointments(transformedAppointments);
+      }
     } catch (error) {
       console.error("Error loading appointments:", error);
       toast.error("Không thể tải danh sách lịch hẹn");
@@ -229,9 +251,9 @@ const Appointments = () => {
           <Button 
             variant="outline" 
             onClick={() => {
+              setDemoMode(true);
               initializeData();
-              loadAppointments();
-              toast.success("Đã reset dữ liệu demo với 300 lịch hẹn!");
+              toast.success("Đã bật demo mode và tải 700 lịch hẹn!");
             }}
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
           >
