@@ -50,7 +50,7 @@ const Appointments = () => {
   const [loading, setLoading] = useState(true);
 
   // Get employees from Zustand store and fetch appointments from Supabase
-  const { employees } = useSalonStore();
+  const { employees, initializeData } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
 
   // Load appointments from Supabase on component mount
@@ -226,6 +226,18 @@ const Appointments = () => {
           <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              initializeData();
+              loadAppointments();
+              toast.success("Đã reset dữ liệu demo với 300 lịch hẹn!");
+            }}
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            Reset Demo Data
+          </Button>
+          
           <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="border-pink-600 text-pink-600 hover:bg-pink-50">
