@@ -14,7 +14,7 @@ import { vi } from "date-fns/locale";
 
 export function GeneralManagement() {
   const { language } = useLanguage();
-  const { employees, deleteEmployee } = useSalonStore();
+  const { employees, deleteEmployee, initializeData } = useSalonStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
 
@@ -133,13 +133,22 @@ export function GeneralManagement() {
           <h2 className="text-2xl font-bold text-gray-800">{text.title}</h2>
           <p className="text-gray-600 mt-1">{text.subtitle}</p>
         </div>
-        <Button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-pink-600 hover:bg-pink-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {text.addEmployee}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={initializeData}
+            variant="outline"
+            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+          >
+            Reset Demo Data
+          </Button>
+          <Button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-pink-600 hover:bg-pink-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {text.addEmployee}
+          </Button>
+        </div>
       </div>
 
       {/* Employee Stats */}
