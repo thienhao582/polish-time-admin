@@ -17,8 +17,8 @@ export const useSalonStore = create<SalonState>()(
       services: [...initialServices],
       customers: [...initialCustomers],
       appointments: [...initialAppointments],
-      nextAppointmentId: 4,
-      nextCustomerId: 4,
+      nextAppointmentId: 1500, // Updated for many appointments 
+      nextCustomerId: 101, // Updated for 100 customers
       
       // Enhanced customers state
       enhancedCustomers: [...initialEnhancedCustomers],
@@ -27,7 +27,7 @@ export const useSalonStore = create<SalonState>()(
       // Employee state (unified)
       employees: [...initialEmployees],
       timeRecords: [],
-      nextEmployeeId: 4,
+      nextEmployeeId: 51, // Updated to account for 50 employees
       nextTimeRecordId: 1,
       
       // Service actions
@@ -483,14 +483,14 @@ export const useSalonStore = create<SalonState>()(
         services: [...initialServices],
         customers: [...initialCustomers],
         appointments: [...initialAppointments],
-        nextAppointmentId: 4,
-        nextCustomerId: 4,
+        nextAppointmentId: 1500, // Updated for many appointments
+        nextCustomerId: 101, // Updated for 100 customers
         employees: [...initialEmployees],
         timeRecords: [],
-        nextEmployeeId: 4,
+        nextEmployeeId: 51, // Updated for 50 employees
         nextTimeRecordId: 1,
         enhancedCustomers: [...initialEnhancedCustomers],
-        nextEnhancedCustomerId: 5,
+        nextEnhancedCustomerId: 101, // Updated for 100 enhanced customers
       }),
     }),
     {
