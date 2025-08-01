@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TaskDashboardStats } from "@/components/task/TaskDashboardStats";
 import { TaskFilters } from "@/components/task/TaskFilters";
 import { TaskEmployeeCard } from "@/components/task/TaskEmployeeCard";
-import { TaskTimelineView } from "@/components/task/TaskTimelineView";
+
 import { useSalonStore } from "@/stores/useSalonStore";
 import { format, addMinutes, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -52,7 +52,7 @@ const TaskManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"cards" | "list" | "timeline">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update current time every minute
@@ -285,8 +285,8 @@ const TaskManagement = () => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Chế độ xem:</span>
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "cards" | "list" | "timeline")}>
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "cards" | "list")}>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cards" className="flex items-center gap-2">
                 <LayoutGrid className="h-4 w-4" />
                 <span className="hidden sm:inline">Thẻ</span>
@@ -294,10 +294,6 @@ const TaskManagement = () => {
               <TabsTrigger value="list" className="flex items-center gap-2">
                 <List className="h-4 w-4" />
                 <span className="hidden sm:inline">Danh sách</span>
-              </TabsTrigger>
-              <TabsTrigger value="timeline" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Timeline</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -320,11 +316,6 @@ const TaskManagement = () => {
             />
           ))}
         </div>
-      ) : viewMode === "timeline" ? (
-        <TaskTimelineView 
-          employees={filteredEmployees} 
-          currentTime={currentTime}
-        />
       ) : (
         <Card>
           <CardContent className="p-0">
