@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Clock, 
-  User, 
-  Calendar, 
-  Search, 
-  Filter,
-  CheckCircle,
-  AlertCircle,
-  Timer,
-  Users,
-  BarChart3
+  LayoutGrid,
+  List,
+  Calendar as CalendarIcon,
+  Shuffle,
+  User
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+// Import new components
+import { TaskDashboardStats } from "@/components/task/TaskDashboardStats";
+import { TaskFilters } from "@/components/task/TaskFilters";
+import { TaskEmployeeCard } from "@/components/task/TaskEmployeeCard";
+import { TaskTimelineView } from "@/components/task/TaskTimelineView";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { format, addMinutes, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -51,7 +51,8 @@ const TaskManagement = () => {
   const { employees, appointments, services } = useSalonStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"cards" | "list" | "timeline">("cards");
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update current time every minute
@@ -172,7 +173,23 @@ const TaskManagement = () => {
   const filteredEmployees = employeeStatuses.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || emp.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Service filter logic
+    let matchesService = true;
+    if (serviceFilter !== "all") {
+      if (emp.currentTask) {
+        const serviceName = emp.currentTask.serviceName.toLowerCase();
+        matchesService = 
+          (serviceFilter === "MANI" && serviceName.includes("mani")) ||
+          (serviceFilter === "PEDI" && serviceName.includes("pedi")) ||
+          (serviceFilter === "BGS" && serviceName.includes("gel")) ||
+          (serviceFilter === "OTHER" && !serviceName.includes("mani") && !serviceName.includes("pedi") && !serviceName.includes("gel"));
+      } else {
+        matchesService = false; // If no current task, doesn't match any specific service
+      }
+    }
+    
+    return matchesSearch && matchesStatus && matchesService;
   });
 
   // Statistics
@@ -218,6 +235,21 @@ const TaskManagement = () => {
     return `${hours}h ${remainingMinutes}p`;
   };
 
+  // Filter helpers
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (statusFilter !== "all") count++;
+    if (serviceFilter !== "all") count++;
+    return count;
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setServiceFilter("all");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -233,200 +265,65 @@ const TaskManagement = () => {
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng nhân viên</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang rảnh</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.available}</div>
-          </CardContent>
-        </Card>
+      {/* Enhanced Statistics Dashboard */}
+      <TaskDashboardStats stats={stats} />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang bận</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.busy}</div>
-          </CardContent>
-        </Card>
+      {/* Enhanced Filters */}
+      <TaskFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        serviceFilter={serviceFilter}
+        onServiceChange={setServiceFilter}
+        onClearFilters={clearFilters}
+        activeFiltersCount={getActiveFiltersCount()}
+      />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoàn thành</CardTitle>
-            <CheckCircle className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.finished}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lịch hẹn hôm nay</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Doanh thu hôm nay</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('vi-VN', { 
-                style: 'currency', 
-                currency: 'VND' 
-              }).format(stats.totalRevenue)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Controls */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm nhân viên..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[250px]"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
-              <Filter className="h-4 w-4" />
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="available">Rảnh</SelectItem>
-              <SelectItem value="busy">Đang bận</SelectItem>
-              <SelectItem value="finished">Hoàn thành</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* View Mode Tabs */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Chế độ xem:</span>
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "cards" | "list" | "timeline")}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="cards" className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">Thẻ</span>
+              </TabsTrigger>
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                <span className="hidden sm:inline">Danh sách</span>
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Timeline</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "list")}>
-          <TabsList>
-            <TabsTrigger value="grid">Lưới</TabsTrigger>
-            <TabsTrigger value="list">Danh sách</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Shuffle className="h-4 w-4" />
+          Hiển thị {filteredEmployees.length} / {employeeStatuses.length} nhân viên
+        </div>
       </div>
 
-      {/* Employee Grid/List */}
-      {viewMode === "grid" ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Dynamic View Content */}
+      {viewMode === "cards" ? (
+        <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredEmployees.map((employee) => (
-            <Card key={employee.id} className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
-                          {employee.name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${getStatusColor(employee.status)}`} />
-                    </div>
-                    <div>
-                      <p className="font-medium">{employee.name}</p>
-                      <p className="text-sm text-muted-foreground">{employee.role}</p>
-                    </div>
-                  </div>
-                  <Badge variant={employee.status === 'available' ? 'default' : 'secondary'}>
-                    {getStatusText(employee.status)}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                {/* Current Task */}
-                {employee.currentTask && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Timer className="h-4 w-4 text-red-600" />
-                      <span className="font-medium text-red-800">Đang làm</span>
-                    </div>
-                    <p className="text-sm font-medium">{employee.currentTask.customerName}</p>
-                    <p className="text-sm text-muted-foreground">{employee.currentTask.serviceName}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-muted-foreground">
-                        {employee.currentTask.startTime} - {employee.currentTask.endTime}
-                      </span>
-                      <span className="text-sm font-medium text-red-600">
-                        Còn {getTimeRemaining(employee.currentTask.endTime)}
-                      </span>
-                    </div>
-                    <div className="mt-2">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Tiến độ</span>
-                        <span>{employee.currentTask.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-red-600 h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${employee.currentTask.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Next Appointment */}
-                {employee.nextAppointment && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium text-blue-800">Lịch hẹn tiếp theo</span>
-                    </div>
-                    <p className="text-sm font-medium">{employee.nextAppointment.customerName}</p>
-                    <p className="text-sm text-muted-foreground">{employee.nextAppointment.serviceName}</p>
-                    <span className="text-sm text-blue-600">
-                      {employee.nextAppointment.startTime} - {employee.nextAppointment.endTime}
-                    </span>
-                  </div>
-                )}
-
-                {/* Available Status */}
-                {employee.status === 'available' && !employee.currentTask && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                    <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-green-800">Sẵn sàng nhận khách</p>
-                  </div>
-                )}
-
-                {/* Daily Stats */}
-                <div className="flex justify-between text-sm">
-                  <span>Hôm nay: {employee.todayAppointments} lịch hẹn</span>
-                  <span>{new Intl.NumberFormat('vi-VN').format(employee.revenue)}đ</span>
-                </div>
-              </CardContent>
-            </Card>
+            <TaskEmployeeCard 
+              key={employee.id} 
+              employee={employee} 
+              getTimeRemaining={getTimeRemaining}
+            />
           ))}
         </div>
+      ) : viewMode === "timeline" ? (
+        <TaskTimelineView 
+          employees={filteredEmployees} 
+          currentTime={currentTime}
+        />
       ) : (
         <Card>
           <CardContent className="p-0">
