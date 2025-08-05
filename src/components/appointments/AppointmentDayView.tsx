@@ -190,8 +190,8 @@ export function AppointmentDayView({
       </div>
 
       {/* Scrollable Grid Container */}
-      <div className="flex-1 overflow-auto">
-        <div className="flex min-w-max">
+      <div className="flex-1 overflow-auto max-h-[calc(100vh-280px)]">
+        <div className="flex min-w-max">{/* Ensure horizontal scroll when content exceeds width */}
           {/* Time column */}
           <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-10">
             <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
@@ -214,7 +214,7 @@ export function AppointmentDayView({
             </div>
           ) : (
             workingEmployees.map((employee) => (
-              <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '150px' }}>
+              <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '140px' }}>
                 {/* Employee header */}
                 <div className="h-12 border-b border-gray-200 bg-white p-1 flex items-center justify-center">
                   <div className="text-center">
