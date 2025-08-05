@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Maximize2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -347,30 +347,23 @@ const Appointments = () => {
         </>
       )}
 
-      {/* Maximize Mode - Show only filters with minimize button */}
+      {/* Maximize Mode - Show only minimize button */}
       {isMaximized && (
-        <div className="sticky top-0 z-40 bg-white pb-2 border-b">
-          <AppointmentFilters
-            displayMode={displayMode}
-            setDisplayMode={setDisplayMode}
-            selectedStaffIds={selectedStaffIds}
-            setSelectedStaffIds={setSelectedStaffIds}
-            filteredAppointmentsCount={filteredAppointments.length}
-            onMaximize={handleMaximize}
-            showFullView={showFullView}
-            setShowFullView={setShowFullView}
-             viewMode={viewMode}
-             selectedDate={selectedDate}
-             filteredAppointments={filteredAppointments}
-             showAvailableStaffSidebar={showAvailableStaffSidebar}
-             setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
-             isMaximized={isMaximized}
-          />
+        <div className="absolute top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleMaximize}
+            className="gap-2 bg-white shadow-lg"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Thu nhỏ
+          </Button>
         </div>
       )}
 
       {/* Main Content with Sidebar - Full Height Container */}
-      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden w-full">
+      <div className={`flex-1 flex gap-4 min-h-0 overflow-hidden w-full ${isMaximized ? 'h-full' : ''}`}>
         {/* Calendar View - Calculate max width based on available space */}
         <div className={`transition-all duration-300 min-w-0 overflow-hidden flex-1`}>
           <Card className="h-full overflow-hidden">
