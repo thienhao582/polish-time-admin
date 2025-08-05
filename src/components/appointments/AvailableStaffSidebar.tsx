@@ -20,19 +20,44 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments }: Av
     const dateString = format(selectedDate, "yyyy-MM-dd");
     const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
     
-    const staffAvailability = employees.map(employee => {
+    console.log("AvailableStaffSidebar Debug:", {
+      dateString,
+      totalEmployees: employees.length,
+      totalTimeRecords: timeRecords.length,
+      dayAppointments: dayAppointments.length,
+      timeRecordsForDate: timeRecords.filter(tr => format(new Date(tr.date), "yyyy-MM-dd") === dateString).length
+    });
+    
+    // Filter to only technicians who do services
+    const serviceEmployees = employees.filter(emp => 
+      emp.role === "thợ" || emp.role === "thợ chính" || emp.role === "phụ tá"
+    );
+    
+    const staffAvailability = serviceEmployees.map(employee => {
       // Check if employee has time record for this date (is working)
       const timeRecord = timeRecords.find(tr => 
         tr.employeeId === employee.id && 
         format(new Date(tr.date), "yyyy-MM-dd") === dateString
       );
       
-      if (!timeRecord || timeRecord.status === 'absent') {
-        return null; // Don't show employees not working or absent
+      // If no time records exist for any employee, show all service employees
+      // If time records exist but this employee doesn't have one, don't show them
+      const hasAnyTimeRecords = timeRecords.length > 0;
+      const hasTimeRecordForDate = timeRecords.some(tr => format(new Date(tr.date), "yyyy-MM-dd") === dateString);
+      
+      if (hasAnyTimeRecords && hasTimeRecordForDate && (!timeRecord || timeRecord.status === 'absent')) {
+        return null; // Don't show employees not working or absent when time records exist
+      }
+      
+      // If no time records system in place, show all service employees
+      if (!hasAnyTimeRecords || !hasTimeRecordForDate) {
+        // Show all service employees when no time tracking
       }
 
-      // Get employee's appointments for the day
-      const employeeAppointments = dayAppointments.filter(apt => apt.staff === employee.name);
+      // Get employee's appointments for the day  
+      const employeeAppointments = dayAppointments.filter(apt => 
+        apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
+      );
       
       // Calculate priority based on current status
       let priority = 0;
@@ -87,6 +112,12 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments }: Av
         appointmentCount: employeeAppointments.length
       };
     }).filter(Boolean);
+
+    console.log("Staff availability result:", {
+      serviceEmployees: serviceEmployees.length,
+      availableStaff: staffAvailability.length,
+      sampleStaff: staffAvailability.slice(0, 3).map(s => s?.employee.name)
+    });
 
     // Sort by priority (1 = highest priority)
     return staffAvailability.sort((a, b) => a!.priority - b!.priority);
