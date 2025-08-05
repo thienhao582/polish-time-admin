@@ -25,6 +25,7 @@ interface AppointmentFiltersProps {
   filteredAppointments?: any[];
   showAvailableStaffSidebar?: boolean;
   setShowAvailableStaffSidebar?: (show: boolean) => void;
+  isMaximized?: boolean;
 }
 
 export function AppointmentFilters({
@@ -40,7 +41,8 @@ export function AppointmentFilters({
   selectedDate,
   filteredAppointments,
   showAvailableStaffSidebar,
-  setShowAvailableStaffSidebar
+  setShowAvailableStaffSidebar,
+  isMaximized = false
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
   const { t } = useLanguage();
@@ -173,7 +175,7 @@ export function AppointmentFilters({
             className="gap-2"
           >
             <Maximize2 className="w-4 h-4" />
-            Phóng to
+            {isMaximized ? 'Thu nhỏ' : 'Phóng to'}
           </Button>
         </div>
       </div>

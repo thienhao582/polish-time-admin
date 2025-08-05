@@ -253,14 +253,16 @@ const Appointments = () => {
 
   return (
     <div className={`h-screen flex flex-col overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-white' : ''}`}>
-      {/* Fixed Header with Action Buttons */}
-      <div className="sticky top-0 z-40 bg-white pb-4 border-b">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">{t('appointments.title')}</h1>
-            <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
+      {/* Fixed Header with Action Buttons - Hide when maximized */}
+      {!isMaximized && (
+        <>
+          <div className="sticky top-0 z-40 bg-white pb-4 border-b">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">{t('appointments.title')}</h1>
+                <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={() => {
@@ -327,6 +329,7 @@ const Appointments = () => {
          filteredAppointments={filteredAppointments}
          showAvailableStaffSidebar={showAvailableStaffSidebar}
          setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
+         isMaximized={isMaximized}
       />
 
       {/* View Controls */}
@@ -341,6 +344,30 @@ const Appointments = () => {
           />
         </CardContent>
       </Card>
+        </>
+      )}
+
+      {/* Maximize Mode - Show only filters with minimize button */}
+      {isMaximized && (
+        <div className="sticky top-0 z-40 bg-white pb-2 border-b">
+          <AppointmentFilters
+            displayMode={displayMode}
+            setDisplayMode={setDisplayMode}
+            selectedStaffIds={selectedStaffIds}
+            setSelectedStaffIds={setSelectedStaffIds}
+            filteredAppointmentsCount={filteredAppointments.length}
+            onMaximize={handleMaximize}
+            showFullView={showFullView}
+            setShowFullView={setShowFullView}
+             viewMode={viewMode}
+             selectedDate={selectedDate}
+             filteredAppointments={filteredAppointments}
+             showAvailableStaffSidebar={showAvailableStaffSidebar}
+             setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
+             isMaximized={isMaximized}
+          />
+        </div>
+      )}
 
       {/* Main Content with Sidebar - Full Height Container */}
       <div className="flex-1 flex gap-4 min-h-0 overflow-hidden w-full">
