@@ -181,11 +181,11 @@ export function AppointmentDayView({
         </p>
       </div>
 
-      {/* Scrollable Grid Container */}
+      {/* Fixed Width Grid Container with Internal Scrolling */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-auto">
-          <div className="flex min-w-max">
-            {/* Time column */}
+        <div className="h-[calc(100vh-300px)] w-full overflow-auto border-2 border-gray-200 rounded-lg bg-white">
+          <div className="flex" style={{ minWidth: `${Math.max(1200, workingEmployees.length * 140 + 80)}px` }}>
+            {/* Time column - sticky left */}
             <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30">
               <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">Giờ</span>
@@ -227,12 +227,6 @@ export function AppointmentDayView({
                       appointmentStartsAtSlot(apt, timeSlot)
                     );
                     
-                    console.log(`Rendering ${employee.name} at ${timeSlot}:`, {
-                      employeeAppointments: employeeAppointments.length,
-                      startingAppointments: startingAppointments.length,
-                      appointments: startingAppointments.map(apt => apt.customer)
-                    });
-                    
                     return (
                       <div 
                         key={`${employee.id}-${timeSlot}`} 
@@ -273,19 +267,9 @@ export function AppointmentDayView({
                                 handleAppointmentClick(apt, e);
                               }}
                             >
-                              {displayMode === "staff" ? (
-                                <div className="font-bold truncate">
-                                  {apt.customer}
-                                </div>
-                              ) : displayMode === "customer" ? (
-                                <div className="font-bold truncate">
-                                  {apt.customer}
-                                </div>
-                              ) : (
-                                <div className="font-bold truncate">
-                                  {apt.customer}
-                                </div>
-                              )}
+                              <div className="font-bold truncate">
+                                {apt.customer}
+                              </div>
                               <div className="truncate text-xs opacity-90">
                                 {apt.service}
                               </div>
