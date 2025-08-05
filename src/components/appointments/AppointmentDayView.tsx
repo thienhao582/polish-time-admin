@@ -163,7 +163,7 @@ export function AppointmentDayView({
                       return (
                         <div
                           key={`${apt.id}-${aptIndex}`}
-                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors z-10 animate-fade-in"
+                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors z-20"
                           style={{
                             top: '4px',
                             left: `${aptIndex * widthPercentage + 1}%`,
@@ -219,7 +219,7 @@ export function AppointmentDayView({
                     }).map((apt, index) => (
                       <div
                         key={`continuation-${apt.id}-${index}`}
-                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-30"
+                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 z-5"
                         style={{
                           left: `${index * 50}%`,
                           width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`
