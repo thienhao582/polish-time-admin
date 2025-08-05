@@ -1,6 +1,6 @@
 
-import { format, isSameDay, parseISO } from "date-fns";
-import { AppointmentOverflow } from "./AppointmentOverflow";
+import { format } from "date-fns";
+import { useSalonStore } from "@/stores/useSalonStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 
 interface Appointment {
@@ -32,12 +32,52 @@ export function AppointmentDayView({
   showFullView
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
+  const { employees, timeRecords } = useSalonStore();
   
-  // Filter appointments for the selected day - using simple string comparison like WeekView
+  // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
 
+  // Get working employees for this date
+  const getWorkingEmployees = () => {
+    const workingEmployees = employees.filter(employee => {
+      // Check if employee has time record for this date (is working)
+      const timeRecord = timeRecords.find(tr => 
+        tr.employeeId === employee.id && 
+        format(new Date(tr.date), "yyyy-MM-dd") === dateString
+      );
+      
+      return timeRecord && timeRecord.status !== 'absent';
+    });
 
-  // Create time slots from 8 AM to 9 PM (to match the time selector in the form)
+    // Sort employees by priority: those with appointments first, then by appointment time
+    const employeesWithAppointments = workingEmployees.map(employee => {
+      const employeeAppointments = dayAppointments.filter(apt => 
+        apt.staff.includes(employee.name)
+      );
+      
+      const earliestAppointmentTime = employeeAppointments.length > 0 
+        ? Math.min(...employeeAppointments.map(apt => timeToMinutes(apt.time)))
+        : Infinity;
+      
+      return {
+        employee,
+        appointmentCount: employeeAppointments.length,
+        earliestTime: earliestAppointmentTime
+      };
+    });
+
+    // Sort by: 1) Has appointments (ascending), 2) Earliest appointment time (ascending)
+    return employeesWithAppointments
+      .sort((a, b) => {
+        if (a.appointmentCount === 0 && b.appointmentCount === 0) return 0;
+        if (a.appointmentCount === 0) return 1;
+        if (b.appointmentCount === 0) return -1;
+        return a.earliestTime - b.earliestTime;
+      })
+      .map(item => item.employee);
+  };
+
+  // Create time slots from 8 AM to 9 PM
   const allTimeSlots = [];
   for (let hour = 8; hour <= 21; hour++) {
     allTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
@@ -49,7 +89,7 @@ export function AppointmentDayView({
   // Helper function to parse duration from string like "60 phút" to minutes
   const parseDuration = (durationStr: string): number => {
     const match = durationStr.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 30; // Default 30 minutes if can't parse
+    return match ? parseInt(match[1]) : 30;
   };
 
   // Helper function to convert time string to minutes since midnight
@@ -58,152 +98,171 @@ export function AppointmentDayView({
     return hours * 60 + minutes;
   };
 
-  // Helper function to convert minutes since midnight back to time string
-  const minutesToTime = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-  };
-
-  // Check if an appointment overlaps with a specific time slot
-  const appointmentOverlapsTimeSlot = (apt: Appointment, timeSlot: string): boolean => {
-    const aptStartMinutes = timeToMinutes(apt.time);
-    const aptDurationMinutes = parseDuration(apt.duration);
-    const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
-    
+  // Get appointments for a specific employee and time slot
+  const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
     const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 30; // Each slot is 30 minutes
+    const slotEndMinutes = slotStartMinutes + 30;
     
-    // Check if appointment overlaps with this time slot
-    return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
+    return dayAppointments.filter(apt => {
+      if (!apt.staff.includes(employee.name)) return false;
+      
+      const aptStartMinutes = timeToMinutes(apt.time);
+      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
+      
+      // Check if appointment overlaps with this time slot
+      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
+    });
   };
 
-  const getAppointmentsForTimeSlot = (timeSlot: string) => {
-    const appointments = dayAppointments.filter(apt => 
-      appointmentOverlapsTimeSlot(apt, timeSlot)
-    );
-    
-    return appointments;
-  };
-
-  // Calculate how many slots an appointment spans
-  const getAppointmentSpan = (apt: Appointment, startTimeSlot: string): { span: number, isStart: boolean } => {
+  // Check if an appointment starts at this time slot
+  const appointmentStartsAtSlot = (apt: Appointment, timeSlot: string): boolean => {
     const aptStartMinutes = timeToMinutes(apt.time);
-    const aptDurationMinutes = parseDuration(apt.duration);
-    const slotStartMinutes = timeToMinutes(startTimeSlot);
-    
-    const isStart = aptStartMinutes === slotStartMinutes;
-    const slotsSpanned = Math.ceil(aptDurationMinutes / 30);
-    
-    return { span: slotsSpanned, isStart };
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 30;
   };
+
+  const workingEmployees = getWorkingEmployees();
 
   // Filter time slots based on showFullView setting
   const timeSlots = showFullView 
     ? allTimeSlots 
     : allTimeSlots.filter(timeSlot => {
-        const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
-        return timeSlotAppointments.length > 0;
+        return dayAppointments.some(apt => {
+          const aptStartMinutes = timeToMinutes(apt.time);
+          const slotStartMinutes = timeToMinutes(timeSlot);
+          const slotEndMinutes = slotStartMinutes + 30;
+          return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration) > slotStartMinutes;
+        });
       });
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-x-auto">
       {/* Header */}
-      <div className="bg-gray-50 p-4 border-b">
-        <h3 className="font-medium text-lg">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-200">
+        <h3 className="font-semibold text-lg text-gray-800">
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
         <p className="text-sm text-gray-600">
-          {dayAppointments.length} lịch hẹn
+          {dayAppointments.length} lịch hẹn • {workingEmployees.length} nhân viên đang làm việc
         </p>
       </div>
 
-      {/* Timeline */}
-      <div className="flex">
+      {/* Grid Layout */}
+      <div className="flex min-w-max">
         {/* Time column */}
-        <div className="w-20 bg-gray-50 border-r">
+        <div className="w-20 bg-gray-50 border-r border-gray-200">
+          <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
+            <span className="text-xs font-medium text-gray-600">Giờ</span>
+          </div>
           {timeSlots.map((timeSlot) => (
-            <div key={timeSlot} className="h-16 p-2 border-b text-sm text-gray-600 font-medium flex items-center">
+            <div 
+              key={timeSlot} 
+              className="h-14 p-1 border-b border-gray-200 text-xs text-gray-700 font-medium flex items-center justify-center bg-gray-50"
+            >
               {timeSlot}
             </div>
           ))}
         </div>
 
-        {/* Appointments column */}
-        <div className="flex-1 relative">
-          {timeSlots.map((timeSlot, index) => {
-            const timeSlotAppointments = getAppointmentsForTimeSlot(timeSlot);
-            
-            // Only render appointments that start at this time slot
-            const startingAppointments = timeSlotAppointments.filter(apt => {
-              const aptStartMinutes = timeToMinutes(apt.time);
-              const slotStartMinutes = timeToMinutes(timeSlot);
-              // Check if appointment starts within this 30-minute slot
-              return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 30;
-            });
-            
-            return (
-              <div key={timeSlot} className="h-16 border-b bg-white hover:bg-gray-50 relative">
-                {startingAppointments.map((apt, aptIndex) => {
-                  const durationMinutes = parseDuration(apt.duration);
-                  const slotsSpanned = Math.ceil(durationMinutes / 30);
-                  const heightInPixels = slotsSpanned * 64; // 64px per slot (h-16)
-                  const widthPercentage = 100 / startingAppointments.length; // Divide width equally
-                  
-                  return (
-                    <div
-                      key={`${apt.id}-${aptIndex}`}
-                      className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors shadow-sm"
-                      style={{
-                        top: '2px',
-                        left: `${aptIndex * widthPercentage + 0.5}%`,
-                        width: `${widthPercentage - 1}%`,
-                        height: `${heightInPixels - 4}px`,
-                        minHeight: '60px',
-                        zIndex: 10
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleAppointmentClick(apt, e);
-                      }}
-                    >
-                      {displayMode === "customer" ? (
-                        <div className="text-xs font-bold text-blue-800 truncate">
-                          {apt.customer}
-                        </div>
-                      ) : displayMode === "staff" ? (
-                        <div className="text-xs font-bold text-blue-800 truncate">
-                          {apt.staff}
-                        </div>
-                      ) : (
-                        <>
-                          <div className="text-xs font-bold text-blue-800 truncate">
-                            {apt.customer}
-                          </div>
-                          <div className="text-xs font-medium text-blue-700 truncate">
-                            {apt.staff}
-                          </div>
-                        </>
-                      )}
-                      <div className="text-xs text-blue-600 truncate mt-1">
-                        {apt.service}
-                      </div>
-                      <div className="text-xs text-blue-500 mt-1">
-                        {formatTimeRange(apt.time, apt.duration)}
-                      </div>
-                      {apt.phone && startingAppointments.length === 1 && (
-                        <div className="text-xs text-blue-500 truncate">
-                          {apt.phone}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+        {/* Employee columns */}
+        {workingEmployees.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
+            Không có nhân viên nào đang làm việc hôm nay
+          </div>
+        ) : (
+          workingEmployees.map((employee) => (
+            <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '200px' }}>
+              {/* Employee header */}
+              <div className="h-12 border-b border-gray-200 bg-white p-2 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-gray-800 truncate">
+                    {employee.name}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {employee.role}
+                  </div>
+                </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Time slots for this employee */}
+              {timeSlots.map((timeSlot) => {
+                const employeeAppointments = getEmployeeAppointmentsForTimeSlot(employee, timeSlot);
+                const startingAppointments = employeeAppointments.filter(apt => 
+                  appointmentStartsAtSlot(apt, timeSlot)
+                );
+                
+                return (
+                  <div 
+                    key={`${employee.id}-${timeSlot}`} 
+                    className="h-14 border-b border-gray-200 bg-white hover:bg-gray-50 relative p-1"
+                  >
+                    {startingAppointments.map((apt, aptIndex) => {
+                      const durationMinutes = parseDuration(apt.duration);
+                      const slotsSpanned = Math.ceil(durationMinutes / 30);
+                      const heightInPixels = slotsSpanned * 56 - 4; // 56px per slot (h-14) minus border
+                      
+                      // Color based on service type or status
+                      const getAppointmentColor = () => {
+                        if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
+                        if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
+                        if (apt.service.toLowerCase().includes('nail')) return 'bg-pink-100 border-pink-300 text-pink-800';
+                        if (apt.service.toLowerCase().includes('wax')) return 'bg-purple-100 border-purple-300 text-purple-800';
+                        if (apt.service.toLowerCase().includes('pedicure')) return 'bg-blue-100 border-blue-300 text-blue-800';
+                        return 'bg-yellow-100 border-yellow-300 text-yellow-800';
+                      };
+                      
+                      return (
+                        <div
+                          key={`${apt.id}-${aptIndex}`}
+                          className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs overflow-hidden`}
+                          style={{
+                            top: '2px',
+                            left: `${aptIndex * 50}%`,
+                            width: startingAppointments.length > 1 ? '48%' : '96%',
+                            height: `${heightInPixels}px`,
+                            minHeight: '50px',
+                            zIndex: 10
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAppointmentClick(apt, e);
+                          }}
+                        >
+                          {displayMode === "staff" ? (
+                            <div className="font-bold truncate">
+                              {apt.customer}
+                            </div>
+                          ) : displayMode === "customer" ? (
+                            <div className="font-bold truncate">
+                              {apt.customer}
+                            </div>
+                          ) : (
+                            <div className="font-bold truncate">
+                              {apt.customer}
+                            </div>
+                          )}
+                          <div className="truncate text-xs opacity-90">
+                            {apt.service}
+                          </div>
+                          <div className="text-xs opacity-80">
+                            {apt.time}
+                          </div>
+                          {durationMinutes >= 60 && (
+                            <div className="text-xs opacity-75">
+                              {apt.duration}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
