@@ -41,7 +41,9 @@ export function AppointmentDayView({
     dateString,
     totalFiltered: filteredAppointments.length,
     dayAppointments: dayAppointments.length,
-    firstFewAppointments: dayAppointments.slice(0, 3)
+    firstFewAppointments: dayAppointments.slice(0, 5),
+    allStaffNames: dayAppointments.map(apt => apt.staff),
+    uniqueStaffNames: [...new Set(dayAppointments.map(apt => apt.staff))]
   });
 
   // Get working employees for this date (only service staff, not managers/reception)
@@ -50,24 +52,16 @@ export function AppointmentDayView({
     const staffNamesInAppointments = [...new Set(dayAppointments.map(apt => apt.staff))];
     
     console.log("Staff names in appointments:", staffNamesInAppointments);
+    console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role })));
     
-    // Find employees that match the staff names in appointments
-    const employeesWithAppointments = employees.filter(employee => {
-      const hasAppointment = staffNamesInAppointments.some(staffName => 
-        staffName.includes(employee.name) || employee.name.includes(staffName)
-      );
-      return hasAppointment;
-    });
-
-    // If no matching employees found, create virtual employees from staff names
-    const finalEmployees = employeesWithAppointments.length > 0 
-      ? employeesWithAppointments 
-      : staffNamesInAppointments.map((staffName, index) => ({
-          id: `virtual-${index}`,
-          name: staffName,
-          role: "Nhân viên",
-          specialties: []
-        }));
+    // Instead of trying to match with existing employees, just create virtual employees from appointment staff names
+    // This ensures all staff with appointments are displayed
+    const finalEmployees = staffNamesInAppointments.map((staffName, index) => ({
+      id: `virtual-${index}`,
+      name: staffName,
+      role: "thợ",
+      specialties: []
+    }));
 
     console.log("Final employees for day view:", finalEmployees.map(e => e.name));
     
@@ -92,7 +86,6 @@ export function AppointmentDayView({
       totalEmployees: employees.length,
       dayAppointments: dayAppointments.length,
       staffNamesInAppointments: staffNamesInAppointments.length,
-      employeesWithAppointments: employeesWithAppointments.length,
       finalEmployees: finalEmployees.length,
       employeeNames: finalEmployees.map(e => e.name)
     });
