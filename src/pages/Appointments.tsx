@@ -252,7 +252,7 @@ const Appointments = () => {
   }
 
   return (
-    <div className={`space-y-6 ${isMaximized ? 'fixed inset-0 z-50 bg-white p-6 overflow-auto' : ''}`}>
+    <div className={`h-screen flex flex-col ${isMaximized ? 'fixed inset-0 z-50 bg-white overflow-hidden' : ''}`}>
       {/* Fixed Header with Action Buttons */}
       <div className="sticky top-0 z-40 bg-white pb-4 border-b">
         <div className="flex justify-between items-center">
@@ -342,14 +342,14 @@ const Appointments = () => {
         </CardContent>
       </Card>
 
-      {/* Main Content with Sidebar */}
-      <div className="flex gap-6">
+      {/* Main Content with Sidebar - Full Height Container */}
+      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
         {/* Calendar View */}
-        <div className={`transition-all duration-300 ${
+        <div className={`transition-all duration-300 min-w-0 ${
           viewMode === "day" && showAvailableStaffSidebar ? 'flex-[2]' : 'flex-1'
         }`}>
-          <Card>
-            <CardContent className="p-6">
+          <Card className="h-full">
+            <CardContent className="p-0 h-full">
               {viewMode === "month" && (
                 <AppointmentMonthView
                   selectedDate={selectedDate}
@@ -385,7 +385,7 @@ const Appointments = () => {
         {/* Available Staff Sidebar */}
         {viewMode === "day" && showAvailableStaffSidebar && (
           <div className="w-64 flex-shrink-0">
-            <Card className="h-[calc(100vh-200px)]">
+            <Card className="h-full">
               <CardContent className="p-3 h-full">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-sm">Nhân viên sẵn sàng</h3>

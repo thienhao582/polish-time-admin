@@ -169,24 +169,22 @@ export function AppointmentDayView({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-200 flex-shrink-0">
-        <h3 className="font-semibold text-lg text-gray-800">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-blue-200 flex-shrink-0">
+        <h3 className="font-semibold text-base text-gray-800">
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
         <p className="text-sm text-gray-600">
           {dayAppointments.length} lịch hẹn • {workingEmployees.length} nhân viên ({employees.length} tổng)
         </p>
-        <p className="text-xs text-gray-500">
-          Debug: timeRecords={timeRecords.length}, selectedDate={dateString}
-        </p>
       </div>
 
       {/* Fixed Width Grid Container with Internal Scrolling */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-[calc(100vh-300px)] w-full overflow-auto border-2 border-gray-200 rounded-lg bg-white">
-          <div className="flex" style={{ minWidth: `${Math.max(1200, workingEmployees.length * 140 + 80)}px` }}>
+        <div className="h-full w-full overflow-auto">
+          <div className="flex" style={{ minWidth: `${Math.max(1400, workingEmployees.length * 140 + 80)}px` }}>
+            {/* Ensure minimum width forces horizontal scroll when needed */}
             {/* Time column - sticky left */}
-            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30">
+            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm">
               <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">Giờ</span>
               </div>
