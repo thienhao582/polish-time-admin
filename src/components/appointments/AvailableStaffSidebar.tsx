@@ -134,64 +134,48 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments, isCo
   // If isContentOnly is true, return only the content without Sheet wrapper
   if (isContentOnly) {
     return (
-      <div className="mt-4">
+      <div className="h-full flex flex-col">
+        <div className="flex-shrink-0 mb-2">
+          <div className="text-xs text-muted-foreground">
+            Sắp xếp: Rảnh → Sắp xong → Đang bận
+          </div>
+        </div>
+        
         {availableStaff.length === 0 ? (
-          <div className="text-center py-6">
-            <Users className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-xs text-muted-foreground">
-              Không có nhân viên nào đang làm việc hôm nay
+          <div className="flex-1 flex flex-col items-center justify-center py-4">
+            <Users className="w-6 h-6 text-muted-foreground mb-2" />
+            <p className="text-xs text-muted-foreground text-center">
+              Không có nhân viên làm việc hôm nay
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground mb-3">
-              Sắp xếp theo độ ưu tiên: Rảnh → Sắp xong → Đang bận
-            </div>
-            
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
             {availableStaff.map((staff, index) => (
               <div 
                 key={staff!.employee.id} 
-                className="p-2 rounded-md border bg-card hover:bg-accent/50 transition-colors"
+                className="p-2 rounded border bg-card hover:bg-accent/30 transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 mb-1">
-                      <span className="text-xs font-medium truncate">{staff!.employee.name}</span>
-                      <Badge 
-                        variant={
-                          staff!.status === "Rảnh" ? "default" : 
-                          staff!.status === "Sắp xong" ? "secondary" : 
-                          "outline"
-                        }
-                        className="text-xs h-4 px-1"
-                      >
-                        {staff!.status}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                      <Clock className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">{staff!.nextAvailable}</span>
-                    </div>
-                    
-                    {staff!.appointmentCount > 0 && (
-                      <div className="text-xs text-muted-foreground">
-                        📅 {staff!.appointmentCount} lịch
-                      </div>
-                    )}
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-xs font-medium truncate">{staff!.employee.name}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      staff!.status === "Rảnh" ? 'bg-green-500' : 
+                      staff!.status === "Sắp xong" ? 'bg-orange-500' : 
+                      'bg-red-500'
+                    }`} />
                   </div>
-                  
-                  <div className="ml-2 flex items-center">
-                    <span className="text-xs text-muted-foreground mr-1">#{index + 1}</span>
-                    {staff!.status === "Rảnh" ? (
-                      <CheckCircle className="w-3 h-3 text-green-500" />
-                    ) : staff!.status === "Sắp xong" ? (
-                      <Clock className="w-3 h-3 text-orange-500" />
-                    ) : (
-                      <XCircle className="w-3 h-3 text-red-500" />
-                    )}
-                  </div>
+                  <span className="text-xs text-muted-foreground">#{index + 1}</span>
                 </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  {staff!.status === "Rảnh" ? "Có thể nhận lịch" : staff!.nextAvailable}
+                </div>
+                
+                {staff!.appointmentCount > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    📅 {staff!.appointmentCount} lịch
+                  </div>
+                )}
               </div>
             ))}
           </div>

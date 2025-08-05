@@ -381,14 +381,14 @@ const Appointments = () => {
 
         {/* Available Staff Sidebar */}
         {viewMode === "day" && showAvailableStaffSidebar && (
-          <div className="flex-[1] max-w-sm">
-            <Card className="h-fit">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-lg">Nhân viên sẵn sàng</h3>
+          <div className="w-64 flex-shrink-0">
+            <Card className="h-[calc(100vh-200px)]">
+              <CardContent className="p-3 h-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm">Nhân viên sẵn sàng</h3>
                   <button
                     onClick={() => setShowAvailableStaffSidebar(false)}
-                    className="text-gray-500 hover:text-gray-700 p-1"
+                    className="text-gray-500 hover:text-gray-700 p-1 text-lg leading-none"
                   >
                     ×
                   </button>
