@@ -17,6 +17,7 @@ import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDe
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { AvailableStaffSidebar } from "@/components/appointments/AvailableStaffSidebar";
 import { toast } from "sonner";
 
 // Interface for components that expect the old format
@@ -47,6 +48,7 @@ const Appointments = () => {
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showFullView, setShowFullView] = useState(true);
+  const [showAvailableStaffSidebar, setShowAvailableStaffSidebar] = useState(false); // Will be set based on viewMode
   const [appointments, setAppointments] = useState<LegacyAppointment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -220,6 +222,15 @@ const Appointments = () => {
     setIsMaximized(!isMaximized);
   };
 
+  // Auto open sidebar when switching to day view
+  useEffect(() => {
+    if (viewMode === "day") {
+      setShowAvailableStaffSidebar(true);
+    } else {
+      setShowAvailableStaffSidebar(false);
+    }
+  }, [viewMode]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -308,9 +319,11 @@ const Appointments = () => {
         onMaximize={handleMaximize}
         showFullView={showFullView}
         setShowFullView={setShowFullView}
-        viewMode={viewMode}
-        selectedDate={selectedDate}
-        filteredAppointments={filteredAppointments}
+         viewMode={viewMode}
+         selectedDate={selectedDate}
+         filteredAppointments={filteredAppointments}
+         showAvailableStaffSidebar={showAvailableStaffSidebar}
+         setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
       />
 
       {/* View Controls */}
@@ -326,39 +339,70 @@ const Appointments = () => {
         </CardContent>
       </Card>
 
-      {/* Calendar View */}
-      <Card>
-        <CardContent className="p-6">
-          {viewMode === "month" && (
-            <AppointmentMonthView
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              filteredAppointments={filteredAppointments}
-              handleAppointmentClick={handleAppointmentClick}
-              displayMode={displayMode}
-              showFullView={showFullView || !hasActiveFilters}
-            />
-          )}
-          {viewMode === "week" && (
-            <AppointmentWeekView
-              selectedDate={selectedDate}
-              filteredAppointments={filteredAppointments}
-              handleAppointmentClick={handleAppointmentClick}
-              displayMode={displayMode}
-              showFullView={showFullView || !hasActiveFilters}
-            />
-          )}
-          {viewMode === "day" && (
-            <AppointmentDayView
-              selectedDate={selectedDate}
-              filteredAppointments={filteredAppointments}
-              handleAppointmentClick={handleAppointmentClick}
-              displayMode={displayMode}
-              showFullView={showFullView || !hasActiveFilters}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {/* Main Content with Sidebar */}
+      <div className="flex gap-6">
+        {/* Calendar View */}
+        <div className={`transition-all duration-300 ${
+          viewMode === "day" && showAvailableStaffSidebar ? 'flex-[2]' : 'flex-1'
+        }`}>
+          <Card>
+            <CardContent className="p-6">
+              {viewMode === "month" && (
+                <AppointmentMonthView
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  filteredAppointments={filteredAppointments}
+                  handleAppointmentClick={handleAppointmentClick}
+                  displayMode={displayMode}
+                  showFullView={showFullView || !hasActiveFilters}
+                />
+              )}
+              {viewMode === "week" && (
+                <AppointmentWeekView
+                  selectedDate={selectedDate}
+                  filteredAppointments={filteredAppointments}
+                  handleAppointmentClick={handleAppointmentClick}
+                  displayMode={displayMode}
+                  showFullView={showFullView || !hasActiveFilters}
+                />
+              )}
+              {viewMode === "day" && (
+                <AppointmentDayView
+                  selectedDate={selectedDate}
+                  filteredAppointments={filteredAppointments}
+                  handleAppointmentClick={handleAppointmentClick}
+                  displayMode={displayMode}
+                  showFullView={showFullView || !hasActiveFilters}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Available Staff Sidebar */}
+        {viewMode === "day" && showAvailableStaffSidebar && (
+          <div className="flex-[1] max-w-sm">
+            <Card className="h-fit">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-lg">Nhân viên sẵn sàng</h3>
+                  <button
+                    onClick={() => setShowAvailableStaffSidebar(false)}
+                    className="text-gray-500 hover:text-gray-700 p-1"
+                  >
+                    ×
+                  </button>
+                </div>
+                <AvailableStaffSidebar 
+                  selectedDate={selectedDate}
+                  filteredAppointments={filteredAppointments}
+                  isContentOnly={true}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* Appointment Detail Dialog */}
       <AppointmentDetailDialog

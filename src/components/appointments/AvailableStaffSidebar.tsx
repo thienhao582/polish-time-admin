@@ -9,9 +9,10 @@ import { format } from "date-fns";
 interface AvailableStaffSidebarProps {
   selectedDate: Date;
   filteredAppointments: any[];
+  isContentOnly?: boolean;
 }
 
-export function AvailableStaffSidebar({ selectedDate, filteredAppointments }: AvailableStaffSidebarProps) {
+export function AvailableStaffSidebar({ selectedDate, filteredAppointments, isContentOnly = false }: AvailableStaffSidebarProps) {
   const { employees, timeRecords } = useSalonStore();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -130,6 +131,80 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments }: Av
 
   const availableStaff = getStaffAvailability();
 
+  // If isContentOnly is true, return only the content without Sheet wrapper
+  if (isContentOnly) {
+    return (
+      <div className="mt-6">
+        {availableStaff.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">
+              Không có nhân viên nào đang làm việc hôm nay
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground mb-4">
+              Sắp xếp theo độ ưu tiên: Rảnh → Sắp xong → Đang bận
+            </div>
+            
+            {availableStaff.map((staff, index) => (
+              <div 
+                key={staff!.employee.id} 
+                className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium">{staff!.employee.name}</span>
+                      <Badge 
+                        variant={
+                          staff!.status === "Rảnh" ? "default" : 
+                          staff!.status === "Sắp xong" ? "secondary" : 
+                          "outline"
+                        }
+                        className="text-xs"
+                      >
+                        {staff!.status}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">#{index + 1}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                      <Clock className="w-4 h-4" />
+                      <span>Có thể nhận lịch: {staff!.nextAvailable}</span>
+                    </div>
+                    
+                    {staff!.appointmentCount > 0 && (
+                      <div className="text-sm text-muted-foreground">
+                        📅 {staff!.appointmentCount} lịch hẹn hôm nay
+                      </div>
+                    )}
+                    
+                    <div className="text-sm text-muted-foreground mt-2">
+                      🔧 {staff!.employee.role} • {staff!.employee.specialties?.join(", ") || "Chưa có chuyên môn"}
+                    </div>
+                  </div>
+                  
+                  <div className="ml-3">
+                    {staff!.status === "Rảnh" ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : staff!.status === "Sắp xong" ? (
+                      <Clock className="w-5 h-5 text-orange-500" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-500" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Original Sheet-based component
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>

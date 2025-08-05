@@ -23,6 +23,8 @@ interface AppointmentFiltersProps {
   viewMode?: string;
   selectedDate?: Date;
   filteredAppointments?: any[];
+  showAvailableStaffSidebar?: boolean;
+  setShowAvailableStaffSidebar?: (show: boolean) => void;
 }
 
 export function AppointmentFilters({
@@ -36,7 +38,9 @@ export function AppointmentFilters({
   setShowFullView,
   viewMode,
   selectedDate,
-  filteredAppointments
+  filteredAppointments,
+  showAvailableStaffSidebar,
+  setShowAvailableStaffSidebar
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
   const { t } = useLanguage();
@@ -149,12 +153,17 @@ export function AppointmentFilters({
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
-          {/* Available Staff Sidebar */}
-          {viewMode === "day" && selectedDate && filteredAppointments && (
-            <AvailableStaffSidebar 
-              selectedDate={selectedDate}
-              filteredAppointments={filteredAppointments}
-            />
+          {/* Available Staff Sidebar Toggle */}
+          {viewMode === "day" && selectedDate && filteredAppointments && setShowAvailableStaffSidebar && (
+            <Button
+              variant={showAvailableStaffSidebar ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowAvailableStaffSidebar(!showAvailableStaffSidebar)}
+              className="gap-2"
+            >
+              <Users className="w-4 h-4" />
+              NV sẵn sàng
+            </Button>
           )}
           
           <Button
