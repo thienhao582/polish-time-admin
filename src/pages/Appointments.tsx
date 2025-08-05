@@ -253,12 +253,14 @@ const Appointments = () => {
 
   return (
     <div className={`space-y-6 ${isMaximized ? 'fixed inset-0 z-50 bg-white p-6 overflow-auto' : ''}`}>
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">{t('appointments.title')}</h1>
-          <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
-        </div>
-        <div className="flex gap-2">
+      {/* Fixed Header with Action Buttons */}
+      <div className="sticky top-0 z-40 bg-white pb-4 border-b">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">{t('appointments.title')}</h1>
+            <p className="text-gray-600 mt-1">{t('appointments.subtitle')}</p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={() => {
@@ -303,6 +305,7 @@ const Appointments = () => {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </div>
 

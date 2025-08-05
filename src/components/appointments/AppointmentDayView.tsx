@@ -186,7 +186,7 @@ export function AppointmentDayView({
         <div className="h-full overflow-auto">
           <div className="flex min-w-max">
             {/* Time column */}
-            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-10">
+            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30">
               <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">Giờ</span>
               </div>

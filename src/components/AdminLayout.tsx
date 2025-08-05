@@ -9,7 +9,9 @@ const AdminLayoutContent = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
-        <AppSidebar />
+        <div className="relative z-50">
+          <AppSidebar />
+        </div>
         <div className="flex-1 flex flex-col">
           <div className="flex items-center gap-2 p-2 border-b bg-white">
             <SidebarTrigger />
