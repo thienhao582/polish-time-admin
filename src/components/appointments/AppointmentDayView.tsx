@@ -143,8 +143,8 @@ export function AppointmentDayView({
             
             return (
               <div key={timeSlot} className="h-16 border-b bg-white hover:bg-gray-50 relative">
-                {startingAppointments.length > 0 ? (
-                  <div className="flex gap-1 p-1 h-full">
+                {startingAppointments.length > 0 && (
+                  <>
                     {startingAppointments.map((apt, aptIndex) => {
                       const durationMinutes = parseDuration(apt.duration);
                       const slotsSpanned = Math.ceil(durationMinutes / 30);
@@ -154,15 +154,20 @@ export function AppointmentDayView({
                       return (
                         <div
                           key={`${apt.id}-${aptIndex}`}
-                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors z-20"
+                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors"
                           style={{
-                            top: '4px',
-                            left: `${aptIndex * widthPercentage + 1}%`,
-                            width: `${widthPercentage - 2}%`,
-                            height: `${heightInPixels - 8}px`,
-                            minHeight: '56px'
+                            top: '2px',
+                            left: `${aptIndex * widthPercentage + 0.5}%`,
+                            width: `${widthPercentage - 1}%`,
+                            height: `${heightInPixels - 4}px`,
+                            minHeight: '60px',
+                            zIndex: 100
                           }}
-                          onClick={(e) => handleAppointmentClick(apt, e)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAppointmentClick(apt, e);
+                          }}
                         >
                           {displayMode === "customer" ? (
                             <div className="text-xs font-bold text-customer-name truncate">
@@ -199,39 +204,38 @@ export function AppointmentDayView({
                         </div>
                       );
                     })}
-                  </div>
-                ) : (
-                  // Show continuation indicators for appointments that started earlier
-                  <div className="h-full">
-                    {timeSlotAppointments.filter(apt => {
-                      const aptStartMinutes = timeToMinutes(apt.time);
-                      const slotStartMinutes = timeToMinutes(timeSlot);
-                      return aptStartMinutes < slotStartMinutes;
-                    }).map((apt, index) => (
-                      <div
-                        key={`continuation-${apt.id}-${index}`}
-                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 z-5 pointer-events-none"
-                        style={{
-                          left: `${index * 50}%`,
-                          width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`
-                        }}
-                      >
-                        <div className="text-xs text-blue-400 p-1">
-                          {displayMode === "customer" ? (
-                            <div className="truncate font-bold text-customer-name">{apt.customer}</div>
-                          ) : displayMode === "staff" ? (
-                            <div className="truncate font-bold text-staff-name">{apt.staff}</div>
-                          ) : (
-                            <>
-                              <div className="truncate font-bold text-customer-name">{apt.customer}</div>
-                              <div className="truncate font-bold text-staff-name">{apt.staff}</div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  </>
                 )}
+                
+                {/* Show continuation indicators for appointments that started earlier */}
+                {timeSlotAppointments.filter(apt => {
+                  const aptStartMinutes = timeToMinutes(apt.time);
+                  const slotStartMinutes = timeToMinutes(timeSlot);
+                  return aptStartMinutes < slotStartMinutes;
+                }).map((apt, index) => (
+                  <div
+                    key={`continuation-${apt.id}-${index}`}
+                    className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 pointer-events-none"
+                    style={{
+                      left: `${index * 50}%`,
+                      width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`,
+                      zIndex: 1
+                    }}
+                  >
+                    <div className="text-xs text-blue-400 p-1">
+                      {displayMode === "customer" ? (
+                        <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+                      ) : displayMode === "staff" ? (
+                        <div className="truncate font-bold text-staff-name">{apt.staff}</div>
+                      ) : (
+                        <>
+                          <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+                          <div className="truncate font-bold text-staff-name">{apt.staff}</div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             );
           })}
