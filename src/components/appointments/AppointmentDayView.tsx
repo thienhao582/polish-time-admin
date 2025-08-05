@@ -175,9 +175,9 @@ export function AppointmentDayView({
       });
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-200">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-200 flex-shrink-0">
         <h3 className="font-semibold text-lg text-gray-800">
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
@@ -189,45 +189,46 @@ export function AppointmentDayView({
         </p>
       </div>
 
-      {/* Grid Layout */}
-      <div className="flex min-w-max">
-        {/* Time column */}
-        <div className="w-20 bg-gray-50 border-r border-gray-200">
-          <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
-            <span className="text-xs font-medium text-gray-600">Giờ</span>
-          </div>
-          {timeSlots.map((timeSlot) => (
-            <div 
-              key={timeSlot} 
-              className="h-14 p-1 border-b border-gray-200 text-xs text-gray-700 font-medium flex items-center justify-center bg-gray-50"
-            >
-              {timeSlot}
+      {/* Scrollable Grid Container */}
+      <div className="flex-1 overflow-auto">
+        <div className="flex min-w-max">
+          {/* Time column */}
+          <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-10">
+            <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
+              <span className="text-xs font-medium text-gray-600">Giờ</span>
             </div>
-          ))}
-        </div>
-
-        {/* Employee columns */}
-        {workingEmployees.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
-            Không có nhân viên nào đang làm việc hôm nay
+            {timeSlots.map((timeSlot) => (
+              <div 
+                key={timeSlot} 
+                className="h-14 p-1 border-b border-gray-200 text-xs text-gray-700 font-medium flex items-center justify-center bg-gray-50"
+              >
+                {timeSlot}
+              </div>
+            ))}
           </div>
-        ) : (
-          workingEmployees.map((employee) => (
-            <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '200px' }}>
-              {/* Employee header */}
-              <div className="h-12 border-b border-gray-200 bg-white p-2 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-sm font-semibold text-gray-800 truncate">
-                    {employee.name}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {employee.role}
+
+          {/* Employee columns */}
+          {workingEmployees.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
+              Không có nhân viên nào đang làm việc hôm nay
+            </div>
+          ) : (
+            workingEmployees.map((employee) => (
+              <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '150px' }}>
+                {/* Employee header */}
+                <div className="h-12 border-b border-gray-200 bg-white p-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-xs font-semibold text-gray-800 truncate">
+                      {employee.name}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {employee.role}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Time slots for this employee */}
-              {timeSlots.map((timeSlot) => {
+                {/* Time slots for this employee */}
+                {timeSlots.map((timeSlot) => {
                 const employeeAppointments = getEmployeeAppointmentsForTimeSlot(employee, timeSlot);
                 const startingAppointments = employeeAppointments.filter(apt => 
                   appointmentStartsAtSlot(apt, timeSlot)
@@ -313,9 +314,10 @@ export function AppointmentDayView({
                 );
               })}
             </div>
-          ))
-        )}
+              ))
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

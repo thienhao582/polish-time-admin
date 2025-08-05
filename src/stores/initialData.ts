@@ -258,7 +258,76 @@ const generateAppointmentsForRange = () => {
   return appointments;
 };
 
-export const initialAppointments: Appointment[] = generateAppointmentsForRange();
+// Generate additional appointments for August 6th, 2025 to test scrolling
+const generateAug6TestData = () => {
+  const appointments: Appointment[] = [];
+  let appointmentId = 5000; // Start with high ID to avoid conflicts
+  
+  // Select 10 employees to have appointments on Aug 6th
+  const workingEmployeeNames = [
+    "Lý Dung", "Hoàng Oanh", "Võ Anh", "Vũ Uyên", "Cao Phương",
+    "Đỗ Hoa", "Nguyễn Trang", "Đào Bích", "Huỳnh Thi Anh", "Vũ Thị Nga"
+  ];
+  
+  const timeSlots = [
+    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+    "11:00", "11:30", "13:00", "13:30", "14:00", "14:30",
+    "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+  ];
+  
+  workingEmployeeNames.forEach((staffName, staffIndex) => {
+    // Each employee gets 2-4 appointments throughout the day
+    const appointmentCount = Math.floor(Math.random() * 3) + 2; // 2-4 appointments
+    const usedTimeSlots = new Set();
+    
+    for (let i = 0; i < appointmentCount; i++) {
+      // Pick a random time slot that hasn't been used for this employee
+      let timeSlot;
+      do {
+        timeSlot = timeSlots[Math.floor(Math.random() * timeSlots.length)];
+      } while (usedTimeSlots.has(timeSlot));
+      
+      usedTimeSlots.add(timeSlot);
+      
+      const customerIndex = Math.floor(Math.random() * 100);
+      const customer = initialCustomers[customerIndex];
+      const serviceIndex = Math.floor(Math.random() * serviceNames.length);
+      
+      appointments.push({
+        id: appointmentId++,
+        date: "2025-08-06",
+        time: timeSlot,
+        customer: customer.name,
+        phone: customer.phone,
+        service: serviceNames[serviceIndex],
+        duration: `${serviceDurations[serviceIndex]} phút`,
+        price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
+        status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
+        staff: staffName,
+        customerId: customerIndex.toString(),
+        serviceId: (serviceIndex + 1).toString(),
+        staffId: `emp${staffIndex + 1}`,
+        notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
+        staffSalaryData: [{
+          staffId: `emp${staffIndex + 1}`,
+          staffName: staffName,
+          serviceId: (serviceIndex + 1).toString(),
+          serviceName: serviceNames[serviceIndex],
+          commissionRate: 0.3,
+          fixedAmount: 0,
+          servicePrice: servicePrices[serviceIndex]
+        }]
+      });
+    }
+  });
+  
+  return appointments;
+};
+
+const baseAppointments = generateAppointmentsForRange();
+const aug6TestData = generateAug6TestData();
+
+export const initialAppointments: Appointment[] = [...baseAppointments, ...aug6TestData];
 
 // Generate enhanced customers with more realistic data
 export const initialEnhancedCustomers: CustomerEnhanced[] = Array.from({ length: 100 }, (_, index) => {
