@@ -121,9 +121,9 @@ export function AppointmentDayView({
       {/* Timeline */}
       <div className="flex">
         {/* Time column */}
-        <div className="w-20 bg-gray-50">
+        <div className="w-20 bg-gray-50 border-r">
           {timeSlots.map((timeSlot) => (
-            <div key={timeSlot} className="h-16 p-2 border-b border-r text-sm text-gray-600 font-medium">
+            <div key={timeSlot} className="h-16 p-2 border-b text-sm text-gray-600 font-medium flex items-center">
               {timeSlot}
             </div>
           ))}
@@ -144,105 +144,67 @@ export function AppointmentDayView({
             
             return (
               <div key={timeSlot} className="h-16 border-b bg-white hover:bg-gray-50 relative">
-                {startingAppointments.length > 0 && (
-                  <>
-                    {startingAppointments.map((apt, aptIndex) => {
-                      const durationMinutes = parseDuration(apt.duration);
-                      const slotsSpanned = Math.ceil(durationMinutes / 30);
-                      const heightInPixels = slotsSpanned * 64; // 64px per slot (h-16)
-                      const widthPercentage = 100 / startingAppointments.length; // Divide width equally
-                      
-                      return (
-                        <div
-                          key={`${apt.id}-${aptIndex}`}
-                          className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors"
-                          style={{
-                            top: '2px',
-                            left: `${aptIndex * widthPercentage + 0.5}%`,
-                            width: `${widthPercentage - 1}%`,
-                            height: `${heightInPixels - 4}px`,
-                            minHeight: '60px',
-                            zIndex: 100
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAppointmentClick(apt, e);
-                          }}
-                        >
-                          {displayMode === "customer" ? (
-                            <div className="text-xs font-bold text-customer-name truncate">
-                              {apt.customer}
-                            </div>
-                          ) : displayMode === "staff" ? (
-                            <div className="text-xs font-bold text-staff-name truncate">
-                              {apt.staff}
-                            </div>
-                          ) : (
-                            <>
-                              <div className="text-xs font-bold text-customer-name truncate">
-                                {apt.customer}
-                              </div>
-                              <div className="text-xs font-bold text-staff-name truncate">
-                                {apt.staff}
-                              </div>
-                            </>
-                          )}
-                          <div className="text-xs text-blue-600 truncate">
-                            {apt.service}
-                          </div>
-                          <div className="text-xs text-blue-500">
-                            {formatTimeRange(apt.time, apt.duration)}
-                          </div>
-                          <div className="text-xs text-blue-500 truncate">
-                            ({apt.duration})
-                          </div>
-                          {apt.phone && startingAppointments.length === 1 && (
-                            <div className="text-xs text-blue-500 truncate">
-                              {apt.phone}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
-                
-                {/* Show continuation indicators for appointments that started earlier */}
-                {timeSlotAppointments.filter(apt => {
-                  const aptStartMinutes = timeToMinutes(apt.time);
-                  const slotStartMinutes = timeToMinutes(timeSlot);
-                  return aptStartMinutes < slotStartMinutes;
-                }).map((apt, index) => (
-                  <div
-                    key={`continuation-${apt.id}-${index}`}
-                    className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 pointer-events-none"
-                    style={{
-                      left: `${index * 50}%`,
-                      width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`,
-                      zIndex: 1
-                    }}
-                  >
-                    <div className="text-xs text-blue-400 p-1">
+                {startingAppointments.map((apt, aptIndex) => {
+                  const durationMinutes = parseDuration(apt.duration);
+                  const slotsSpanned = Math.ceil(durationMinutes / 30);
+                  const heightInPixels = slotsSpanned * 64; // 64px per slot (h-16)
+                  const widthPercentage = 100 / startingAppointments.length; // Divide width equally
+                  
+                  return (
+                    <div
+                      key={`${apt.id}-${aptIndex}`}
+                      className="absolute bg-blue-100 border border-blue-200 rounded-md p-2 cursor-pointer hover:bg-blue-200 transition-colors shadow-sm"
+                      style={{
+                        top: '2px',
+                        left: `${aptIndex * widthPercentage + 0.5}%`,
+                        width: `${widthPercentage - 1}%`,
+                        height: `${heightInPixels - 4}px`,
+                        minHeight: '60px',
+                        zIndex: 10
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAppointmentClick(apt, e);
+                      }}
+                    >
                       {displayMode === "customer" ? (
-                        <div className="truncate font-bold text-customer-name">{apt.customer}</div>
+                        <div className="text-xs font-bold text-blue-800 truncate">
+                          {apt.customer}
+                        </div>
                       ) : displayMode === "staff" ? (
-                        <div className="truncate font-bold text-staff-name">{apt.staff}</div>
+                        <div className="text-xs font-bold text-blue-800 truncate">
+                          {apt.staff}
+                        </div>
                       ) : (
                         <>
-                          <div className="truncate font-bold text-customer-name">{apt.customer}</div>
-                          <div className="truncate font-bold text-staff-name">{apt.staff}</div>
+                          <div className="text-xs font-bold text-blue-800 truncate">
+                            {apt.customer}
+                          </div>
+                          <div className="text-xs font-medium text-blue-700 truncate">
+                            {apt.staff}
+                          </div>
                         </>
                       )}
+                      <div className="text-xs text-blue-600 truncate mt-1">
+                        {apt.service}
+                      </div>
+                      <div className="text-xs text-blue-500 mt-1">
+                        {formatTimeRange(apt.time, apt.duration)}
+                      </div>
+                      {apt.phone && startingAppointments.length === 1 && (
+                        <div className="text-xs text-blue-500 truncate">
+                          {apt.phone}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             );
           })}
         </div>
       </div>
-
     </div>
   );
 }
