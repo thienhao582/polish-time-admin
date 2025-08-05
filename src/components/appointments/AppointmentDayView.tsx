@@ -46,26 +46,35 @@ export function AppointmentDayView({
 
   // Get working employees for this date (only service staff, not managers/reception)
   const getWorkingEmployees = () => {
-    // Filter employees to only include service staff
-    const serviceEmployees = employees.filter(employee => {
-      const role = employee.role?.toLowerCase() || '';
-      // Only include nail technicians, exclude managers and reception
-      return !role.includes('quản lý') && !role.includes('lễ tân') && 
-             !role.includes('manager') && !role.includes('reception');
+    // Get all unique staff names from appointments for this day
+    const staffNamesInAppointments = [...new Set(dayAppointments.map(apt => apt.staff))];
+    
+    console.log("Staff names in appointments:", staffNamesInAppointments);
+    
+    // Find employees that match the staff names in appointments
+    const employeesWithAppointments = employees.filter(employee => {
+      const hasAppointment = staffNamesInAppointments.some(staffName => 
+        staffName.includes(employee.name) || employee.name.includes(staffName)
+      );
+      return hasAppointment;
     });
 
-    // If no time records for this date, show service employees who have appointments
-    const employeesWithAppointments = serviceEmployees.filter(employee => {
-      return dayAppointments.some(apt => apt.staff.includes(employee.name));
-    });
+    // If no matching employees found, create virtual employees from staff names
+    const finalEmployees = employeesWithAppointments.length > 0 
+      ? employeesWithAppointments 
+      : staffNamesInAppointments.map((staffName, index) => ({
+          id: `virtual-${index}`,
+          name: staffName,
+          role: "Nhân viên",
+          specialties: []
+        }));
 
-    // If no employees have appointments, show top service employees
-    const employeesToShow = employeesWithAppointments.length > 0 ? employeesWithAppointments : serviceEmployees.slice(0, 10);
-
-    // Sort employees by priority: those with appointments first, then by appointment time
-    const employeesWithData = employeesToShow.map(employee => {
+    console.log("Final employees for day view:", finalEmployees.map(e => e.name));
+    
+    // Sort employees by priority: those with more appointments first
+    const employeesWithData = finalEmployees.map(employee => {
       const employeeAppointments = dayAppointments.filter(apt => 
-        apt.staff.includes(employee.name)
+        apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
       );
       
       const earliestAppointmentTime = employeeAppointments.length > 0 
@@ -81,18 +90,19 @@ export function AppointmentDayView({
 
     console.log("Working employees debug:", {
       totalEmployees: employees.length,
-      serviceEmployees: serviceEmployees.length,
+      dayAppointments: dayAppointments.length,
+      staffNamesInAppointments: staffNamesInAppointments.length,
       employeesWithAppointments: employeesWithAppointments.length,
-      finalEmployees: employeesWithData.length,
-      sampleNames: employeesWithData.slice(0, 3).map(e => e.employee.name)
+      finalEmployees: finalEmployees.length,
+      employeeNames: finalEmployees.map(e => e.name)
     });
 
-    // Sort by: 1) Has appointments (ascending), 2) Earliest appointment time (ascending)
+    // Sort by: 1) Has appointments (descending), 2) Earliest appointment time (ascending)
     return employeesWithData
       .sort((a, b) => {
-        if (a.appointmentCount === 0 && b.appointmentCount === 0) return 0;
-        if (a.appointmentCount === 0) return 1;
-        if (b.appointmentCount === 0) return -1;
+        if (a.appointmentCount !== b.appointmentCount) {
+          return b.appointmentCount - a.appointmentCount; // More appointments first
+        }
         return a.earliestTime - b.earliestTime;
       })
       .map(item => item.employee);
@@ -125,8 +135,11 @@ export function AppointmentDayView({
     const slotEndMinutes = slotStartMinutes + 30;
     
     const appointments = dayAppointments.filter(apt => {
-      // Check if employee name is exactly in staff field (exact match or contains)
-      const isStaffMatch = apt.staff === employee.name || apt.staff.includes(employee.name);
+      // Check if employee name matches staff field (more flexible matching)
+      const isStaffMatch = apt.staff === employee.name || 
+                          apt.staff.includes(employee.name) || 
+                          employee.name.includes(apt.staff);
+      
       if (!isStaffMatch) return false;
       
       const aptStartMinutes = timeToMinutes(apt.time);
@@ -137,12 +150,7 @@ export function AppointmentDayView({
       return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
     });
     
-  console.log("Appointments for timeSlot debug:", {
-    appointments: appointments.length,
-    sampleAppointment: appointments[0],
-    isStaffMatch: appointments[0] ? appointments[0].staff === employee.name || appointments[0].staff.includes(employee.name) : 'no appointment'
-  });
-  return appointments;
+    return appointments;
   };
 
   // Check if an appointment starts at this time slot
