@@ -36,9 +36,17 @@ export function AppointmentDayView({
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
+  
+  console.log("AppointmentDayView Debug:", {
+    dateString,
+    totalFiltered: filteredAppointments.length,
+    dayAppointments: dayAppointments.length,
+    firstFewAppointments: dayAppointments.slice(0, 3)
+  });
 
   // Get working employees for this date
   const getWorkingEmployees = () => {
+    // If no time records for this date, show all employees
     const workingEmployees = employees.filter(employee => {
       // Check if employee has time record for this date (is working)
       const timeRecord = timeRecords.find(tr => 
@@ -46,11 +54,16 @@ export function AppointmentDayView({
         format(new Date(tr.date), "yyyy-MM-dd") === dateString
       );
       
-      return timeRecord && timeRecord.status !== 'absent';
+      // If no time records exist, show all employees
+      // Otherwise only show employees with working status
+      return timeRecords.length === 0 || (timeRecord && timeRecord.status !== 'absent');
     });
 
+    // If no employees have time records, show all employees
+    const employeesToShow = workingEmployees.length > 0 ? workingEmployees : employees;
+
     // Sort employees by priority: those with appointments first, then by appointment time
-    const employeesWithAppointments = workingEmployees.map(employee => {
+    const employeesWithAppointments = employeesToShow.map(employee => {
       const employeeAppointments = dayAppointments.filter(apt => 
         apt.staff.includes(employee.name)
       );
@@ -144,7 +157,10 @@ export function AppointmentDayView({
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
         <p className="text-sm text-gray-600">
-          {dayAppointments.length} lịch hẹn • {workingEmployees.length} nhân viên đang làm việc
+          {dayAppointments.length} lịch hẹn • {workingEmployees.length} nhân viên ({employees.length} tổng)
+        </p>
+        <p className="text-xs text-gray-500">
+          Debug: timeRecords={timeRecords.length}, selectedDate={dateString}
         </p>
       </div>
 
