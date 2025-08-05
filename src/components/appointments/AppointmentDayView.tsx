@@ -138,7 +138,8 @@ export function AppointmentDayView({
             const startingAppointments = timeSlotAppointments.filter(apt => {
               const aptStartMinutes = timeToMinutes(apt.time);
               const slotStartMinutes = timeToMinutes(timeSlot);
-              return aptStartMinutes === slotStartMinutes;
+              // Check if appointment starts within this 30-minute slot
+              return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 30;
             });
             
             return (
