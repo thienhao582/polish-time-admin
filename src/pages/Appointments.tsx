@@ -252,7 +252,7 @@ const Appointments = () => {
   }
 
   return (
-    <div className={`h-screen flex flex-col ${isMaximized ? 'fixed inset-0 z-50 bg-white overflow-hidden' : ''}`}>
+    <div className={`h-screen flex flex-col overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       {/* Fixed Header with Action Buttons */}
       <div className="sticky top-0 z-40 bg-white pb-4 border-b">
         <div className="flex justify-between items-center">
@@ -343,17 +343,10 @@ const Appointments = () => {
       </Card>
 
       {/* Main Content with Sidebar - Full Height Container */}
-      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
+      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden w-full">
         {/* Calendar View - Calculate max width based on available space */}
-        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${
-          viewMode === "day" && showAvailableStaffSidebar ? 'flex-[2]' : 'flex-1'
-        }`}
-        style={{
-          maxWidth: viewMode === "day" && showAvailableStaffSidebar 
-            ? 'calc(100vw - 280px - 256px - 2rem)' // 100vw - sidebar - available staff sidebar - gap
-            : 'calc(100vw - 280px - 2rem)' // 100vw - sidebar - padding
-        }}>
-          <Card className="h-full">
+        <div className={`transition-all duration-300 min-w-0 overflow-hidden flex-1`}>
+          <Card className="h-full overflow-hidden">
             <CardContent className="p-0 h-full overflow-hidden">
               {viewMode === "month" && (
                 <AppointmentMonthView
@@ -389,8 +382,8 @@ const Appointments = () => {
 
         {/* Available Staff Sidebar */}
         {viewMode === "day" && showAvailableStaffSidebar && (
-          <div className="w-64 flex-shrink-0">
-            <Card className="h-full">
+          <div className="w-64 flex-shrink-0 overflow-hidden">
+            <Card className="h-full overflow-hidden">
               <CardContent className="p-3 h-full">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-sm">Nhân viên sẵn sàng</h3>

@@ -178,10 +178,10 @@ export function AppointmentDayView({
         </p>
       </div>
 
-      {/* Grid Container with Calculated Width and Internal Scrolling */}
-      <div className="flex-1 overflow-hidden">
+      {/* Grid Container with Full Width and Internal Scrolling */}
+      <div className="flex-1 overflow-hidden w-full">
         <div className="h-full w-full overflow-auto">
-          <div className="flex" style={{ width: `${Math.max(800, workingEmployees.length * 140 + 80)}px` }}>
+          <div className="flex" style={{ width: `${Math.max(1200, workingEmployees.length * 140 + 80)}px` }}>
             {/* Calculate actual needed width based on employees */}
             {/* Time column - sticky left */}
             <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm">
