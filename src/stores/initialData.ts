@@ -263,64 +263,82 @@ const generateAug6TestData = () => {
   const appointments: Appointment[] = [];
   let appointmentId = 5000; // Start with high ID to avoid conflicts
   
-  // Select 10 employees to have appointments on Aug 6th
-  const workingEmployeeNames = [
-    "Lý Dung", "Hoàng Oanh", "Võ Anh", "Vũ Uyên", "Cao Phương",
-    "Đỗ Hoa", "Nguyễn Trang", "Đào Bích", "Huỳnh Thi Anh", "Vũ Thị Nga"
-  ];
-  
-  const timeSlots = [
-    "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-    "11:00", "11:30", "13:00", "13:30", "14:00", "14:30",
-    "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
-  ];
-  
-  workingEmployeeNames.forEach((staffName, staffIndex) => {
-    // Each employee gets 2-4 appointments throughout the day
-    const appointmentCount = Math.floor(Math.random() * 3) + 2; // 2-4 appointments
-    const usedTimeSlots = new Set();
+  // Create fixed appointments for August 6th, 2025 to ensure they show up
+  const aug6Appointments = [
+    // Lý Dung
+    { staff: "Lý Dung", time: "08:00", service: "French Manicure", duration: 75, price: 280000, customer: "Huỳnh Thi Anh" },
+    { staff: "Lý Dung", time: "11:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Lý Thi Hồng" },
+    { staff: "Lý Dung", time: "14:30", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Ngô Thi Hiền" },
     
-    for (let i = 0; i < appointmentCount; i++) {
-      // Pick a random time slot that hasn't been used for this employee
-      let timeSlot;
-      do {
-        timeSlot = timeSlots[Math.floor(Math.random() * timeSlots.length)];
-      } while (usedTimeSlots.has(timeSlot));
-      
-      usedTimeSlots.add(timeSlot);
-      
-      const customerIndex = Math.floor(Math.random() * 100);
-      const customer = initialCustomers[customerIndex];
-      const serviceIndex = Math.floor(Math.random() * serviceNames.length);
-      
-      appointments.push({
-        id: appointmentId++,
-        date: "2025-08-06",
-        time: timeSlot,
-        customer: customer.name,
-        phone: customer.phone,
-        service: serviceNames[serviceIndex],
-        duration: `${serviceDurations[serviceIndex]} phút`,
-        price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
-        status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
-        staff: staffName,
-        customerId: customerIndex.toString(),
-        serviceId: (serviceIndex + 1).toString(),
-        staffId: `emp${staffIndex + 1}`,
-        notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
-        staffSalaryData: [{
-          staffId: `emp${staffIndex + 1}`,
-          staffName: staffName,
-          serviceId: (serviceIndex + 1).toString(),
-          serviceName: serviceNames[serviceIndex],
-          commissionRate: 0.3,
-          fixedAmount: 0,
-          servicePrice: servicePrices[serviceIndex]
-        }]
-      });
-    }
+    // Hoàng Oanh  
+    { staff: "Hoàng Oanh", time: "09:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Đinh Thi Vy" },
+    { staff: "Hoàng Oanh", time: "15:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Bùi Thi Thanh" },
+    
+    // Võ Anh
+    { staff: "Võ Anh", time: "10:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hồ Thi Yến" },
+    { staff: "Võ Anh", time: "13:30", service: "French Manicure", duration: 75, price: 280000, customer: "Dương Thi Diệu" },
+    { staff: "Võ Anh", time: "16:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Phan Thi Kim" },
+    
+    // Vũ Uyên
+    { staff: "Vũ Uyên", time: "08:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Võ Thi Hoài" },
+    { staff: "Vũ Uyên", time: "14:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Đặng Thi Xuân" },
+    
+    // Cao Phương
+    { staff: "Cao Phương", time: "09:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Lê Thi An" },
+    { staff: "Cao Phương", time: "16:30", service: "French Manicure", duration: 75, price: 280000, customer: "Trần Thi Bích" },
+    
+    // Đỗ Hoa
+    { staff: "Đỗ Hoa", time: "11:30", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Phạm Thi Cúc" },
+    { staff: "Đỗ Hoa", time: "15:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Huỳnh Thi Đào" },
+    
+    // Nguyễn Trang
+    { staff: "Nguyễn Trang", time: "10:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Hoàng Thi Giang" },
+    { staff: "Nguyễn Trang", time: "17:00", service: "French Manicure", duration: 75, price: 280000, customer: "Phan Thi Hiền" },
+    
+    // Đào Bích
+    { staff: "Đào Bích", time: "12:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Vũ Thi Khánh" },
+    { staff: "Đào Bích", time: "17:30", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Võ Thi Lam" },
+    
+    // Huỳnh Thi Anh
+    { staff: "Huỳnh Thi Anh", time: "13:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Bùi Thi My" },
+    
+    // Vũ Thị Nga
+    { staff: "Vũ Thị Nga", time: "12:30", service: "French Manicure", duration: 75, price: 280000, customer: "Đỗ Thi Nhung" },
+    { staff: "Vũ Thị Nga", time: "16:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hồ Thi Oanh" }
+  ];
+  
+  aug6Appointments.forEach((aptData, index) => {
+    const customerIndex = Math.floor(Math.random() * 100);
+    const customer = initialCustomers[customerIndex];
+    
+    appointments.push({
+      id: appointmentId + index,
+      date: "2025-08-06",
+      time: aptData.time,
+      customer: aptData.customer,
+      phone: customer.phone,
+      service: aptData.service,
+      duration: `${aptData.duration} phút`,
+      price: `${aptData.price.toLocaleString()}đ`,
+      status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
+      staff: aptData.staff,
+      customerId: customerIndex.toString(),
+      serviceId: "1",
+      staffId: `emp${index + 1}`,
+      notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
+      staffSalaryData: [{
+        staffId: `emp${index + 1}`,
+        staffName: aptData.staff,
+        serviceId: "1",
+        serviceName: aptData.service,
+        commissionRate: 0.3,
+        fixedAmount: 0,
+        servicePrice: aptData.price
+      }]
+    });
   });
   
+  console.log("Generated Aug 6 test data:", appointments.length, "appointments");
   return appointments;
 };
 
