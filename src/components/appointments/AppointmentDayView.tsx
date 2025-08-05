@@ -33,17 +33,8 @@ export function AppointmentDayView({
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   
-  // Filter appointments for the selected day with improved date parsing
-  const dayAppointments = filteredAppointments.filter(apt => {
-    try {
-      // Handle both date string formats
-      const aptDate = apt.date.includes('T') ? parseISO(apt.date) : parseISO(apt.date + 'T00:00:00');
-      return isSameDay(aptDate, selectedDate);
-    } catch (error) {
-      console.error("Error parsing appointment date:", apt.date, error);
-      return false;
-    }
-  });
+  // Filter appointments for the selected day - using simple string comparison like WeekView
+  const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
 
 
   // Create time slots from 8 AM to 9 PM (to match the time selector in the form)
