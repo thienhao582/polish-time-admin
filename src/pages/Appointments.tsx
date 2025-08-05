@@ -344,12 +344,17 @@ const Appointments = () => {
 
       {/* Main Content with Sidebar - Full Height Container */}
       <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
-        {/* Calendar View */}
-        <div className={`transition-all duration-300 min-w-0 ${
+        {/* Calendar View - Calculate max width based on available space */}
+        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${
           viewMode === "day" && showAvailableStaffSidebar ? 'flex-[2]' : 'flex-1'
-        }`}>
+        }`}
+        style={{
+          maxWidth: viewMode === "day" && showAvailableStaffSidebar 
+            ? 'calc(100vw - 280px - 256px - 2rem)' // 100vw - sidebar - available staff sidebar - gap
+            : 'calc(100vw - 280px - 2rem)' // 100vw - sidebar - padding
+        }}>
           <Card className="h-full">
-            <CardContent className="p-0 h-full">
+            <CardContent className="p-0 h-full overflow-hidden">
               {viewMode === "month" && (
                 <AppointmentMonthView
                   selectedDate={selectedDate}
