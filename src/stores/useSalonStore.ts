@@ -479,19 +479,77 @@ export const useSalonStore = create<SalonState>()(
         );
       },
 
-      initializeData: () => set({
-        services: [...initialServices],
-        customers: [...initialCustomers],
-        appointments: [...initialAppointments],
-        nextAppointmentId: 1500, // Updated for many appointments
-        nextCustomerId: 101, // Updated for 100 customers
-        employees: [...initialEmployees],
-        timeRecords: [],
-        nextEmployeeId: 51, // Updated for 50 employees
-        nextTimeRecordId: 1,
-        enhancedCustomers: [...initialEnhancedCustomers],
-        nextEnhancedCustomerId: 101, // Updated for 100 enhanced customers
-      }),
+      initializeData: () => {
+        // Generate time records for today and recent days
+        const generateTimeRecords = () => {
+          const timeRecords = [];
+          const today = new Date();
+          
+          // Generate records for last 7 days
+          for (let dayOffset = -7; dayOffset <= 0; dayOffset++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() + dayOffset);
+            const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            
+            // Random 15-20 employees working each day
+            const workingEmployees = initialEmployees
+              .filter(emp => emp.role === "thợ")
+              .sort(() => 0.5 - Math.random())
+              .slice(0, 15 + Math.floor(Math.random() * 6)); // 15-20 employees
+            
+            workingEmployees.forEach((employee, index) => {
+              const checkInHour = 8 + Math.floor(Math.random() * 2); // 8-9 AM
+              const checkInMinute = Math.floor(Math.random() * 60);
+              const checkIn = `${String(checkInHour).padStart(2, '0')}:${String(checkInMinute).padStart(2, '0')}`;
+              
+              // Most employees are working, some have finished
+              const status = dayOffset === 0 
+                ? (Math.random() > 0.8 ? 'completed' : 'working') // Today: mostly working
+                : (Math.random() > 0.3 ? 'completed' : 'working'); // Past days: mostly completed
+              
+              let checkOut;
+              let totalHours;
+              
+              if (status === 'completed') {
+                const checkOutHour = 17 + Math.floor(Math.random() * 3); // 5-7 PM
+                const checkOutMinute = Math.floor(Math.random() * 60);
+                checkOut = `${String(checkOutHour).padStart(2, '0')}:${String(checkOutMinute).padStart(2, '0')}`;
+                
+                const checkInTime = new Date(`${dateString} ${checkIn}`);
+                const checkOutTime = new Date(`${dateString} ${checkOut}`);
+                totalHours = Math.round((checkOutTime.getTime() - checkInTime.getTime()) / (1000 * 60 * 60) * 100) / 100;
+              }
+              
+              timeRecords.push({
+                id: (timeRecords.length + 1).toString(),
+                employeeId: employee.id,
+                employeeName: employee.name,
+                date: dateString,
+                checkIn,
+                checkOut,
+                totalHours,
+                status: status as 'working' | 'completed'
+              });
+            });
+          }
+          
+          return timeRecords;
+        };
+
+        set({
+          services: [...initialServices],
+          customers: [...initialCustomers],
+          appointments: [...initialAppointments],
+          nextAppointmentId: 1500, // Updated for many appointments
+          nextCustomerId: 101, // Updated for 100 customers
+          employees: [...initialEmployees],
+          timeRecords: generateTimeRecords(),
+          nextEmployeeId: 51, // Updated for 50 employees
+          nextTimeRecordId: 1000,
+          enhancedCustomers: [...initialEnhancedCustomers],
+          nextEnhancedCustomerId: 101, // Updated for 100 enhanced customers
+        });
+      },
     }),
     {
       name: 'salon-storage',

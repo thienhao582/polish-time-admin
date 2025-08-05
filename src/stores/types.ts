@@ -20,7 +20,7 @@ export interface Employee {
   name: string;
   avatar?: string;
   phone: string;
-  role: 'thợ chính' | 'phụ tá' | 'lễ tân' | 'quản lý';
+  role: 'thợ chính' | 'phụ tá' | 'lễ tân' | 'quản lý' | 'thợ';
   status: 'đang làm' | 'đã nghỉ';
   assignedServices: string[];
   specialties: string[];

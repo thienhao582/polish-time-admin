@@ -73,7 +73,7 @@ const vietnameseLastNames = [
   "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "Đinh", "Đào", "Cao", "Trần"
 ];
 
-const roles = ["thợ chính", "phụ tá", "lễ tân", "quản lý"];
+const roles = ["thợ"]; // Only technicians do services
 const specialtiesList = [
   ["Gel Polish", "Nail Art"],
   ["Manicure", "Pedicure"],
@@ -88,10 +88,12 @@ const specialtiesList = [
 export const initialEmployees: Employee[] = Array.from({ length: 50 }, (_, index) => {
   const firstName = vietnameseFirstNames[Math.floor(Math.random() * vietnameseFirstNames.length)];
   const lastName = vietnameseLastNames[Math.floor(Math.random() * vietnameseLastNames.length)];
-  const role = roles[Math.floor(Math.random() * roles.length)];
   
-  // Generate assigned services (1-4 services per employee)
-  const serviceCount = Math.floor(Math.random() * 4) + 1;
+  // Everyone is a technician
+  const role = "thợ";
+  
+  // Generate assigned services (2-4 services per employee)
+  const serviceCount = Math.floor(Math.random() * 3) + 2; // 2-4 services
   const assignedServices = Array.from({ length: serviceCount }, () => 
     (Math.floor(Math.random() * 5) + 1).toString()
   ).filter((value, index, self) => self.indexOf(value) === index);
@@ -162,13 +164,13 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
       const serviceIndex = Math.floor(Math.random() * serviceNames.length);
       const customerIndex = Math.floor(Math.random() * 100) + 1;
       
-      // Find employees who can do this service
+      // Find employees who can do this service (only technicians)
       const availableEmployees = initialEmployees.filter(emp => 
-        emp.assignedServices.includes((serviceIndex + 1).toString())
+        emp.role === "thợ" && emp.assignedServices.includes((serviceIndex + 1).toString())
       );
       const employee = availableEmployees.length > 0 
         ? availableEmployees[Math.floor(Math.random() * availableEmployees.length)]
-        : initialEmployees[Math.floor(Math.random() * 50)];
+        : initialEmployees.filter(emp => emp.role === "thợ")[Math.floor(Math.random() * initialEmployees.filter(emp => emp.role === "thợ").length)];
       
       // Spread appointments throughout the day (8:00 - 18:00)
       const baseHour = 8 + Math.floor((i / appointmentsPerDay) * 10); // Distribute across 10 hours
