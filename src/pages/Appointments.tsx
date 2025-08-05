@@ -308,6 +308,9 @@ const Appointments = () => {
         onMaximize={handleMaximize}
         showFullView={showFullView}
         setShowFullView={setShowFullView}
+        viewMode={viewMode}
+        selectedDate={selectedDate}
+        filteredAppointments={filteredAppointments}
       />
 
       {/* View Controls */}

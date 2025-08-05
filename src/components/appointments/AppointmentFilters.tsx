@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AvailableStaffSidebar } from "./AvailableStaffSidebar";
 
 interface AppointmentFiltersProps {
   displayMode: "customer" | "staff" | "both";
@@ -19,6 +20,9 @@ interface AppointmentFiltersProps {
   onMaximize: () => void;
   showFullView: boolean;
   setShowFullView: (show: boolean) => void;
+  viewMode?: string;
+  selectedDate?: Date;
+  filteredAppointments?: any[];
 }
 
 export function AppointmentFilters({
@@ -29,7 +33,10 @@ export function AppointmentFilters({
   filteredAppointmentsCount,
   onMaximize,
   showFullView,
-  setShowFullView
+  setShowFullView,
+  viewMode,
+  selectedDate,
+  filteredAppointments
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
   const { t } = useLanguage();
@@ -149,11 +156,21 @@ export function AppointmentFilters({
             </div>
           </div>
 
-          {/* Maximize Button */}
-          <Button variant="outline" size="sm" onClick={onMaximize} className="gap-2">
-            <Maximize2 className="w-4 h-4" />
-            {t('appointments.maximize')}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Available Staff Sidebar - Only show in day view */}
+            {viewMode === "day" && selectedDate && filteredAppointments && (
+              <AvailableStaffSidebar 
+                selectedDate={selectedDate} 
+                filteredAppointments={filteredAppointments} 
+              />
+            )}
+            
+            {/* Maximize Button */}
+            <Button variant="outline" size="sm" onClick={onMaximize} className="gap-2">
+              <Maximize2 className="w-4 h-4" />
+              {t('appointments.maximize')}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
