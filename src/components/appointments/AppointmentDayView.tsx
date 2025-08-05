@@ -137,8 +137,12 @@ export function AppointmentDayView({
       return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
     });
     
-    console.log(`Appointments for ${employee.name} at ${timeSlot}:`, appointments.length);
-    return appointments;
+  console.log("Appointments for timeSlot debug:", {
+    appointments: appointments.length,
+    sampleAppointment: appointments[0],
+    isStaffMatch: appointments[0] ? appointments[0].staff === employee.name || appointments[0].staff.includes(employee.name) : 'no appointment'
+  });
+  return appointments;
   };
 
   // Check if an appointment starts at this time slot
@@ -221,11 +225,22 @@ export function AppointmentDayView({
                   appointmentStartsAtSlot(apt, timeSlot)
                 );
                 
+                console.log(`Rendering ${employee.name} at ${timeSlot}:`, {
+                  employeeAppointments: employeeAppointments.length,
+                  startingAppointments: startingAppointments.length,
+                  appointments: startingAppointments.map(apt => apt.customer)
+                });
+                
                 return (
                   <div 
                     key={`${employee.id}-${timeSlot}`} 
                     className="h-14 border-b border-gray-200 bg-white hover:bg-gray-50 relative p-1"
                   >
+                    {startingAppointments.length > 0 && (
+                      <div className="text-xs text-blue-600 absolute top-0 left-0">
+                        {startingAppointments.length} apt
+                      </div>
+                    )}
                     {startingAppointments.map((apt, aptIndex) => {
                       const durationMinutes = parseDuration(apt.duration);
                       const slotsSpanned = Math.ceil(durationMinutes / 30);
