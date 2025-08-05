@@ -45,9 +45,6 @@ export function AppointmentDayView({
     }
   });
 
-  console.log("AppointmentDayView - Selected date:", dateString);
-  console.log("AppointmentDayView - All filtered appointments:", filteredAppointments);
-  console.log("AppointmentDayView - Day appointments after filtering:", dayAppointments);
 
   // Create time slots from 8 AM to 9 PM (to match the time selector in the form)
   const allTimeSlots = [];
@@ -94,7 +91,7 @@ export function AppointmentDayView({
     const appointments = dayAppointments.filter(apt => 
       appointmentOverlapsTimeSlot(apt, timeSlot)
     );
-    console.log(`Time slot ${timeSlot} appointments:`, appointments);
+    
     return appointments;
   };
 
@@ -250,26 +247,6 @@ export function AppointmentDayView({
         </div>
       </div>
 
-      {/* Debug info - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-          <h4 className="font-medium text-yellow-800">Debug Info:</h4>
-          <p className="text-sm text-yellow-700">Selected Date: {dateString}</p>
-          <p className="text-sm text-yellow-700">Total Filtered Appointments: {filteredAppointments.length}</p>
-          <p className="text-sm text-yellow-700">Day Appointments: {dayAppointments.length}</p>
-          <p className="text-sm text-yellow-700">Time Slots: {timeSlots.length}</p>
-          {dayAppointments.length > 0 && (
-            <div className="mt-2">
-              <p className="text-sm text-yellow-700">Appointments for this day:</p>
-              {dayAppointments.map(apt => (
-                <p key={apt.id} className="text-xs text-yellow-600 ml-2">
-                  {apt.time} - {apt.customer} - {apt.service}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
