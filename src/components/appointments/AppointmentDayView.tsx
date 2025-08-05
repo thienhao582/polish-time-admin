@@ -219,7 +219,7 @@ export function AppointmentDayView({
                     }).map((apt, index) => (
                       <div
                         key={`continuation-${apt.id}-${index}`}
-                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 z-5"
+                        className="absolute inset-x-0 h-full bg-blue-50 border-l-2 border-blue-200 opacity-20 z-5 pointer-events-none"
                         style={{
                           left: `${index * 50}%`,
                           width: `${Math.min(50, 100 / timeSlotAppointments.length)}%`
