@@ -107,7 +107,11 @@ export function GeneralManagement() {
       "quản lý": { label: text.roles["quản lý"], variant: "destructive" as const },
     };
     
-    const config = roleConfig[role as keyof typeof roleConfig];
+    const config = roleConfig[role as keyof typeof roleConfig] || { 
+      label: role, 
+      variant: "secondary" as const 
+    };
+    
     return (
       <Badge variant={config.variant} className={
         role === "thợ chính" ? "bg-pink-100 text-pink-700 hover:bg-pink-100" : ""
