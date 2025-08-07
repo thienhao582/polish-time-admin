@@ -51,6 +51,7 @@ const Appointments = () => {
   const [showAvailableStaffSidebar, setShowAvailableStaffSidebar] = useState(false); // Will be set based on viewMode
   const [appointments, setAppointments] = useState<LegacyAppointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [appointmentStatus, setAppointmentStatus] = useState("confirmed");
 
   // Get employees from Zustand store and fetch appointments from Supabase
   const { employees, initializeData, appointments: demoAppointments } = useSalonStore();
@@ -136,6 +137,11 @@ const Appointments = () => {
           return staff && apt.staff.includes(staff.name);
         })
       );
+    }
+
+    // Apply status filter
+    if (appointmentStatus !== "all") {
+      filtered = filtered.filter(apt => apt.status === appointmentStatus);
     }
 
     // Apply date range filter based on view mode
@@ -327,9 +333,11 @@ const Appointments = () => {
          viewMode={viewMode}
          selectedDate={selectedDate}
          filteredAppointments={filteredAppointments}
-         showAvailableStaffSidebar={showAvailableStaffSidebar}
-         setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
-         isMaximized={isMaximized}
+             showAvailableStaffSidebar={showAvailableStaffSidebar}
+             setShowAvailableStaffSidebar={setShowAvailableStaffSidebar}
+             isMaximized={isMaximized}
+             appointmentStatus={appointmentStatus}
+             setAppointmentStatus={setAppointmentStatus}
       />
 
       {/* View Controls */}

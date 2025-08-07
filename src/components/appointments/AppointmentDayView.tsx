@@ -181,17 +181,17 @@ export function AppointmentDayView({
       {/* Grid Container with Full Width and Internal Scrolling */}
       <div className="flex-1 overflow-hidden w-full">
         <div className="h-full w-full overflow-auto">
-          <div className="flex" style={{ width: `${Math.max(1200, workingEmployees.length * 140 + 80)}px` }}>
+          <div className="flex min-w-fit">
             {/* Calculate actual needed width based on employees */}
             {/* Time column - sticky left */}
-            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm">
+            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm flex-shrink-0">
               <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
-                <span className="text-xs font-medium text-gray-600">Giờ</span>
+                <span className="text-xs font-semibold text-gray-700">Giờ</span>
               </div>
               {timeSlots.map((timeSlot) => (
                 <div 
                   key={timeSlot} 
-                  className="h-14 p-1 border-b border-gray-200 text-xs text-gray-700 font-medium flex items-center justify-center bg-gray-50"
+                  className="h-14 p-2 border-b border-gray-200 text-xs text-gray-700 font-semibold flex items-center justify-center bg-gray-50"
                 >
                   {timeSlot}
                 </div>
@@ -205,14 +205,14 @@ export function AppointmentDayView({
               </div>
             ) : (
               workingEmployees.map((employee) => (
-                <div key={employee.id} className="flex-shrink-0 border-r border-gray-200" style={{ width: '140px' }}>
-                  {/* Employee header */}
-                  <div className="h-12 border-b border-gray-200 bg-white p-1 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-xs font-semibold text-gray-800 truncate">
+                <div key={employee.id} className="flex-shrink-0 border-r border-gray-200 w-36">
+                  {/* Employee header - Fixed and more prominent */}
+                  <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 flex items-center justify-center sticky top-0 z-20">
+                    <div className="text-center w-full">
+                      <div className="text-sm font-bold text-gray-800 truncate leading-tight">
                         {employee.name}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">
+                      <div className="text-xs text-blue-600 truncate font-medium">
                         {employee.role}
                       </div>
                     </div>

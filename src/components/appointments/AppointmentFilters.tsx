@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Filter, Users, User, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,8 @@ interface AppointmentFiltersProps {
   showAvailableStaffSidebar?: boolean;
   setShowAvailableStaffSidebar?: (show: boolean) => void;
   isMaximized?: boolean;
+  appointmentStatus?: string;
+  setAppointmentStatus?: (status: string) => void;
 }
 
 export function AppointmentFilters({
@@ -42,7 +43,9 @@ export function AppointmentFilters({
   filteredAppointments,
   showAvailableStaffSidebar,
   setShowAvailableStaffSidebar,
-  isMaximized = false
+  isMaximized = false,
+  appointmentStatus = "confirmed",
+  setAppointmentStatus
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();
   const { t } = useLanguage();
@@ -75,6 +78,23 @@ export function AppointmentFilters({
                 <SelectItem value="both">Cả hai</SelectItem>
                 <SelectItem value="customer">KH</SelectItem>
                 <SelectItem value="staff">NV</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Trạng thái:</span>
+            <Select value={appointmentStatus} onValueChange={(value) => setAppointmentStatus?.(value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="confirmed">Xác nhận</SelectItem>
+                <SelectItem value="completed">Hoàn thành</SelectItem>
+                <SelectItem value="cancelled">Đã hủy</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
               </SelectContent>
             </Select>
           </div>
