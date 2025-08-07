@@ -108,7 +108,7 @@ const AppSidebar = () => {
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
           <Scissors className="h-6 w-6 text-pink-600" />
-          {!isCollapsed && <span className="font-bold text-lg">Nail Salon</span>}
+          {!isCollapsed && <span className="font-bold text-lg">Nails Salon</span>}
         </div>
       </SidebarHeader>
       <SidebarContent>
