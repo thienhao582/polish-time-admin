@@ -53,6 +53,7 @@ const translations = {
 
     // Customers
     'customers.title': 'Quản lý Khách Hàng',
+    'customers.general-info': 'Thông tin chung',
     'customers.subtitle': 'Theo dõi thông tin, tích điểm và gửi SMS khách hàng',
     'customers.add_customer': 'Thêm khách hàng',
     'customers.total_customers': 'Tổng khách hàng',
@@ -160,6 +161,7 @@ const translations = {
 
     // Customers
     'customers.title': 'Customer Management',
+    'customers.general-info': 'General Information',
     'customers.subtitle': 'Track information, loyalty points and send SMS to customers',
     'customers.add_customer': 'Add Customer',
     'customers.total_customers': 'Total Customers',
