@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Clock, Users, Search, Plus, QrCode } from "lucide-react";
+import { Clock, Users, Search, Plus, QrCode, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import QRCodePopup from "@/components/QRCodePopup";
+import { CheckInEditDialog } from "@/components/CheckInEditDialog";
 
 interface CheckInItem {
   id: string;
   customerNumber: string;
   customerName: string;
-  status: 'Walk In' | 'Appointment';
+  status: string;
   checkInTime: string;
   tags: string[];
-  services: string[];
+  services?: string[];
   phone?: string;
   waitTime?: number;
+  notes?: string;
 }
 
 const CheckIn = () => {
@@ -27,7 +29,7 @@ const CheckIn = () => {
       id: "1",
       customerNumber: "3760",
       customerName: "Misteri Crowder",
-      status: "Walk In",
+      status: "waiting",
       checkInTime: "10:23 AM",
       tags: ["NEW"],
       services: ["Haircut", "Wash"],
@@ -38,7 +40,7 @@ const CheckIn = () => {
       id: "2", 
       customerNumber: "3141",
       customerName: "Sophie",
-      status: "Walk In",
+      status: "waiting",
       checkInTime: "09:08 AM",
       tags: ["VIP"],
       services: ["Color", "Style"],
@@ -49,7 +51,7 @@ const CheckIn = () => {
       id: "3",
       customerNumber: "2895",
       customerName: "John Doe",
-      status: "Appointment",
+      status: "waiting",
       checkInTime: "11:15 AM",
       tags: ["REGULAR"],
       services: ["Trim"],
@@ -60,7 +62,7 @@ const CheckIn = () => {
       id: "4",
       customerNumber: "2701",
       customerName: "Maria Garcia",
-      status: "Walk In",
+      status: "waiting",
       checkInTime: "11:30 AM",
       tags: ["NEW"],
       services: ["Manicure", "Pedicure"],
@@ -72,6 +74,7 @@ const CheckIn = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedQRItem, setSelectedQRItem] = useState<CheckInItem | null>(null);
+  const [editDialogItem, setEditDialogItem] = useState<CheckInItem | null>(null);
 
   const getTagVariant = (tag: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (tag) {
@@ -103,10 +106,22 @@ const CheckIn = () => {
     setCheckInItems(items => items.filter(item => item.id !== id));
   };
 
+  const handleEditCheckIn = (item: CheckInItem) => {
+    setEditDialogItem(item);
+  };
+
+  const handleUpdateCheckIn = (updatedItem: CheckInItem) => {
+    setCheckInItems(items => 
+      items.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      )
+    );
+  };
+
   const stats = {
     total: checkInItems.length,
-    walkIn: checkInItems.filter(item => item.status === "Walk In").length,
-    appointments: checkInItems.filter(item => item.status === "Appointment").length,
+    waiting: checkInItems.filter(item => item.status === "waiting").length,
+    inService: checkInItems.filter(item => item.status === "in_service").length,
     avgWaitTime: Math.round(checkInItems.reduce((acc, item) => acc + (item.waitTime || 0), 0) / checkInItems.length)
   };
 
@@ -146,10 +161,10 @@ const CheckIn = () => {
               <div className="p-2 bg-green-100 rounded-lg">
                 <Users className="h-6 w-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Walk-ins</p>
-                <p className="text-2xl font-bold">{stats.walkIn}</p>
-              </div>
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">Waiting</p>
+                 <p className="text-2xl font-bold">{stats.waiting}</p>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -160,10 +175,10 @@ const CheckIn = () => {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Users className="h-6 w-6 text-purple-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Appointments</p>
-                <p className="text-2xl font-bold">{stats.appointments}</p>
-              </div>
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">In Service</p>
+                 <p className="text-2xl font-bold">{stats.inService}</p>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -203,11 +218,11 @@ const CheckIn = () => {
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Walk In">Walk In</SelectItem>
-                <SelectItem value="Appointment">Appointment</SelectItem>
-              </SelectContent>
+               <SelectContent>
+                 <SelectItem value="all">All Status</SelectItem>
+                 <SelectItem value="waiting">Waiting</SelectItem>
+                 <SelectItem value="in_service">In Service</SelectItem>
+               </SelectContent>
             </Select>
           </div>
 
@@ -230,13 +245,15 @@ const CheckIn = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4 mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-medium text-sm ${
-                            item.status === 'Walk In' ? 'text-green-600' : 'text-blue-600'
-                          }`}>
-                            {item.status}
-                          </span>
+                       <div className="flex items-center gap-4 mb-3">
+                         <div className="flex items-center gap-2">
+                           <span className={`font-medium text-sm ${
+                             item.status === 'waiting' ? 'text-yellow-600' : 
+                             item.status === 'in_service' ? 'text-blue-600' : 'text-green-600'
+                           }`}>
+                             {item.status === 'waiting' ? 'Đang chờ' :
+                              item.status === 'in_service' ? 'Đang phục vụ' : item.status}
+                           </span>
                           <span className="text-muted-foreground">•</span>
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
@@ -266,9 +283,9 @@ const CheckIn = () => {
                         ))}
                       </div>
                       
-                      <div className="text-sm text-muted-foreground">
-                        <strong>Services:</strong> {item.services.join(", ")}
-                      </div>
+                       <div className="text-sm text-muted-foreground">
+                         <strong>Services:</strong> {item.services?.join(", ") || "Chưa chọn dịch vụ"}
+                       </div>
                     </div>
                     
                     <div className="flex flex-col gap-2 ml-6">
@@ -280,12 +297,15 @@ const CheckIn = () => {
                         <QrCode className="h-4 w-4" />
                         Show QR
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                      >
-                        Edit
-                      </Button>
+                       <Button 
+                         size="sm" 
+                         variant="outline"
+                         onClick={() => handleEditCheckIn(item)}
+                         className="gap-2"
+                       >
+                         <Edit className="h-4 w-4" />
+                         Edit
+                       </Button>
                       <Button 
                         size="sm" 
                         variant="destructive"
@@ -318,6 +338,16 @@ const CheckIn = () => {
           itemId={selectedQRItem.id}
           customerName={selectedQRItem.customerName}
           customerNumber={selectedQRItem.customerNumber}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {editDialogItem && (
+        <CheckInEditDialog
+          isOpen={!!editDialogItem}
+          onClose={() => setEditDialogItem(null)}
+          checkInItem={editDialogItem}
+          onUpdate={handleUpdateCheckIn}
         />
       )}
     </div>
