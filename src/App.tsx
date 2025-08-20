@@ -19,6 +19,7 @@ import AccountManagement from "./pages/AccountManagement";
 import NotFound from "./pages/NotFound";
 import Invoices from "./pages/Invoices";
 import Login from "./pages/Login";
+import CheckIn from "./pages/CheckIn";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="tasks" element={<TaskManagement />} />
+              <Route path="checkin" element={<CheckIn />} />
               <Route path="customers/*" element={<Customers />} />
               <Route path="services" element={
                 <ProtectedRoute requiredPermission="manage_services">

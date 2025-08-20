@@ -190,99 +190,26 @@ const AppSidebar = () => {
               ))}
 
               {/* Check-in Section */}
-              <Collapsible defaultOpen={checkInItems.length > 0}>
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="flex items-center gap-2 justify-between">
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={location.pathname === "/checkin"}
+                >
+                  <Link to="/checkin" className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    {!isCollapsed && (
                       <div className="flex items-center gap-2">
-                        <LogIn className="h-4 w-4" />
-                        {!isCollapsed && <span>Check In</span>}
-                        {!isCollapsed && checkInItems.length > 0 && (
+                        <span>Check In</span>
+                        {checkInItems.length > 0 && (
                           <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-xs">
                             {checkInItems.length}
                           </Badge>
                         )}
                       </div>
-                      {!isCollapsed && (
-                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                      )}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="px-2 py-2">
-                      {!isCollapsed && (
-                        <ScrollArea className="max-h-96">
-                          <div className="space-y-2">
-                            {checkInItems.map((item) => (
-                              <Card key={item.id} className="bg-primary/5 border-primary/20">
-                                <CardContent className="p-3">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-primary text-sm">
-                                        {item.customerNumber}
-                                      </span>
-                                      <span className="font-medium text-sm">
-                                        {item.customerName}
-                                      </span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <span className="text-green-600 font-medium">
-                                        {item.status}
-                                      </span>
-                                      <span>•</span>
-                                      <span>{item.checkInTime}</span>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                      {item.tags.map((tag) => (
-                                        <Badge 
-                                          key={tag} 
-                                          variant={getTagVariant(tag)}
-                                          className="text-xs px-1.5 py-0.5 h-5"
-                                        >
-                                          {tag}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                    
-                                    <div className="text-xs text-muted-foreground">
-                                      {item.services.join(", ")}
-                                    </div>
-                                    
-                                    <div className="flex gap-2 pt-1">
-                                      <Button 
-                                        size="sm" 
-                                        className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 h-6 text-xs flex-1"
-                                      >
-                                        Pay
-                                      </Button>
-                                      <Button 
-                                        size="sm" 
-                                        variant="destructive" 
-                                        className="px-2 py-1 h-6 text-xs flex-1"
-                                      >
-                                        Service
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                            
-                            {checkInItems.length === 0 && (
-                              <div className="text-center text-muted-foreground py-4">
-                                <LogIn className="h-6 w-6 mx-auto mb-2 opacity-50" />
-                                <p className="text-xs">No customers checked in</p>
-                              </div>
-                            )}
-                          </div>
-                        </ScrollArea>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               
               {/* Customer Management Accordion - Position 3 */}
               <Collapsible defaultOpen={isCustomerSectionActive}>
