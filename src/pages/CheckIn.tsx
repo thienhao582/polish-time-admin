@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Clock, Users, Search, Plus } from "lucide-react";
+import { Clock, Users, Search, Plus, QrCode } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import QRCodePopup from "@/components/QRCodePopup";
 
 interface CheckInItem {
   id: string;
@@ -19,6 +21,7 @@ interface CheckInItem {
 }
 
 const CheckIn = () => {
+  const { toast } = useToast();
   const [checkInItems, setCheckInItems] = useState<CheckInItem[]>([
     {
       id: "1",
@@ -68,6 +71,7 @@ const CheckIn = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedQRItem, setSelectedQRItem] = useState<CheckInItem | null>(null);
 
   const getTagVariant = (tag: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (tag) {
@@ -270,9 +274,11 @@ const CheckIn = () => {
                     <div className="flex flex-col gap-2 ml-6">
                       <Button 
                         size="sm" 
-                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        className="gap-2"
+                        onClick={() => setSelectedQRItem(item)}
                       >
-                        Start Service
+                        <QrCode className="h-4 w-4" />
+                        Show QR
                       </Button>
                       <Button 
                         size="sm" 
@@ -303,6 +309,17 @@ const CheckIn = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* QR Code Popup */}
+      {selectedQRItem && (
+        <QRCodePopup
+          isOpen={!!selectedQRItem}
+          onClose={() => setSelectedQRItem(null)}
+          itemId={selectedQRItem.id}
+          customerName={selectedQRItem.customerName}
+          customerNumber={selectedQRItem.customerNumber}
+        />
+      )}
     </div>
   );
 };
