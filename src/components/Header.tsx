@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useAuth } from "@/hooks/useAuth";
+import CheckInMenu from "@/components/CheckInMenu";
 
 const Header = () => {
   const { logout, user } = useAuth();
@@ -15,6 +16,8 @@ const Header = () => {
   return (
     <div className="flex-1 flex items-center justify-end gap-4">
       <LanguageSelector />
+      
+      <CheckInMenu />
       
       <Button variant="ghost" size="icon">
         <Bell className="h-4 w-4" />
