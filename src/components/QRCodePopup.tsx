@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -14,33 +14,29 @@ interface QRCodePopupProps {
 }
 
 const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: QRCodePopupProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const generateQRCode = async () => {
-      if (canvasRef.current && isOpen) {
+      if (isOpen && itemId) {
+        setIsLoading(true);
         try {
-          // Generate QR code with item ID
-          await QRCode.toCanvas(canvasRef.current, itemId, {
-            width: 256,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#ffffff'
-            }
-          });
-
-          // Also generate data URL for download
+          console.log('Generating QR code for ID:', itemId);
+          
+          // Generate QR code as data URL
           const dataUrl = await QRCode.toDataURL(itemId, {
             width: 256,
             margin: 2,
             color: {
               dark: '#000000',
               light: '#ffffff'
-            }
+            },
+            errorCorrectionLevel: 'M'
           });
+          
+          console.log('QR code generated successfully');
           setQrCodeDataUrl(dataUrl);
         } catch (error) {
           console.error('Error generating QR code:', error);
@@ -49,6 +45,8 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
             description: "Failed to generate QR code",
             variant: "destructive"
           });
+        } finally {
+          setIsLoading(false);
         }
       }
     };
@@ -91,6 +89,9 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>QR Code - {customerName}</DialogTitle>
+          <DialogDescription>
+            Scan this QR code to access customer information
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col items-center space-y-4">
@@ -101,11 +102,22 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
           </div>
 
           {/* QR Code */}
-          <div className="p-4 bg-white rounded-lg border">
-            <canvas 
-              ref={canvasRef}
-              className="block"
-            />
+          <div className="p-4 bg-white rounded-lg border shadow-sm">
+            {isLoading ? (
+              <div className="w-64 h-64 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : qrCodeDataUrl ? (
+              <img 
+                src={qrCodeDataUrl} 
+                alt={`QR Code for ${customerName}`}
+                className="w-64 h-64 block"
+              />
+            ) : (
+              <div className="w-64 h-64 flex items-center justify-center text-muted-foreground">
+                Failed to generate QR code
+              </div>
+            )}
           </div>
 
           {/* Item ID */}
@@ -127,6 +139,7 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
               variant="outline"
               onClick={handleDownloadQR}
               className="flex-1 gap-2"
+              disabled={!qrCodeDataUrl}
             >
               <Download className="h-4 w-4" />
               Download QR
