@@ -120,18 +120,6 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
             )}
           </div>
 
-          {/* Item ID */}
-          <div className="flex items-center gap-2 p-2 bg-muted rounded">
-            <span className="text-sm font-mono">{itemId}</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleCopyId}
-              className="h-6 w-6 p-0"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
 
           {/* Actions */}
           <div className="flex gap-2 w-full">
