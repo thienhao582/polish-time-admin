@@ -39,19 +39,24 @@ export function AppointmentDayView({
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
   
+  // Separate appointments with and without specific staff
+  const anyoneAppointments = dayAppointments.filter(apt => !apt.staff || apt.staff.trim() === '');
+  const staffAppointments = dayAppointments.filter(apt => apt.staff && apt.staff.trim() !== '');
+  
   console.log("AppointmentDayView Debug:", {
     dateString,
     totalFiltered: filteredAppointments.length,
     dayAppointments: dayAppointments.length,
-    firstFewAppointments: dayAppointments.slice(0, 5),
+    anyoneAppointments: anyoneAppointments.length,
+    staffAppointments: staffAppointments.length,
     allStaffNames: dayAppointments.map(apt => apt.staff),
     uniqueStaffNames: [...new Set(dayAppointments.map(apt => apt.staff))]
   });
 
   // Get working employees for this date (only service staff, not managers/reception)
   const getWorkingEmployees = () => {
-    // Get all unique staff names from appointments for this day
-    const staffNamesInAppointments = [...new Set(dayAppointments.map(apt => apt.staff))];
+    // Get all unique staff names from appointments for this day (excluding empty staff)
+    const staffNamesInAppointments = [...new Set(staffAppointments.map(apt => apt.staff))];
     
     console.log("Staff names in appointments:", staffNamesInAppointments);
     console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role })));
@@ -69,7 +74,7 @@ export function AppointmentDayView({
     
     // Sort employees by priority: those with more appointments first
     const employeesWithData = finalEmployees.map(employee => {
-      const employeeAppointments = dayAppointments.filter(apt => 
+      const employeeAppointments = staffAppointments.filter(apt => 
         apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
       );
       
@@ -129,7 +134,7 @@ export function AppointmentDayView({
     const slotStartMinutes = timeToMinutes(timeSlot);
     const slotEndMinutes = slotStartMinutes + 30;
     
-    const appointments = dayAppointments.filter(apt => {
+    const appointments = staffAppointments.filter(apt => {
       // Check if employee name matches staff field (more flexible matching)
       const isStaffMatch = apt.staff === employee.name || 
                           apt.staff.includes(employee.name) || 
@@ -137,6 +142,23 @@ export function AppointmentDayView({
       
       if (!isStaffMatch) return false;
       
+      const aptStartMinutes = timeToMinutes(apt.time);
+      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
+      
+      // Check if appointment overlaps with this time slot
+      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
+    });
+    
+    return appointments;
+  };
+
+  // Get appointments for "Anyone" column for a specific time slot
+  const getAnyoneAppointmentsForTimeSlot = (timeSlot: string) => {
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    const slotEndMinutes = slotStartMinutes + 30;
+    
+    const appointments = anyoneAppointments.filter(apt => {
       const aptStartMinutes = timeToMinutes(apt.time);
       const aptDurationMinutes = parseDuration(apt.duration);
       const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
@@ -177,7 +199,7 @@ export function AppointmentDayView({
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
         <p className="text-sm text-gray-600">
-          {dayAppointments.length} lịch hẹn • {workingEmployees.length} nhân viên ({employees.length} tổng)
+          {dayAppointments.length} lịch hẹn • {anyoneAppointments.length} không chỉ định • {workingEmployees.length} nhân viên ({employees.length} tổng)
         </p>
       </div>
 
@@ -201,10 +223,105 @@ export function AppointmentDayView({
               ))}
             </div>
 
+            {/* Anyone column */}
+            <div className="flex-shrink-0 border-r border-gray-200 w-36">
+              {/* Anyone header */}
+              <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50 p-2 flex items-center justify-center sticky top-0 z-20">
+                <div className="text-center w-full">
+                  <div className="text-sm font-bold text-gray-800 truncate leading-tight">
+                    Anyone
+                  </div>
+                  <div className="text-xs text-orange-600 truncate font-medium">
+                    {anyoneAppointments.length} lịch hẹn
+                  </div>
+                </div>
+              </div>
+
+              {/* Time slots for Anyone column */}
+              {timeSlots.map((timeSlot) => {
+                const anyoneSlotAppointments = getAnyoneAppointmentsForTimeSlot(timeSlot);
+                const startingAppointments = anyoneSlotAppointments.filter(apt => 
+                  appointmentStartsAtSlot(apt, timeSlot)
+                );
+
+                const handleTimeSlotClick = () => {
+                  if (onTimeSlotClick && startingAppointments.length === 0) {
+                    onTimeSlotClick(dateString, timeSlot, "Anyone");
+                  }
+                };
+                
+                return (
+                  <div 
+                    key={`anyone-${timeSlot}`} 
+                    className={cn(
+                      "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors",
+                      startingAppointments.length === 0 
+                        ? "hover:bg-orange-50 cursor-pointer" 
+                        : "hover:bg-gray-50"
+                    )}
+                    onClick={handleTimeSlotClick}
+                  >
+                    {startingAppointments.length > 0 && (
+                      <div className="text-xs text-orange-600 absolute top-0 left-0">
+                        {startingAppointments.length} apt
+                      </div>
+                    )}
+                    {startingAppointments.map((apt, aptIndex) => {
+                      const durationMinutes = parseDuration(apt.duration);
+                      const slotsSpanned = Math.ceil(durationMinutes / 30);
+                      const heightInPixels = slotsSpanned * 56 - 4; // 56px per slot (h-14) minus border
+                      
+                      // Use orange color for "Anyone" appointments
+                      const getAppointmentColor = () => {
+                        if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
+                        if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
+                        return 'bg-orange-100 border-orange-300 text-orange-800'; // Orange for anyone appointments
+                      };
+                      
+                      return (
+                        <div
+                          key={`${apt.id}-${aptIndex}`}
+                          className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs overflow-hidden`}
+                          style={{
+                            top: '2px',
+                            left: `${aptIndex * 50}%`,
+                            width: startingAppointments.length > 1 ? '48%' : '96%',
+                            height: `${heightInPixels}px`,
+                            minHeight: '50px',
+                            zIndex: 10
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAppointmentClick(apt, e);
+                          }}
+                        >
+                          <div className="font-bold truncate">
+                            {apt.customer}
+                          </div>
+                          <div className="truncate text-xs opacity-90">
+                            {apt.service}
+                          </div>
+                          <div className="text-xs opacity-80">
+                            {apt.time}
+                          </div>
+                          {durationMinutes >= 60 && (
+                            <div className="text-xs opacity-75">
+                              {apt.duration}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Employee columns */}
-            {workingEmployees.length === 0 ? (
+            {workingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
               <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
-                Không có nhân viên nào đang làm việc hôm nay
+                Không có lịch hẹn nào hôm nay
               </div>
             ) : (
               workingEmployees.map((employee) => (
