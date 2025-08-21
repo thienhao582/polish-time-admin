@@ -263,6 +263,14 @@ const generateAug6TestData = () => {
   const appointments: Appointment[] = [];
   let appointmentId = 5000; // Start with high ID to avoid conflicts
   
+  // Create "Anyone" appointments (no specific staff assigned)
+  const anyoneAppointments = [
+    { time: "09:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Nguyễn Thi Lan" },
+    { time: "11:00", service: "French Manicure", duration: 75, price: 280000, customer: "Trần Thi Mai" },
+    { time: "14:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Lê Thi Hoa" },
+    { time: "16:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Phạm Thi Thu" },
+  ];
+
   // Create appointments for 15 employees to test horizontal scrolling
   const employeeAppointments = [
     // Lý Dung - 3 appointments
@@ -333,6 +341,33 @@ const generateAug6TestData = () => {
     { staff: "Huỳnh Anh", time: "16:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hoàng Thi Hiền" },
   ];
   
+  // Add "Anyone" appointments (no staff assigned)
+  anyoneAppointments.forEach((aptData, index) => {
+    const customerIndex = Math.floor(Math.random() * 100);
+    const customer = initialCustomers[customerIndex];
+    
+    appointments.push({
+      id: appointmentId + index,
+      date: "2025-08-06",
+      time: aptData.time,
+      customer: aptData.customer,
+      phone: customer.phone,
+      service: aptData.service,
+      duration: `${aptData.duration} phút`,
+      price: `${aptData.price.toLocaleString()}đ`,
+      status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
+      staff: "", // Empty staff for "Anyone" column
+      customerId: customerIndex.toString(),
+      serviceId: "1",
+      staffId: "",
+      notes: Math.random() < 0.2 ? "Không yêu cầu nhân viên cụ thể" : undefined,
+      staffSalaryData: []
+    });
+  });
+  
+  appointmentId += anyoneAppointments.length;
+  
+  // Add employee appointments
   employeeAppointments.forEach((aptData, index) => {
     const customerIndex = Math.floor(Math.random() * 100);
     const customer = initialCustomers[customerIndex];
@@ -365,7 +400,7 @@ const generateAug6TestData = () => {
   });
   
   console.log("Generated Aug 6 test data:", appointments.length, "appointments for", 
-    [...new Set(employeeAppointments.map(a => a.staff))].length, "employees");
+    [...new Set(employeeAppointments.map(a => a.staff))].length, "employees + Anyone column");
   return appointments;
 };
 
