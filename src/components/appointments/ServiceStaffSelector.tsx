@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,12 +26,23 @@ interface ServiceStaffItem {
 interface ServiceStaffSelectorProps {
   selectedItems: ServiceStaffItem[];
   onItemsChange: (items: ServiceStaffItem[]) => void;
+  preSelectedEmployeeName?: string;
 }
 
-export function ServiceStaffSelector({ selectedItems, onItemsChange }: ServiceStaffSelectorProps) {
+export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelectedEmployeeName }: ServiceStaffSelectorProps) {
   const { services, employees } = useSalonStore();
   const [currentServiceId, setCurrentServiceId] = useState("");
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+
+  // Pre-select employee if provided
+  useEffect(() => {
+    if (preSelectedEmployeeName && selectedItems.length === 0) {
+      const employee = employees.find(e => e.name === preSelectedEmployeeName);
+      if (employee) {
+        setSelectedStaffIds([employee.id]);
+      }
+    }
+  }, [preSelectedEmployeeName, employees, selectedItems.length]);
 
   const addServiceStaffItem = () => {
     if (!currentServiceId || selectedStaffIds.length === 0) return;

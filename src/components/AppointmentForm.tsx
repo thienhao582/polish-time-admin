@@ -63,6 +63,39 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     },
   });
 
+  // Update form when editData changes (for time slot clicks)
+  useEffect(() => {
+    if (editData) {
+      if (editData.date) {
+        form.setValue("date", new Date(editData.date));
+      }
+      if (editData.time) {
+        form.setValue("time", editData.time);
+      }
+      if (editData.customer) {
+        form.setValue("customerName", editData.customer);
+      }
+      if (editData.phone) {
+        form.setValue("customerPhone", editData.phone);
+      }
+      if (editData.email) {
+        form.setValue("customerEmail", editData.email);
+      }
+      if (editData.notes) {
+        form.setValue("notes", editData.notes);
+      }
+      
+      // If we have an employee name from time slot click, pre-select it in service staff
+      if (editData.employeeName && serviceStaffItems.length === 0) {
+        const employee = employees.find(e => e.name === editData.employeeName);
+        if (employee) {
+          // We'll handle this in the ServiceStaffSelector component
+          console.log("Pre-selected employee:", employee.name);
+        }
+      }
+    }
+  }, [editData, form, employees]);
+
   // Deduplicate customers when component loads
   useEffect(() => {
     deduplicateCustomers();
@@ -347,6 +380,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         <ServiceStaffSelector
           selectedItems={serviceStaffItems}
           onItemsChange={setServiceStaffItems}
+          preSelectedEmployeeName={editData?.employeeName}
         />
       </div>
 

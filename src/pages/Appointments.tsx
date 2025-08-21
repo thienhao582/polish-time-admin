@@ -52,6 +52,7 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState<LegacyAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [appointmentStatus, setAppointmentStatus] = useState("confirmed");
+  const [initialFormData, setInitialFormData] = useState<any>(null);
 
   // Get employees from Zustand store and fetch appointments from Supabase
   const { employees, initializeData, appointments: demoAppointments } = useSalonStore();
@@ -175,9 +176,19 @@ const Appointments = () => {
 
   const handleAppointmentCreate = async (appointmentData: any) => {
     setIsFormOpen(false);
+    setInitialFormData(null);
     // Refresh appointments after creating
     await loadAppointments();
     toast.success("Lịch hẹn đã được tạo thành công!");
+  };
+
+  const handleTimeSlotClick = (date: string, time: string, employeeName: string) => {
+    setInitialFormData({
+      date,
+      time,
+      employeeName
+    });
+    setIsFormOpen(true);
   };
 
   const handleAppointmentEdit = async (appointmentData: any) => {
@@ -309,7 +320,14 @@ const Appointments = () => {
                 <DialogTitle>Tạo lịch hẹn mới</DialogTitle>
               </DialogHeader>
               <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
-                <AppointmentForm onClose={() => setIsFormOpen(false)} onSubmit={handleAppointmentCreate} />
+                <AppointmentForm 
+                  onClose={() => {
+                    setIsFormOpen(false);
+                    setInitialFormData(null);
+                  }} 
+                  onSubmit={handleAppointmentCreate}
+                  editData={initialFormData}
+                />
               </div>
             </DialogContent>
           </Dialog>
@@ -402,6 +420,7 @@ const Appointments = () => {
                   handleAppointmentClick={handleAppointmentClick}
                   displayMode={displayMode}
                   showFullView={showFullView || !hasActiveFilters}
+                  onTimeSlotClick={handleTimeSlotClick}
                 />
               )}
             </CardContent>

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { formatTimeRange } from "@/utils/timeUtils";
+import { cn } from "@/lib/utils";
 
 interface Appointment {
   id: number;
@@ -21,6 +22,7 @@ interface AppointmentDayViewProps {
   handleAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
   displayMode: "customer" | "staff" | "both";
   showFullView: boolean;
+  onTimeSlotClick?: (date: string, time: string, employeeName: string) => void;
 }
 
 export function AppointmentDayView({
@@ -28,7 +30,8 @@ export function AppointmentDayView({
   filteredAppointments,
   handleAppointmentClick,
   displayMode,
-  showFullView
+  showFullView,
+  onTimeSlotClick
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -218,17 +221,29 @@ export function AppointmentDayView({
                     </div>
                   </div>
 
-                  {/* Time slots for this employee */}
+                   {/* Time slots for this employee */}
                   {timeSlots.map((timeSlot) => {
                     const employeeAppointments = getEmployeeAppointmentsForTimeSlot(employee, timeSlot);
                     const startingAppointments = employeeAppointments.filter(apt => 
                       appointmentStartsAtSlot(apt, timeSlot)
                     );
+
+                    const handleTimeSlotClick = () => {
+                      if (onTimeSlotClick && startingAppointments.length === 0) {
+                        onTimeSlotClick(dateString, timeSlot, employee.name);
+                      }
+                    };
                     
                     return (
                       <div 
                         key={`${employee.id}-${timeSlot}`} 
-                        className="h-14 border-b border-gray-200 bg-white hover:bg-gray-50 relative p-1"
+                        className={cn(
+                          "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors",
+                          startingAppointments.length === 0 
+                            ? "hover:bg-blue-50 cursor-pointer" 
+                            : "hover:bg-gray-50"
+                        )}
+                        onClick={handleTimeSlotClick}
                       >
                         {startingAppointments.length > 0 && (
                           <div className="text-xs text-blue-600 absolute top-0 left-0">
