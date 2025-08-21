@@ -188,12 +188,21 @@ export function AppointmentDayView({
   const timeSlots = showFullView 
     ? allTimeSlots 
     : allTimeSlots.filter(timeSlot => {
-        return dayAppointments.some(apt => {
+        const hasAppointment = dayAppointments.some(apt => {
           const aptStartMinutes = timeToMinutes(apt.time);
           const slotStartMinutes = timeToMinutes(timeSlot);
           const slotEndMinutes = slotStartMinutes + 30;
           return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration) > slotStartMinutes;
         });
+        
+        if (hasAppointment && timeSlot === "08:00") {
+          console.log("Time slot 08:00 has appointments:", dayAppointments.filter(apt => 
+            timeToMinutes(apt.time) >= timeToMinutes(timeSlot) && 
+            timeToMinutes(apt.time) < timeToMinutes(timeSlot) + 30
+          ).map(apt => ({ customer: apt.customer, staff: `"${apt.staff}"`, time: apt.time })));
+        }
+        
+        return hasAppointment;
       });
 
   return (

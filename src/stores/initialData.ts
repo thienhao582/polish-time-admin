@@ -265,11 +265,13 @@ const generateAug6TestData = () => {
   
   // Create "Anyone" appointments (no specific staff assigned)
   const anyoneAppointments = [
-    { time: "09:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Nguyễn Thi Lan" },
+    { time: "08:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Nguyễn Thi Lan" },
     { time: "11:00", service: "French Manicure", duration: 75, price: 280000, customer: "Trần Thi Mai" },
     { time: "14:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Lê Thi Hoa" },
     { time: "16:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Phạm Thi Thu" },
   ];
+
+  console.log("Creating Anyone appointments:", anyoneAppointments.length);
 
   // Create appointments for 15 employees to test horizontal scrolling
   const employeeAppointments = [
@@ -346,7 +348,7 @@ const generateAug6TestData = () => {
     const customerIndex = Math.floor(Math.random() * 100);
     const customer = initialCustomers[customerIndex];
     
-    appointments.push({
+    const anyoneAppt = {
       id: appointmentId + index,
       date: "2025-08-06",
       time: aptData.time,
@@ -362,7 +364,17 @@ const generateAug6TestData = () => {
       staffId: "",
       notes: "Không yêu cầu nhân viên cụ thể",
       staffSalaryData: []
+    };
+    
+    console.log(`Creating Anyone appointment ${index + 1}:`, {
+      id: anyoneAppt.id,
+      time: anyoneAppt.time,
+      customer: anyoneAppt.customer,
+      staff: `"${anyoneAppt.staff}"`,
+      service: anyoneAppt.service
     });
+    
+    appointments.push(anyoneAppt);
   });
   
   appointmentId += anyoneAppointments.length;
@@ -399,8 +411,16 @@ const generateAug6TestData = () => {
     });
   });
   
-  console.log("Generated Aug 6 test data:", appointments.length, "appointments for", 
-    [...new Set(employeeAppointments.map(a => a.staff))].length, "employees + Anyone column");
+  
+  console.log("Generated Aug 6 test data:", appointments.length, "appointments");
+  console.log("Anyone appointments:", appointments.filter(a => a.staff === "").length);
+  console.log("Staff appointments:", appointments.filter(a => a.staff !== "").length);
+  console.log("Sample appointments:", appointments.slice(0, 6).map(a => ({ 
+    id: a.id, 
+    time: a.time, 
+    customer: a.customer, 
+    staff: `"${a.staff}"` 
+  })));
   return appointments;
 };
 
