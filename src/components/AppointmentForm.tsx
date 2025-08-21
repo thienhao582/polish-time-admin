@@ -50,6 +50,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [phoneInput, setPhoneInput] = useState<string>("");
+  const [foundCustomer, setFoundCustomer] = useState<any>(null);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -100,6 +102,30 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   useEffect(() => {
     deduplicateCustomers();
   }, [deduplicateCustomers]);
+
+  // Handle phone input change
+  const handlePhoneInputChange = (phone: string) => {
+    setPhoneInput(phone);
+    
+    if (phone.length >= 10) {
+      const customer = enhancedCustomers.find(c => c.phone === phone);
+      if (customer) {
+        setFoundCustomer(customer);
+        setCustomerType("existing");
+        setSelectedCustomerId(customer.id);
+        form.setValue("customerName", customer.name);
+        form.setValue("customerPhone", customer.phone);
+        form.setValue("customerEmail", customer.email || "");
+        toast.success("Đã tìm thấy thông tin khách hàng");
+      } else {
+        setFoundCustomer(null);
+        setCustomerType("new");
+        form.setValue("customerPhone", phone);
+      }
+    } else {
+      setFoundCustomer(null);
+    }
+  };
 
   const handleCustomerChange = (customerId: string) => {
     setSelectedCustomerId(customerId);
@@ -259,6 +285,26 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.time.message}</p>
           )}
         </div>
+      </div>
+
+      {/* Phone Number Lookup */}
+      <div>
+        <Label htmlFor="phoneInput" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+          Số điện thoại
+        </Label>
+        <Input 
+          id="phoneInput" 
+          type="tel" 
+          placeholder="Nhập số điện thoại để tìm khách hàng" 
+          value={phoneInput}
+          onChange={(e) => handlePhoneInputChange(e.target.value)}
+          className="mb-2"
+        />
+        {foundCustomer && (
+          <div className="text-sm text-green-600 bg-green-50 p-2 rounded-md">
+            ✓ Đã tìm thấy: {foundCustomer.name}
+          </div>
+        )}
       </div>
 
       {/* Customer Type Selection */}
