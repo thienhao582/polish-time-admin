@@ -42,53 +42,66 @@ export function AppointmentDayView({
   // Create test data for "Anyone" column if on Aug 6, 2025
   const testAnyoneData = dateString === "2025-08-06" ? [
     {
-      id: 9001,
-      date: "2025-08-06",
-      time: "08:00",
-      customer: "Nguyễn Thị Lan",
-      phone: "0912345678",
-      service: "Basic Manicure",
-      duration: "60 phút",
-      price: "200,000đ",
-      status: "confirmed",
-      staff: "",
-      customerId: "1",
-      serviceId: "1",
-      staffId: "",
-      notes: "Không yêu cầu nhân viên cụ thể"
+      id: 9001, date: "2025-08-06", time: "09:22", customer: "Ngô Thị Linh", phone: "0912345678", 
+      service: "Cao Diệu", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
+      customerId: "1", serviceId: "1", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     },
     {
-      id: 9002,
-      date: "2025-08-06", 
-      time: "11:00",
-      customer: "Trần Thị Mai",
-      phone: "0912345679",
-      service: "French Manicure",
-      duration: "75 phút",
-      price: "280,000đ", 
-      status: "confirmed",
-      staff: "",
-      customerId: "2",
-      serviceId: "2",
-      staffId: "",
-      notes: "Không yêu cầu nhân viên cụ thể"
+      id: 9002, date: "2025-08-06", time: "11:36", customer: "Lê Thị Xuân", phone: "0912345679", 
+      service: "Phạm Hoài", duration: "75 phút", price: "280,000đ", status: "confirmed", staff: "", 
+      customerId: "2", serviceId: "2", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     },
     {
-      id: 9003,
-      date: "2025-08-06",
-      time: "14:00", 
-      customer: "Lê Thị Hoa",
-      phone: "0912345680",
-      service: "Gel Polish + Nail Art",
-      duration: "90 phút",
-      price: "450,000đ",
-      status: "confirmed", 
-      staff: "",
-      customerId: "3",
-      serviceId: "3",
-      staffId: "",
-      notes: "Không yêu cầu nhân viên cụ thể"
+      id: 9003, date: "2025-08-06", time: "14:04", customer: "Võ Thị Hường", phone: "0912345680", 
+      service: "Đỗ Hoa", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
+      customerId: "3", serviceId: "3", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9004, date: "2025-08-06", time: "08:30", customer: "Trần Thị Nga", phone: "0912345681", 
+      service: "Manicure + Pedicure", duration: "120 phút", price: "380,000đ", status: "confirmed", staff: "", 
+      customerId: "4", serviceId: "4", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9005, date: "2025-08-06", time: "10:15", customer: "Phạm Thị Yến", phone: "0912345682", 
+      service: "Nail Extension", duration: "150 phút", price: "650,000đ", status: "confirmed", staff: "", 
+      customerId: "5", serviceId: "5", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9006, date: "2025-08-06", time: "12:45", customer: "Hoàng Thị Lan", phone: "0912345683", 
+      service: "French Manicure", duration: "75 phút", price: "280,000đ", status: "confirmed", staff: "", 
+      customerId: "6", serviceId: "6", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9007, date: "2025-08-06", time: "15:20", customer: "Đặng Thị Hoa", phone: "0912345684", 
+      service: "Basic Manicure", duration: "60 phút", price: "200,000đ", status: "confirmed", staff: "", 
+      customerId: "7", serviceId: "7", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9008, date: "2025-08-06", time: "16:30", customer: "Vũ Thị Minh", phone: "0912345685", 
+      service: "Gel Polish + Nail Art", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
+      customerId: "8", serviceId: "8", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9009, date: "2025-08-06", time: "09:00", customer: "Lý Thị Thu", phone: "0912345686", 
+      service: "Manicure + Pedicure", duration: "120 phút", price: "380,000đ", status: "confirmed", staff: "", 
+      customerId: "9", serviceId: "9", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9010, date: "2025-08-06", time: "13:15", customer: "Bùi Thị Thanh", phone: "0912345687", 
+      service: "Nail Extension", duration: "150 phút", price: "650,000đ", status: "confirmed", staff: "", 
+      customerId: "10", serviceId: "10", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9011, date: "2025-08-06", time: "17:00", customer: "Đinh Thị Cúc", phone: "0912345688", 
+      service: "French Manicure", duration: "75 phút", price: "280,000đ", status: "confirmed", staff: "", 
+      customerId: "11", serviceId: "11", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9012, date: "2025-08-06", time: "07:30", customer: "Cao Thị Đào", phone: "0912345689", 
+      service: "Basic Manicure", duration: "60 phút", price: "200,000đ", status: "confirmed", staff: "", 
+      customerId: "12", serviceId: "12", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     }
+    // ... thêm nhiều appointments khác để có tổng cộng 40+ lịch hẹn
   ] : [];
   
   // Combine real appointments with test data
@@ -190,6 +203,15 @@ export function AppointmentDayView({
   const timeToMinutes = (timeStr: string): number => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
+  };
+
+  // Helper function to calculate end time from start time and duration
+  const timeToEndTime = (startTime: string, durationMinutes: number): string => {
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = startMinutes + durationMinutes;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
   // Get appointments for a specific employee and time slot
@@ -326,85 +348,43 @@ export function AppointmentDayView({
                 </div>
               </div>
 
-              {/* Time slots for Anyone column */}
-              {timeSlots.map((timeSlot) => {
-                const anyoneSlotAppointments = getAnyoneAppointmentsForTimeSlot(timeSlot);
-                const startingAppointments = anyoneSlotAppointments.filter(apt => 
-                  appointmentStartsAtSlot(apt, timeSlot)
-                );
-
-                const handleTimeSlotClick = () => {
-                  if (onTimeSlotClick && startingAppointments.length === 0) {
-                    onTimeSlotClick(dateString, timeSlot, "Anyone");
-                  }
-                };
-                
-                return (
-                  <div 
-                    key={`anyone-${timeSlot}`} 
-                    className={cn(
-                      "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors",
-                      startingAppointments.length === 0 
-                        ? "hover:bg-orange-50 cursor-pointer" 
-                        : "hover:bg-gray-50"
-                    )}
-                    onClick={handleTimeSlotClick}
-                  >
-                    {startingAppointments.length > 0 && (
-                      <div className="text-xs text-orange-600 absolute top-0 left-0">
-                        {startingAppointments.length} apt
+              {/* Time slots for Anyone column - Show as a list */}
+              <div className="h-full overflow-y-auto bg-orange-50/30">
+                {anyoneAppointments.length > 0 ? (
+                  <div className="p-2 space-y-1">
+                    {anyoneAppointments.slice(0, 10).map((apt, index) => (
+                      <div
+                        key={`anyone-${apt.id}`}
+                        className="bg-orange-100 border border-orange-300 rounded-md p-2 cursor-pointer hover:shadow-md transition-all text-xs hover:bg-orange-200"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAppointmentClick(apt, e);
+                        }}
+                      >
+                        <div className="font-semibold text-orange-800 text-xs mb-1">
+                          {apt.time} - {timeToEndTime(apt.time, parseDuration(apt.duration))}
+                        </div>
+                        <div className="font-bold text-gray-800 truncate">
+                          {apt.customer}
+                        </div>
+                        <div className="text-orange-700 truncate text-xs">
+                          {apt.service}
+                        </div>
+                      </div>
+                    ))}
+                    {anyoneAppointments.length > 10 && (
+                      <div className="text-center text-orange-600 text-xs font-medium py-2">
+                        +{anyoneAppointments.length - 10} lịch hẹn khác
                       </div>
                     )}
-                    {startingAppointments.map((apt, aptIndex) => {
-                      const durationMinutes = parseDuration(apt.duration);
-                      const slotsSpanned = Math.ceil(durationMinutes / 30);
-                      const heightInPixels = slotsSpanned * 56 - 4; // 56px per slot (h-14) minus border
-                      
-                      // Use orange color for "Anyone" appointments
-                      const getAppointmentColor = () => {
-                        if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
-                        if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
-                        return 'bg-orange-100 border-orange-300 text-orange-800'; // Orange for anyone appointments
-                      };
-                      
-                      return (
-                        <div
-                          key={`${apt.id}-${aptIndex}`}
-                          className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs overflow-hidden`}
-                          style={{
-                            top: '2px',
-                            left: `${aptIndex * 50}%`,
-                            width: startingAppointments.length > 1 ? '48%' : '96%',
-                            height: `${heightInPixels}px`,
-                            minHeight: '50px',
-                            zIndex: 10
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAppointmentClick(apt, e);
-                          }}
-                        >
-                          <div className="font-bold truncate">
-                            {apt.customer}
-                          </div>
-                          <div className="truncate text-xs opacity-90">
-                            {apt.service}
-                          </div>
-                          <div className="text-xs opacity-80">
-                            {apt.time}
-                          </div>
-                          {durationMinutes >= 60 && (
-                            <div className="text-xs opacity-75">
-                              {apt.duration}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
-                );
-              })}
+                ) : (
+                  <div className="p-4 text-center text-orange-600 text-xs">
+                    Không có lịch hẹn nào
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Employee columns */}
