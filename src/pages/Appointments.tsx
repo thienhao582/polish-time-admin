@@ -283,9 +283,9 @@ const Appointments = () => {
           <Button 
             variant="outline" 
             onClick={() => {
-              setDemoMode(true);
-              initializeData();
-              toast.success("Đã bật demo mode và tải 700 lịch hẹn!");
+              // Clear localStorage to force refresh
+              localStorage.removeItem('salon-store');
+              window.location.reload();
             }}
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
           >

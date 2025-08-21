@@ -40,8 +40,12 @@ export function AppointmentDayView({
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
   
   // Separate appointments with and without specific staff
-  const anyoneAppointments = dayAppointments.filter(apt => !apt.staff || apt.staff.trim() === '');
-  const staffAppointments = dayAppointments.filter(apt => apt.staff && apt.staff.trim() !== '');
+  const anyoneAppointments = dayAppointments.filter(apt => 
+    !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone'
+  );
+  const staffAppointments = dayAppointments.filter(apt => 
+    apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
+  );
   
   console.log("AppointmentDayView Debug:", {
     dateString,
@@ -49,7 +53,8 @@ export function AppointmentDayView({
     dayAppointments: dayAppointments.length,
     anyoneAppointments: anyoneAppointments.length,
     staffAppointments: staffAppointments.length,
-    allStaffNames: dayAppointments.map(apt => apt.staff),
+    sampleAnyoneAppt: anyoneAppointments[0],
+    allStaffNames: dayAppointments.map(apt => `"${apt.staff}"`),
     uniqueStaffNames: [...new Set(dayAppointments.map(apt => apt.staff))]
   });
 

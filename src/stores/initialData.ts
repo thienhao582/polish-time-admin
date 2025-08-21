@@ -356,11 +356,11 @@ const generateAug6TestData = () => {
       duration: `${aptData.duration} phút`,
       price: `${aptData.price.toLocaleString()}đ`,
       status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
-      staff: "", // Empty staff for "Anyone" column
+      staff: "", // Explicitly empty string for "Anyone" column
       customerId: customerIndex.toString(),
       serviceId: "1",
       staffId: "",
-      notes: Math.random() < 0.2 ? "Không yêu cầu nhân viên cụ thể" : undefined,
+      notes: "Không yêu cầu nhân viên cụ thể",
       staffSalaryData: []
     });
   });
