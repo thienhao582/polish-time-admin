@@ -50,18 +50,18 @@ export function AppointmentDayView({
   const testAnyoneData = dateString === "2025-08-06" ? [
     {
       id: 9001, date: "2025-08-06", time: "09:22", customer: "Ngô Thị Linh", phone: "0912345678", 
-      service: "Cao Diệu", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
+      service: "Gel Polish + Nail Art", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
       customerId: "1", serviceId: "1", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     },
     {
       id: 9002, date: "2025-08-06", time: "11:36", customer: "Lê Thị Xuân", phone: "0912345679", 
-      service: "Phạm Hoài", duration: "75 phút", price: "280,000đ", status: "confirmed", staff: "", 
-      customerId: "2", serviceId: "2", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+      service: "French Manicure", duration: "75 phút", price: "280,000đ", status: "confirmed", staff: "", 
+      customerId: "2", serviceId: "5", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     },
     {
       id: 9003, date: "2025-08-06", time: "14:04", customer: "Võ Thị Hường", phone: "0912345680", 
-      service: "Đỗ Hoa", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
-      customerId: "3", serviceId: "3", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
+      service: "Manicure + Pedicure", duration: "120 phút", price: "380,000đ", status: "confirmed", staff: "", 
+      customerId: "3", serviceId: "2", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     },
     {
       id: 9004, date: "2025-08-06", time: "08:30", customer: "Trần Thị Nga", phone: "0912345681", 
