@@ -290,7 +290,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       {/* Phone Number Lookup */}
       <div>
         <Label htmlFor="phoneInput" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-          Số điện thoại {foundCustomer && <span className="text-muted-foreground">({foundCustomer.phone})</span>}
+          Số điện thoại {enhancedCustomers.length > 0 && <span className="text-muted-foreground">(VD: {enhancedCustomers[0].phone})</span>}
         </Label>
         <Input 
           id="phoneInput" 
