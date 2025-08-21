@@ -318,7 +318,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
             type="text" 
             placeholder="Nhập tên khách hàng" 
             {...form.register("customerName")}
-            disabled={customerType === "existing" && selectedCustomerId !== ""}
+            disabled={foundCustomer !== null}
           />
           {form.formState.errors.customerName && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerName.message}</p>
@@ -326,36 +326,20 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         </div>
 
         <div>
-          <Label htmlFor="customerPhone" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-            Số điện thoại
+          <Label htmlFor="customerEmail" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Địa chỉ email (tùy chọn)
           </Label>
           <Input 
-            id="customerPhone" 
-            type="tel" 
-            placeholder="Nhập số điện thoại" 
-            {...form.register("customerPhone")}
-            disabled={customerType === "existing" && selectedCustomerId !== ""}
+            id="customerEmail" 
+            type="email" 
+            placeholder="Nhập địa chỉ email" 
+            {...form.register("customerEmail")}
+            disabled={foundCustomer !== null}
           />
-          {form.formState.errors.customerPhone && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerPhone.message}</p>
+          {form.formState.errors.customerEmail && (
+            <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerEmail.message}</p>
           )}
         </div>
-      </div>
-
-      <div>
-        <Label htmlFor="customerEmail" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-          Địa chỉ email (tùy chọn)
-        </Label>
-        <Input 
-          id="customerEmail" 
-          type="email" 
-          placeholder="Nhập địa chỉ email" 
-          {...form.register("customerEmail")}
-          disabled={customerType === "existing" && selectedCustomerId !== ""}
-        />
-        {form.formState.errors.customerEmail && (
-          <p className="text-sm text-red-500 mt-1">{form.formState.errors.customerEmail.message}</p>
-        )}
       </div>
 
       <div>
