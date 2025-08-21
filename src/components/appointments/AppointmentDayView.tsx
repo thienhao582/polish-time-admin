@@ -39,11 +39,66 @@ export function AppointmentDayView({
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
   
+  // Create test data for "Anyone" column if on Aug 6, 2025
+  const testAnyoneData = dateString === "2025-08-06" ? [
+    {
+      id: 9001,
+      date: "2025-08-06",
+      time: "08:00",
+      customer: "Nguyễn Thị Lan",
+      phone: "0912345678",
+      service: "Basic Manicure",
+      duration: "60 phút",
+      price: "200,000đ",
+      status: "confirmed",
+      staff: "",
+      customerId: "1",
+      serviceId: "1",
+      staffId: "",
+      notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9002,
+      date: "2025-08-06", 
+      time: "11:00",
+      customer: "Trần Thị Mai",
+      phone: "0912345679",
+      service: "French Manicure",
+      duration: "75 phút",
+      price: "280,000đ", 
+      status: "confirmed",
+      staff: "",
+      customerId: "2",
+      serviceId: "2",
+      staffId: "",
+      notes: "Không yêu cầu nhân viên cụ thể"
+    },
+    {
+      id: 9003,
+      date: "2025-08-06",
+      time: "14:00", 
+      customer: "Lê Thị Hoa",
+      phone: "0912345680",
+      service: "Gel Polish + Nail Art",
+      duration: "90 phút",
+      price: "450,000đ",
+      status: "confirmed", 
+      staff: "",
+      customerId: "3",
+      serviceId: "3",
+      staffId: "",
+      notes: "Không yêu cầu nhân viên cụ thể"
+    }
+  ] : [];
+  
+  // Combine real appointments with test data
+  const allDayAppointments = [...dayAppointments, ...testAnyoneData];
+  
   // Separate appointments with and without specific staff
-  const anyoneAppointments = dayAppointments.filter(apt => 
+  const anyoneAppointments = allDayAppointments.filter(apt => 
     !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone'
   );
-  const staffAppointments = dayAppointments.filter(apt => 
+  const staffAppointments = allDayAppointments.filter(apt => 
     apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
   );
   
@@ -51,11 +106,13 @@ export function AppointmentDayView({
     dateString,
     totalFiltered: filteredAppointments.length,
     dayAppointments: dayAppointments.length,
+    testAnyoneData: testAnyoneData.length,
+    allDayAppointments: allDayAppointments.length,
     anyoneAppointments: anyoneAppointments.length,
     staffAppointments: staffAppointments.length,
     sampleAnyoneAppt: anyoneAppointments[0],
-    allStaffNames: dayAppointments.map(apt => `"${apt.staff}"`),
-    uniqueStaffNames: [...new Set(dayAppointments.map(apt => apt.staff))]
+    allStaffNames: allDayAppointments.map(apt => `"${apt.staff}"`),
+    uniqueStaffNames: [...new Set(allDayAppointments.map(apt => apt.staff))]
   });
 
   // Get working employees for this date (only service staff, not managers/reception)
@@ -65,6 +122,7 @@ export function AppointmentDayView({
     
     console.log("Staff names in appointments:", staffNamesInAppointments);
     console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role })));
+    console.log("Anyone appointments count:", anyoneAppointments.length);
     
     // Instead of trying to match with existing employees, just create virtual employees from appointment staff names
     // This ensures all staff with appointments are displayed
@@ -205,7 +263,7 @@ export function AppointmentDayView({
   const timeSlots = showFullView 
     ? allTimeSlots 
     : allTimeSlots.filter(timeSlot => {
-        const hasAppointment = dayAppointments.some(apt => {
+        const hasAppointment = allDayAppointments.some(apt => {
           const aptStartMinutes = timeToMinutes(apt.time);
           const slotStartMinutes = timeToMinutes(timeSlot);
           const slotEndMinutes = slotStartMinutes + 30;
@@ -213,7 +271,7 @@ export function AppointmentDayView({
         });
         
         if (hasAppointment && timeSlot === "08:00") {
-          console.log("Time slot 08:00 has appointments:", dayAppointments.filter(apt => 
+          console.log("Time slot 08:00 has appointments:", allDayAppointments.filter(apt => 
             timeToMinutes(apt.time) >= timeToMinutes(timeSlot) && 
             timeToMinutes(apt.time) < timeToMinutes(timeSlot) + 30
           ).map(apt => ({ customer: apt.customer, staff: `"${apt.staff}"`, time: apt.time })));
