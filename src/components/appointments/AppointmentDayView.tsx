@@ -172,6 +172,23 @@ export function AppointmentDayView({
       return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
     });
     
+    // Debug log for specific time slots
+    if (timeSlot === "08:00" || timeSlot === "11:00") {
+      console.log(`Anyone appointments for ${timeSlot}:`, {
+        slotStartMinutes,
+        slotEndMinutes,
+        totalAnyoneAppointments: anyoneAppointments.length,
+        anyoneAppointmentsData: anyoneAppointments.map(apt => ({ 
+          customer: apt.customer, 
+          time: apt.time, 
+          staff: `"${apt.staff}"`,
+          startMinutes: timeToMinutes(apt.time)
+        })),
+        filteredAppointments: appointments.length,
+        appointments: appointments.map(apt => ({ customer: apt.customer, time: apt.time }))
+      });
+    }
+    
     return appointments;
   };
 
