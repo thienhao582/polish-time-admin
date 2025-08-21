@@ -2,6 +2,8 @@ import { format } from "date-fns";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Appointment {
   id: number;
@@ -35,6 +37,11 @@ export function AppointmentDayView({
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
+  
+  // State for anyone appointments popup
+  const [isAnyonePopupOpen, setIsAnyonePopupOpen] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
+  const [selectedSlotAppointments, setSelectedSlotAppointments] = useState<any[]>([]);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -238,36 +245,19 @@ export function AppointmentDayView({
     return appointments;
   };
 
-  // Get appointments for "Anyone" column for a specific time slot
-  const getAnyoneAppointmentsForTimeSlot = (timeSlot: string) => {
+  // Get appointments for "Anyone" column for a specific time slot (1 hour slots)
+  const getAnyoneAppointmentsForHourSlot = (timeSlot: string) => {
     const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 30;
+    const slotEndMinutes = slotStartMinutes + 60; // 1 hour slot
     
     const appointments = anyoneAppointments.filter(apt => {
       const aptStartMinutes = timeToMinutes(apt.time);
       const aptDurationMinutes = parseDuration(apt.duration);
       const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
       
-      // Check if appointment overlaps with this time slot
+      // Check if appointment overlaps with this 1-hour slot
       return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
     });
-    
-    // Debug log for specific time slots
-    if (timeSlot === "08:00" || timeSlot === "11:00") {
-      console.log(`Anyone appointments for ${timeSlot}:`, {
-        slotStartMinutes,
-        slotEndMinutes,
-        totalAnyoneAppointments: anyoneAppointments.length,
-        anyoneAppointmentsData: anyoneAppointments.map(apt => ({ 
-          customer: apt.customer, 
-          time: apt.time, 
-          staff: `"${apt.staff}"`,
-          startMinutes: timeToMinutes(apt.time)
-        })),
-        filteredAppointments: appointments.length,
-        appointments: appointments.map(apt => ({ customer: apt.customer, time: apt.time }))
-      });
-    }
     
     return appointments;
   };
@@ -278,6 +268,12 @@ export function AppointmentDayView({
     const slotStartMinutes = timeToMinutes(timeSlot);
     return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 30;
   };
+
+  // Create hour-based time slots for Anyone column (8 AM to 9 PM)
+  const hourSlots = [];
+  for (let hour = 8; hour <= 20; hour++) {
+    hourSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
 
   const workingEmployees = getWorkingEmployees();
 
@@ -348,43 +344,68 @@ export function AppointmentDayView({
                 </div>
               </div>
 
-              {/* Time slots for Anyone column - Show as a list */}
-              <div className="h-full overflow-y-auto bg-orange-50/30">
-                {anyoneAppointments.length > 0 ? (
-                  <div className="p-2 space-y-1">
-                    {anyoneAppointments.slice(0, 10).map((apt, index) => (
-                      <div
-                        key={`anyone-${apt.id}`}
-                        className="bg-orange-100 border border-orange-300 rounded-md p-2 cursor-pointer hover:shadow-md transition-all text-xs hover:bg-orange-200"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAppointmentClick(apt, e);
-                        }}
-                      >
-                        <div className="font-semibold text-orange-800 text-xs mb-1">
-                          {apt.time} - {timeToEndTime(apt.time, parseDuration(apt.duration))}
+              {/* Time slots for Anyone column - Hour-based slots */}
+              {hourSlots.map((hourSlot) => {
+                const slotAppointments = getAnyoneAppointmentsForHourSlot(hourSlot);
+                const displayAppointment = slotAppointments[0];
+                const remainingCount = slotAppointments.length - 1;
+
+                const handleMoreClick = () => {
+                  setSelectedTimeSlot(hourSlot);
+                  setSelectedSlotAppointments(slotAppointments);
+                  setIsAnyonePopupOpen(true);
+                };
+
+                return (
+                  <div 
+                    key={`anyone-hour-${hourSlot}`} 
+                    className="h-28 border-b border-gray-200 bg-white relative p-1 transition-colors hover:bg-orange-50"
+                  >
+                    {/* Hour label */}
+                    <div className="text-xs text-gray-500 mb-1">
+                      {hourSlot} - {timeToEndTime(hourSlot, 60)}
+                    </div>
+
+                    {displayAppointment ? (
+                      <div className="space-y-1">
+                        {/* First appointment */}
+                        <div
+                          className="bg-orange-100 border border-orange-300 rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAppointmentClick(displayAppointment, e);
+                          }}
+                        >
+                          <div className="font-semibold text-orange-800 text-xs">
+                            {displayAppointment.time}
+                          </div>
+                          <div className="font-bold text-gray-800 truncate">
+                            {displayAppointment.customer}
+                          </div>
+                          <div className="text-orange-700 truncate text-xs">
+                            {displayAppointment.service}
+                          </div>
                         </div>
-                        <div className="font-bold text-gray-800 truncate">
-                          {apt.customer}
-                        </div>
-                        <div className="text-orange-700 truncate text-xs">
-                          {apt.service}
-                        </div>
+
+                        {/* Show more button if there are additional appointments */}
+                        {remainingCount > 0 && (
+                          <button
+                            onClick={handleMoreClick}
+                            className="w-full bg-orange-50 border border-orange-200 rounded-md p-1 text-xs text-orange-600 hover:bg-orange-100 transition-colors"
+                          >
+                            +{remainingCount} lịch hẹn khác
+                          </button>
+                        )}
                       </div>
-                    ))}
-                    {anyoneAppointments.length > 10 && (
-                      <div className="text-center text-orange-600 text-xs font-medium py-2">
-                        +{anyoneAppointments.length - 10} lịch hẹn khác
+                    ) : (
+                      <div className="text-center text-orange-400 text-xs py-4">
+                        Trống
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="p-4 text-center text-orange-600 text-xs">
-                    Không có lịch hẹn nào
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </div>
 
             {/* Employee columns */}
@@ -492,6 +513,44 @@ export function AppointmentDayView({
           </div>
         </div>
       </div>
+
+      {/* Anyone Appointments Popup */}
+      <Dialog open={isAnyonePopupOpen} onOpenChange={setIsAnyonePopupOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Lịch hẹn khung giờ {selectedTimeSlot} - {timeToEndTime(selectedTimeSlot, 60)}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto space-y-2">
+            {selectedSlotAppointments.map((apt, index) => (
+              <div
+                key={`popup-${apt.id}`}
+                className="bg-orange-50 border border-orange-200 rounded-md p-3 cursor-pointer hover:bg-orange-100 transition-colors"
+                onClick={(e) => {
+                  handleAppointmentClick(apt, e);
+                  setIsAnyonePopupOpen(false);
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="font-bold text-gray-800">
+                    {apt.customer}
+                  </div>
+                  <div className="text-xs text-orange-600 font-medium">
+                    {apt.time}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {apt.service}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {apt.duration} • {apt.price}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
