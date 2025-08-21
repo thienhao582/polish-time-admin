@@ -361,11 +361,6 @@ export function AppointmentDayView({
                     key={`anyone-hour-${hourSlot}`} 
                     className="h-28 border-b border-gray-200 bg-white relative p-1 transition-colors hover:bg-orange-50"
                   >
-                    {/* Hour label */}
-                    <div className="text-xs text-gray-500 mb-1">
-                      {hourSlot} - {timeToEndTime(hourSlot, 60)}
-                    </div>
-
                     {displayAppointment ? (
                       <div className="space-y-1">
                         {/* First appointment */}
