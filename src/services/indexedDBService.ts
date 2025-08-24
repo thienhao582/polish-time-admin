@@ -8,6 +8,7 @@ interface DBStores {
   customers: { id: string; name: string; phone: string; email?: string; address?: string; };
   employees: { id: string; full_name: string; email: string; phone: string; role: string; is_active: boolean; };
   appointments: { id: string; customer_id: string; service_id: string; employee_id: string; appointment_date: string; start_time: string; end_time: string; status: string; notes?: string; total_price: number; };
+  checkins: { id: string; customerNumber: string; customerName: string; status: string; checkInTime: string; date: string; tags: string[]; services?: string[]; phone?: string; waitTime?: number; notes?: string; created_at?: string; updated_at?: string; };
 }
 
 class IndexedDBService {
@@ -41,6 +42,9 @@ class IndexedDBService {
         }
         if (!db.objectStoreNames.contains('appointments')) {
           db.createObjectStore('appointments', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('checkins')) {
+          db.createObjectStore('checkins', { keyPath: 'id' });
         }
       };
     });

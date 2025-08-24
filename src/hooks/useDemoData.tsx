@@ -167,6 +167,41 @@ export const useDemoData = () => {
     }, 'Cập nhật lịch hẹn thành công');
   }, [handleDemoOperation]);
 
+  // Check-ins
+  const fetchDemoCheckIns = useCallback(async () => {
+    return handleDemoOperation(async () => {
+      return await indexedDBService.getData('checkins');
+    });
+  }, [handleDemoOperation]);
+
+  const createDemoCheckIn = useCallback(async (checkIn: any) => {
+    return handleDemoOperation(async () => {
+      const newCheckIn = {
+        ...checkIn,
+        id: `checkin-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      return await indexedDBService.addData('checkins', newCheckIn);
+    }, 'Thêm check-in thành công');
+  }, [handleDemoOperation]);
+
+  const updateDemoCheckIn = useCallback(async (id: string, updates: any) => {
+    return handleDemoOperation(async () => {
+      await indexedDBService.updateData('checkins', id, {
+        ...updates,
+        updated_at: new Date().toISOString()
+      });
+      return { id, ...updates };
+    }, 'Cập nhật check-in thành công');
+  }, [handleDemoOperation]);
+
+  const deleteDemoCheckIn = useCallback(async (id: string) => {
+    return handleDemoOperation(async () => {
+      await indexedDBService.deleteData('checkins', id);
+    }, 'Xóa check-in thành công');
+  }, [handleDemoOperation]);
+
   return {
     isDemoMode,
     // Services
@@ -184,5 +219,10 @@ export const useDemoData = () => {
     fetchDemoAppointments,
     createDemoAppointment,
     updateDemoAppointment,
+    // Check-ins
+    fetchDemoCheckIns,
+    createDemoCheckIn,
+    updateDemoCheckIn,
+    deleteDemoCheckIn,
   };
 };
