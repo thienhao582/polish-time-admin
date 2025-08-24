@@ -237,14 +237,16 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
                     </div>
 
                     {/* Services */}
-                    {checkIn.services && checkIn.services.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <p className="text-sm">
-                          <span className="text-gray-500">Dịch vụ: </span>
-                          <span className="font-medium">{checkIn.services.join(", ")}</span>
-                        </p>
-                      </div>
-                    )}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-sm">
+                        <span className="text-gray-500">Dịch vụ: </span>
+                        <span className="font-medium">
+                          {checkIn.services && checkIn.services.length > 0 
+                            ? checkIn.services.join(", ") 
+                            : "None"}
+                        </span>
+                      </p>
+                    </div>
 
                     {/* Notes */}
                     {checkIn.notes && (

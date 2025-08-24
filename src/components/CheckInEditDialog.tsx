@@ -101,7 +101,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         customer_name: checkInItem.customerName,
         customer_phone: checkInItem.customerNumber,
         service_name: "Anyone", // Default to "Anyone" slot
-        employee_name: "Anyone", // No specific staff assigned
+        employee_name: "", // Empty string for "Anyone" appointments
         duration_minutes: 60, // Default 1 hour slot
         price: 0,
         status: "confirmed",
