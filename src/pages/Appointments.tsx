@@ -33,6 +33,7 @@ interface LegacyAppointment {
   price: string;
   status: string;
   staff: string;
+  extraTime?: number;
   email?: string;
   notes?: string;
   services?: Array<{
@@ -100,7 +101,10 @@ const Appointments = () => {
           duration: apt.duration,
           price: apt.price,
           status: apt.status,
-          staff: apt.staff
+          staff: apt.staff,
+          extraTime: apt.extraTime, // Include extraTime field
+          services: apt.services,
+          notes: apt.notes
         }));
         
         console.log("Demo appointments loaded:", transformedAppointments.length);
@@ -237,6 +241,7 @@ const Appointments = () => {
       phone: selectedAppointment?.phone,
       email: selectedAppointment?.email || "",
       notes: selectedAppointment?.notes || "",
+      extraTime: selectedAppointment?.extraTime || 0,
       service: selectedAppointment?.service,
       staff: selectedAppointment?.staff,
       services: selectedAppointment?.services || [],
@@ -494,6 +499,10 @@ const Appointments = () => {
         appointment={selectedAppointment}
         onEdit={handleEditClick}
         onDelete={handleDeleteAppointment}
+        onDurationUpdate={async () => {
+          // Refresh appointments when duration or extra time is updated
+          await loadAppointments();
+        }}
       />
 
       {/* Edit Appointment Dialog */}
