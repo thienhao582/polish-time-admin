@@ -3,6 +3,7 @@ import { X, Clock, Phone, Users, QrCode, Edit, Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCheckInStore } from "@/stores/useCheckInStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
+import { useSupabaseCheckIns } from "@/hooks/useSupabaseCheckIns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,8 +23,13 @@ interface CheckInSidebarProps {
 }
 
 export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCreated }: CheckInSidebarProps) {
-  const { checkIns, getFilteredCheckIns, initializeWithDemoData, updateCheckIn, convertToAppointment, checkOut } = useCheckInStore();
+  // Demo mode hooks
+  const { checkIns: demoCheckIns, getFilteredCheckIns: getDemoFiltered, initializeWithDemoData, updateCheckIn: updateDemoCheckIn, convertToAppointment, checkOut: demoCheckOut } = useCheckInStore();
   const { isDemoMode } = useDemoMode();
+  
+  // Supabase hooks
+  const { checkIns: supabaseCheckIns, getFilteredCheckIns: getSupabaseFiltered, fetchCheckInsByDate, updateCheckIn: updateSupabaseCheckIn, deleteCheckIn } = useSupabaseCheckIns();
+  
   const { toast } = useToast();
   const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
   const [editDialogItem, setEditDialogItem] = useState<any>(null);
@@ -35,13 +41,22 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   
   // Initialize demo data if in demo mode and no check-ins exist
   useEffect(() => {
-    if (isDemoMode && checkIns.length === 0) {
+    if (isDemoMode && demoCheckIns.length === 0) {
       initializeWithDemoData();
     }
-  }, [isDemoMode, checkIns.length, initializeWithDemoData]);
+  }, [isDemoMode, demoCheckIns.length, initializeWithDemoData]);
+
+  // Fetch Supabase data when not in demo mode
+  useEffect(() => {
+    if (!isDemoMode && isOpen) {
+      fetchCheckInsByDate(dateString);
+    }
+  }, [isDemoMode, isOpen, dateString, fetchCheckInsByDate]);
   
-  // Get filtered and sorted check-ins
-  const filteredCheckIns = getFilteredCheckIns(dateString, statusFilter, searchTerm);
+  // Get filtered and sorted check-ins based on mode
+  const filteredCheckIns = isDemoMode 
+    ? getDemoFiltered(dateString, statusFilter, searchTerm)
+    : getSupabaseFiltered(dateString, statusFilter, searchTerm);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -73,14 +88,22 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
     setReceiptItem(checkInItem);
   };
 
-  const handleConfirmCheckOut = () => {
+  const handleConfirmCheckOut = async () => {
     if (receiptItem) {
-      checkOut(receiptItem.id);
-      toast({
-        title: "Thành công",
-        description: "Khách hàng đã check out",
-      });
-      setReceiptItem(null);
+      try {
+        if (isDemoMode) {
+          demoCheckOut(receiptItem.id);
+        } else {
+          await updateSupabaseCheckIn(receiptItem.id, { status: 'completed' });
+        }
+        toast({
+          title: "Thành công",
+          description: "Khách hàng đã check out",
+        });
+        setReceiptItem(null);
+      } catch (error) {
+        // Error handling is in the hook
+      }
     }
   };
 
@@ -96,8 +119,16 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
     setEditDialogItem(item);
   };
 
-  const handleUpdateCheckIn = (updatedItem: any) => {
-    updateCheckIn(updatedItem.id, updatedItem);
+  const handleUpdateCheckIn = async (updatedItem: any) => {
+    try {
+      if (isDemoMode) {
+        updateDemoCheckIn(updatedItem.id, updatedItem);
+      } else {
+        await updateSupabaseCheckIn(updatedItem.id, updatedItem);
+      }
+    } catch (error) {
+      // Error handling is in the hook
+    }
   };
 
   const getWaitTimeColor = (waitTime: number) => {

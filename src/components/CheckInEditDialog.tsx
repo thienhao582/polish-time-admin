@@ -10,17 +10,7 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useDemoData } from "@/hooks/useDemoData";
-
-interface CheckInItem {
-  id: string;
-  customerName: string;
-  customerNumber: string;
-  status: string;
-  tags: string[];
-  services?: string[];
-  notes?: string;
-  checkInTime: string;
-}
+import { CheckInItem } from "@/hooks/useSupabaseCheckIns";
 
 interface CheckInEditDialogProps {
   isOpen: boolean;
