@@ -78,22 +78,12 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         }
       }
 
-      // Create appointment with closest available time slot
+      // Use check-in time for appointment
       const currentDate = new Date();
       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
       
-      // Find the closest time slot (round up to next 15-minute interval)
-      const currentMinutes = currentDate.getMinutes();
-      const roundedMinutes = Math.ceil(currentMinutes / 15) * 15;
-      const adjustedTime = new Date(currentDate);
-      adjustedTime.setMinutes(roundedMinutes, 0, 0);
-      
-      // If rounded time exceeds 59 minutes, move to next hour
-      if (adjustedTime.getMinutes() >= 60) {
-        adjustedTime.setHours(adjustedTime.getHours() + 1, 0, 0, 0);
-      }
-      
-      const appointmentTime = `${String(adjustedTime.getHours()).padStart(2, '0')}:${String(adjustedTime.getMinutes()).padStart(2, '0')}`;
+      // Use the check-in time instead of current time
+      const appointmentTime = checkInItem.checkInTime;
 
       // Create a basic appointment slot (no specific service, staff "Anyone")
       const appointmentData: any = {
