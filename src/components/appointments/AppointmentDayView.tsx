@@ -150,7 +150,7 @@ export function AppointmentDayView({
     
     // Fallback: assume service staff (thợ) are working by default
     // You can enhance this logic based on your work schedule system
-    return employee.role === 'thợ' || employee.role === 'service';
+    return employee.role === 'thợ' || employee.role === 'thợ chính' || employee.role === 'phụ tá' || employee.role === 'service';
   };
 
   // Get working employees for this date (including those without appointments)
@@ -173,7 +173,7 @@ export function AppointmentDayView({
 
     // Get all service employees who are working today (regardless of appointments)
     const allServiceEmployees = employees.filter(emp => 
-      (emp.role === 'thợ chính' || emp.role === 'phụ tá') && 
+      (emp.role === 'thợ chính' || emp.role === 'phụ tá' || emp.role === 'thợ') && 
       isEmployeeWorkingOnDate(emp, dateString)
     );
 
