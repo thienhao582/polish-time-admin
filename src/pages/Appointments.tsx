@@ -16,6 +16,7 @@ import { AppointmentDayView } from "@/components/appointments/AppointmentDayView
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
+import { useDemoData } from "@/hooks/useDemoData";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { AvailableStaffSidebar } from "@/components/appointments/AvailableStaffSidebar";
 import { toast } from "sonner";
@@ -67,6 +68,7 @@ const Appointments = () => {
   // Get employees from Zustand store and fetch appointments from Supabase
   const { employees, initializeData, appointments: demoAppointments } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
+  const { fetchDemoAppointments } = useDemoData();
   const { isDemoMode, setDemoMode } = useDemoMode();
 
   // Load appointments on component mount and when demo mode changes
@@ -79,21 +81,41 @@ const Appointments = () => {
       setLoading(true);
       
       if (isDemoMode) {
-        // Use demo data from store
-        const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
-          id: apt.id,
-          date: apt.date,
-          time: apt.time,
-          customer: apt.customer,
-          phone: apt.phone,
-          service: apt.service,
-          duration: apt.duration,
-          price: apt.price,
-          status: apt.status,
-          staff: apt.staff
-        }));
+        // Use demo data from IndexedDB
+        const demoAppointmentsData = await fetchDemoAppointments();
+        console.log("Demo appointments from IndexedDB:", demoAppointmentsData);
         
-        setAppointments(transformedAppointments);
+        if (demoAppointmentsData && demoAppointmentsData.length > 0) {
+          // Transform demo appointments to legacy format
+          const transformedAppointments: LegacyAppointment[] = demoAppointmentsData.map((apt: any, index) => ({
+            id: parseInt(apt.id?.replace('appointment-', '')) || index + 1,
+            date: apt.appointment_date,
+            time: apt.appointment_time,
+            customer: apt.customer_name,
+            phone: apt.customer_phone || "",
+            service: apt.service_name,
+            duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
+            price: apt.price ? `${apt.price.toLocaleString()}đ` : "",
+            status: apt.status,
+            staff: apt.employee_name || ""
+          }));
+          setAppointments(transformedAppointments);
+        } else {
+          // Fallback to store data if IndexedDB is empty
+          const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
+            id: apt.id,
+            date: apt.date,
+            time: apt.time,
+            customer: apt.customer,
+            phone: apt.phone,
+            service: apt.service,
+            duration: apt.duration,
+            price: apt.price,
+            status: apt.status,
+            staff: apt.staff
+          }));
+          setAppointments(transformedAppointments);
+        }
       } else {
         // Use Supabase data
         const supabaseAppointments = await fetchAppointments();
