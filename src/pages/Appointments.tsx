@@ -70,11 +70,17 @@ const Appointments = () => {
   const { fetchAppointments } = useSupabaseData();
   const { fetchDemoAppointments } = useDemoData();
   const { isDemoMode, setDemoMode } = useDemoMode();
+  
+  console.log("=== APPOINTMENTS PAGE RENDER ===");
+  console.log("isDemoMode:", isDemoMode);
+  console.log("demoAppointments from store:", demoAppointments.length);
+  console.log("Sample appointments:", demoAppointments.slice(0, 3));
 
-  // Load appointments on component mount and when demo mode changes
+  // Load appointments on component mount and when demo mode changes or when store data changes
   useEffect(() => {
+    console.log("useEffect triggered - loadAppointments");
     loadAppointments();
-  }, [isDemoMode]);
+  }, [isDemoMode, demoAppointments.length]); // Add demoAppointments.length as dependency
 
   const loadAppointments = async () => {
     try {
