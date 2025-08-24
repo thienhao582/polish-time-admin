@@ -171,23 +171,24 @@ export function AppointmentDayView({
       hasAppointments: true
     }));
 
-    // Get all service employees who are working today but don't have appointments
-    const serviceEmployees = employees.filter(emp => 
+    // Get all service employees who are working today (regardless of appointments)
+    const allServiceEmployees = employees.filter(emp => 
       (emp.role === 'thợ chính' || emp.role === 'phụ tá') && 
-      isEmployeeWorkingOnDate(emp, dateString) &&
-      !staffNamesInAppointments.includes(emp.name)
+      isEmployeeWorkingOnDate(emp, dateString)
     );
 
-    // Add employees without appointments to the list
-    const employeesWithoutAppointments = serviceEmployees.map(emp => ({
-      id: emp.id,
-      name: emp.name,
-      role: emp.role,
-      specialties: emp.specialties || [],
-      hasAppointments: false
-    }));
+    // Separate employees who have appointments from those who don't
+    const employeesWithoutAppointments = allServiceEmployees
+      .filter(emp => !staffNamesInAppointments.includes(emp.name))
+      .map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        role: emp.role,
+        specialties: emp.specialties || [],
+        hasAppointments: false
+      }));
 
-    // Combine both groups
+    // Combine both groups: employees with appointments first, then without
     const allWorkingEmployees = [...employeesWithAppointments, ...employeesWithoutAppointments];
 
     console.log("Final employees for day view:", allWorkingEmployees.map(e => ({ name: e.name, hasAppointments: e.hasAppointments })));
@@ -211,7 +212,7 @@ export function AppointmentDayView({
 
     console.log("Working employees debug:", {
       totalEmployees: employees.length,
-      serviceEmployees: serviceEmployees.length,
+      allServiceEmployees: allServiceEmployees.length,
       dayAppointments: dayAppointments.length,
       staffNamesInAppointments: staffNamesInAppointments.length,
       employeesWithAppointments: employeesWithAppointments.length,
