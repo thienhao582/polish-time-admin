@@ -4,7 +4,9 @@ import { formatTimeRange } from "@/utils/timeUtils";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserCheck } from "lucide-react";
+import { UserCheck, ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckInSidebar } from "./CheckInSidebar";
 
 interface Appointment {
   id: number;
@@ -46,6 +48,9 @@ export function AppointmentDayView({
   const [isAnyonePopupOpen, setIsAnyonePopupOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [selectedSlotAppointments, setSelectedSlotAppointments] = useState<any[]>([]);
+  
+  // State for check-in sidebar
+  const [isCheckInSidebarOpen, setIsCheckInSidebarOpen] = useState(false);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -363,12 +368,27 @@ export function AppointmentDayView({
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-blue-200 flex-shrink-0">
-        <h3 className="font-semibold text-base text-gray-800">
-          {format(selectedDate, "EEEE, dd/MM/yyyy")}
-        </h3>
-        <p className="text-sm text-gray-600">
-          {dayAppointments.length} lịch hẹn • {anyoneAppointments.length} không chỉ định • {filteredWorkingEmployees.length} nhân viên ({workingEmployees.length} tổng)
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="font-semibold text-base text-gray-800">
+              {format(selectedDate, "EEEE, dd/MM/yyyy")}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {dayAppointments.length} lịch hẹn • {anyoneAppointments.length} không chỉ định • {filteredWorkingEmployees.length} nhân viên ({workingEmployees.length} tổng)
+            </p>
+          </div>
+          
+          {/* Check-in Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCheckInSidebarOpen(true)}
+            className="flex items-center gap-2 bg-white hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Danh sách Check-in
+          </Button>
+        </div>
       </div>
 
       {/* Grid Container with Full Width and Internal Scrolling */}
@@ -622,6 +642,13 @@ export function AppointmentDayView({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Check-in Sidebar */}
+      <CheckInSidebar 
+        isOpen={isCheckInSidebarOpen}
+        onClose={() => setIsCheckInSidebarOpen(false)}
+        selectedDate={selectedDate}
+      />
     </div>
   );
 }
