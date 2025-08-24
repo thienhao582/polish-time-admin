@@ -47,9 +47,9 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { enhancedCustomers, deduplicateCustomers, services, employees } = useSalonStore();
+  const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
-  const { createDemoCustomer, createDemoAppointment } = useDemoData();
+  const { createDemoCustomer } = useDemoData();
   const { isDemoMode } = useDemoMode();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
@@ -221,56 +221,67 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         }
       }
 
-      // For multiple services, create separate appointments for each service
+      // For multiple services, create separate appointments for each service in DB mode
+      // or single appointment with multiple services in demo mode
       const appointments = [];
       
-      for (const serviceStaffItem of serviceStaffItems) {
-        const service = services.find(s => s.id === serviceStaffItem.serviceId);
-        const employee = employees.find(e => serviceStaffItem.staffIds.includes(e.id));
-        
-        // Format date to YYYY-MM-DD
-        const formattedDate = data.date instanceof Date 
-          ? `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`
-          : data.date;
-
-        const appointmentData: any = {
-          appointment_date: formattedDate,
-          appointment_time: data.time,
-          customer_name: data.customerName,
-          customer_phone: data.customerPhone,
-          service_name: serviceStaffItem.serviceName || service?.name || "Unknown Service",
-          employee_name: employee?.name || serviceStaffItem.staffNames[0] || "Unknown Staff",
-          duration_minutes: serviceStaffItem.duration || service?.duration || 0,
-          price: serviceStaffItem.price || service?.price || 0,
-          status: "confirmed",
-          notes: data.notes
+      if (isDemoMode) {
+        // Demo mode: use Zustand store with multi-service support
+        const appointmentData = {
+          date: data.date,
+          time: data.time,
+          customerName: data.customerName,
+          customerPhone: data.customerPhone,
+          customerEmail: data.customerEmail,
+          customerId: customerId,
+          notes: data.notes,
+          serviceStaffItems: serviceStaffItems
         };
-
-        // Only add UUID fields if they exist and are valid
-        if (customerId && customerId.length > 10) {
-          appointmentData.customer_id = customerId;
-        }
-        if (serviceStaffItem.serviceId && serviceStaffItem.serviceId.length > 10) {
-          appointmentData.service_id = serviceStaffItem.serviceId;
-        }
-        if (employee?.id && employee.id.length > 10) {
-          appointmentData.employee_id = employee.id;
-        }
-
-        const createdAppointment = isDemoMode 
-          ? await createDemoAppointment(appointmentData)
-          : await createAppointment(appointmentData);
         
-        if (createdAppointment) {
-          appointments.push(createdAppointment);
-        } else if (isDemoMode) {
-          // If demo appointment creation returns null, create a local appointment object
-          appointments.push({
-            ...appointmentData,
-            id: `appointment-${Date.now()}-${Math.random()}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+        console.log("Creating demo appointment with Zustand store:", appointmentData);
+        const newAppointment = addAppointment(appointmentData);
+        console.log("Demo appointment created:", newAppointment);
+        appointments.push(newAppointment);
+      } else {
+        // Database mode: create separate appointments for each service
+        for (const serviceStaffItem of serviceStaffItems) {
+          const service = services.find(s => s.id === serviceStaffItem.serviceId);
+          const employee = employees.find(e => serviceStaffItem.staffIds.includes(e.id));
+          
+          // Format date to YYYY-MM-DD
+          const formattedDate = data.date instanceof Date 
+            ? `${data.date.getFullYear()}-${String(data.date.getMonth() + 1).padStart(2, '0')}-${String(data.date.getDate()).padStart(2, '0')}`
+            : data.date;
+
+          const appointmentData: any = {
+            appointment_date: formattedDate,
+            appointment_time: data.time,
+            customer_name: data.customerName,
+            customer_phone: data.customerPhone,
+            service_name: serviceStaffItem.serviceName || service?.name || "Unknown Service",
+            employee_name: employee?.name || serviceStaffItem.staffNames[0] || "Unknown Staff",
+            duration_minutes: serviceStaffItem.duration || service?.duration || 0,
+            price: serviceStaffItem.price || service?.price || 0,
+            status: "confirmed",
+            notes: data.notes
+          };
+
+          // Only add UUID fields if they exist and are valid
+          if (customerId && customerId.length > 10) {
+            appointmentData.customer_id = customerId;
+          }
+          if (serviceStaffItem.serviceId && serviceStaffItem.serviceId.length > 10) {
+            appointmentData.service_id = serviceStaffItem.serviceId;
+          }
+          if (employee?.id && employee.id.length > 10) {
+            appointmentData.employee_id = employee.id;
+          }
+
+          const createdAppointment = await createAppointment(appointmentData);
+          
+          if (createdAppointment) {
+            appointments.push(createdAppointment);
+          }
         }
       }
 

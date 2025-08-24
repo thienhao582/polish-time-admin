@@ -81,45 +81,24 @@ const Appointments = () => {
       setLoading(true);
       
       if (isDemoMode) {
-        console.log("Loading demo mode appointments...");
+        console.log("Loading demo mode appointments from Zustand store...");
         
-        // First try to get from IndexedDB
-        const demoAppointmentsData = await fetchDemoAppointments();
-        console.log("Demo appointments from IndexedDB:", demoAppointmentsData);
+        // Use demo data from Zustand store only
+        const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
+          id: apt.id,
+          date: apt.date,
+          time: apt.time,
+          customer: apt.customer,
+          phone: apt.phone,
+          service: apt.service,
+          duration: apt.duration,
+          price: apt.price,
+          status: apt.status,
+          staff: apt.staff
+        }));
         
-        if (demoAppointmentsData && demoAppointmentsData.length > 0) {
-          // Transform demo appointments from IndexedDB to legacy format
-          const transformedAppointments: LegacyAppointment[] = demoAppointmentsData.map((apt: any, index) => ({
-            id: parseInt(apt.id?.replace('appointment-', '')) || index + 1,
-            date: apt.appointment_date,
-            time: apt.appointment_time,
-            customer: apt.customer_name,
-            phone: apt.customer_phone || "",
-            service: apt.service_name,
-            duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
-            price: apt.price ? `${apt.price.toLocaleString()}đ` : "",
-            status: apt.status,
-            staff: apt.employee_name || ""
-          }));
-          console.log("Using IndexedDB appointments:", transformedAppointments.length);
-          setAppointments(transformedAppointments);
-        } else {
-          // Use demo data from Zustand store as primary source for demo mode
-          console.log("IndexedDB empty, using Zustand store demo appointments:", demoAppointments.length);
-          const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
-            id: apt.id,
-            date: apt.date,
-            time: apt.time,
-            customer: apt.customer,
-            phone: apt.phone,
-            service: apt.service,
-            duration: apt.duration,
-            price: apt.price,
-            status: apt.status,
-            staff: apt.staff
-          }));
-          setAppointments(transformedAppointments);
-        }
+        console.log("Demo appointments loaded:", transformedAppointments.length);
+        setAppointments(transformedAppointments);
       } else {
         // Use Supabase data
         const supabaseAppointments = await fetchAppointments();
