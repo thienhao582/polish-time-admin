@@ -103,7 +103,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
         employee_name: "Anyone", // No specific staff assigned
         duration_minutes: 60, // Default 1 hour slot
         price: 0,
-        status: "scheduled",
+        status: "confirmed",
         notes: notes || `Converted from check-in #${checkInItem.customerNumber}`
       };
 
