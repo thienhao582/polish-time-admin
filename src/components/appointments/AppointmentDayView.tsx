@@ -25,6 +25,7 @@ interface AppointmentDayViewProps {
   displayMode: "customer" | "staff" | "both";
   showFullView: boolean;
   onTimeSlotClick?: (date: string, time: string, employeeName: string) => void;
+  searchQuery?: string;
 }
 
 export function AppointmentDayView({
@@ -33,7 +34,8 @@ export function AppointmentDayView({
   handleAppointmentClick,
   displayMode,
   showFullView,
-  onTimeSlotClick
+  onTimeSlotClick,
+  searchQuery
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -321,6 +323,13 @@ export function AppointmentDayView({
 
   const workingEmployees = getWorkingEmployees();
 
+  // Filter working employees based on search query
+  const filteredWorkingEmployees = searchQuery 
+    ? workingEmployees.filter(emp => 
+        emp.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : workingEmployees;
+
   // Filter time slots based on showFullView setting
   const timeSlots = showFullView 
     ? allTimeSlots 
@@ -350,7 +359,7 @@ export function AppointmentDayView({
           {format(selectedDate, "EEEE, dd/MM/yyyy")}
         </h3>
         <p className="text-sm text-gray-600">
-          {dayAppointments.length} lịch hẹn • {anyoneAppointments.length} không chỉ định • {workingEmployees.length} nhân viên ({employees.length} tổng)
+          {dayAppointments.length} lịch hẹn • {anyoneAppointments.length} không chỉ định • {filteredWorkingEmployees.length} nhân viên ({workingEmployees.length} tổng)
         </p>
       </div>
 
@@ -448,12 +457,12 @@ export function AppointmentDayView({
             </div>
 
             {/* Employee columns */}
-            {workingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
+            {filteredWorkingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
               <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
-                Không có nhân viên nào làm việc hôm nay
+                {searchQuery ? "Không tìm thấy nhân viên nào" : "Không có nhân viên nào làm việc hôm nay"}
               </div>
             ) : (
-              workingEmployees.map((employee) => (
+              filteredWorkingEmployees.map((employee) => (
                 <div key={employee.id} className="flex-shrink-0 border-r border-gray-200 w-36">
                   {/* Employee header - Fixed and more prominent */}
                   <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 flex items-center justify-center sticky top-0 z-20">

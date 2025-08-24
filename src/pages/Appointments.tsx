@@ -421,6 +421,7 @@ const Appointments = () => {
                   displayMode={displayMode}
                   showFullView={showFullView || !hasActiveFilters}
                   onTimeSlotClick={handleTimeSlotClick}
+                  searchQuery={searchQuery}
                 />
               )}
             </CardContent>
