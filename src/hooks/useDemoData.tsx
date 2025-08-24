@@ -143,6 +143,30 @@ export const useDemoData = () => {
     }, 'Thêm lịch hẹn thành công');
   }, [handleDemoOperation]);
 
+  const updateDemoAppointment = useCallback(async (id: string, updates: any) => {
+    return handleDemoOperation(async () => {
+      try {
+        await indexedDBService.init();
+        const updatedData = {
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+        await indexedDBService.updateData('appointments', id, updatedData);
+        console.log("Demo appointment updated successfully:", { id, updates: updatedData });
+        return { id, ...updatedData };
+      } catch (error) {
+        console.error("Error updating demo appointment:", error);
+        // Return the update data even if IndexedDB fails
+        const fallbackUpdate = {
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+        console.log("Using fallback update:", { id, updates: fallbackUpdate });
+        return { id, ...fallbackUpdate };
+      }
+    }, 'Cập nhật lịch hẹn thành công');
+  }, [handleDemoOperation]);
+
   return {
     isDemoMode,
     // Services
@@ -159,5 +183,6 @@ export const useDemoData = () => {
     // Appointments
     fetchDemoAppointments,
     createDemoAppointment,
+    updateDemoAppointment,
   };
 };

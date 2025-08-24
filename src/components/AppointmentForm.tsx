@@ -51,6 +51,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment, addCustomer, updateAppointment } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
   const { isDemoMode } = useDemoMode();
+  const { updateDemoAppointment } = useDemoData();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -269,21 +270,28 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         if (editData?.id) {
           // Edit existing appointment
           console.log("Updating existing appointment with ID:", editData.id);
-          console.log("Update data:", {
+          const updateData = {
             time: data.time,
             customer: data.customerName,
             phone: data.customerPhone,
             notes: data.notes,
             extraTime: data.extraTime
-          });
+          };
+          console.log("Update data:", updateData);
           
-          updateAppointment(editData.id, {
-            time: data.time,
-            customer: data.customerName,
-            phone: data.customerPhone,
-            notes: data.notes,
-            extraTime: data.extraTime
-          });
+          // Update in store first
+          updateAppointment(editData.id, updateData);
+          
+          // If in demo mode, also update in IndexedDB
+          if (isDemoMode && updateDemoAppointment) {
+            try {
+              console.log("Calling updateDemoAppointment for demo mode");
+              await updateDemoAppointment(editData.id, updateData);
+            } catch (error) {
+              console.error("Error updating demo appointment:", error);
+            }
+          }
+          
           console.log("Appointment updated successfully");
           appointments.push({ id: editData.id }); // Just for response consistency
         } else {
