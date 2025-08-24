@@ -26,9 +26,10 @@ interface CheckInEditDialogProps {
   onClose: () => void;
   checkInItem: CheckInItem | null;
   onUpdate: (updatedItem: CheckInItem) => void;
+  onAppointmentCreated?: () => void;
 }
 
-export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: CheckInEditDialogProps) => {
+export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAppointmentCreated }: CheckInEditDialogProps) => {
   const { toast } = useToast();
   const { enhancedCustomers } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
@@ -127,6 +128,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
       };
 
       onUpdate(updatedItem);
+      onAppointmentCreated?.();
       toast({
         title: "Thành công",
         description: `Đã chuyển thành lịch hẹn lúc ${appointmentTime}`

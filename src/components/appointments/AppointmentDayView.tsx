@@ -30,6 +30,7 @@ interface AppointmentDayViewProps {
   showFullView: boolean;
   onTimeSlotClick?: (date: string, time: string, employeeName: string) => void;
   searchQuery?: string;
+  onAppointmentCreated?: () => void;
 }
 
 export function AppointmentDayView({
@@ -39,7 +40,8 @@ export function AppointmentDayView({
   displayMode,
   showFullView,
   onTimeSlotClick,
-  searchQuery
+  searchQuery,
+  onAppointmentCreated
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -648,6 +650,7 @@ export function AppointmentDayView({
         isOpen={isCheckInSidebarOpen}
         onClose={() => setIsCheckInSidebarOpen(false)}
         selectedDate={selectedDate}
+        onAppointmentCreated={onAppointmentCreated}
       />
     </div>
   );

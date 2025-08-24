@@ -472,6 +472,7 @@ const Appointments = () => {
                   showFullView={showFullView || !hasActiveFilters}
                   onTimeSlotClick={handleTimeSlotClick}
                   searchQuery={searchQuery}
+                  onAppointmentCreated={loadAppointments}
                 />
               )}
             </CardContent>

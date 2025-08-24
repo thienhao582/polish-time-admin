@@ -17,9 +17,10 @@ interface CheckInSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: Date;
+  onAppointmentCreated?: () => void;
 }
 
-export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebarProps) {
+export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCreated }: CheckInSidebarProps) {
   const { checkIns, getFilteredCheckIns, initializeWithDemoData, updateCheckIn, convertToAppointment, checkOut } = useCheckInStore();
   const { isDemoMode } = useDemoMode();
   const { toast } = useToast();
@@ -322,6 +323,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
           onClose={() => setEditDialogItem(null)}
           checkInItem={editDialogItem}
           onUpdate={handleUpdateCheckIn}
+          onAppointmentCreated={onAppointmentCreated}
         />
       )}
     </>
