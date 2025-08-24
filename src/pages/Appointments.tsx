@@ -340,10 +340,24 @@ const Appointments = () => {
               <div className="flex gap-2 flex-shrink-0">
           <Button 
             variant="outline" 
-            onClick={() => {
-              // Clear localStorage to force refresh all stores including check-ins
-              localStorage.removeItem('salon-store');
+            onClick={async () => {
+              // Re-init in-memory data
+              initializeData();
+              
+              // Clear demo IndexedDB and persisted stores to remove any lingering "Anyone" items
+              try {
+                const { indexedDBService } = await import("@/services/indexedDBService");
+                await indexedDBService.init();
+                await indexedDBService.clearStore('appointments' as any);
+                await indexedDBService.clearStore('checkins' as any);
+              } catch (e) {
+                console.log('IndexedDB clear error:', e);
+              }
+              
+              // Clear persisted Zustand stores
+              localStorage.removeItem('salon-storage');
               localStorage.removeItem('checkin-storage');
+              
               window.location.reload();
             }}
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
