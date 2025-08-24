@@ -108,7 +108,6 @@ export function AppointmentDayView({
       service: "Basic Manicure", duration: "60 phút", price: "200,000đ", status: "confirmed", staff: "", 
       customerId: "12", serviceId: "12", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     }
-    // ... thêm nhiều appointments khác để có tổng cộng 40+ lịch hẹn
   ] : [];
   
   // Combine real appointments with test data
@@ -135,7 +134,26 @@ export function AppointmentDayView({
     uniqueStaffNames: [...new Set(allDayAppointments.map(apt => apt.staff))]
   });
 
-  // Get working employees for this date (only service staff, not managers/reception)
+  // Helper function to check if employee is working on this date
+  const isEmployeeWorkingOnDate = (employee: any, date: string): boolean => {
+    const dayOfWeek = format(new Date(date), 'EEEE').toLowerCase();
+    
+    // Check time records for this employee on this date
+    const employeeTimeRecords = timeRecords.filter(record => 
+      record.employeeId === employee.id && record.date === date
+    );
+    
+    // If there are time records, employee is working
+    if (employeeTimeRecords.length > 0) {
+      return true;
+    }
+    
+    // Fallback: assume service staff (thợ) are working by default
+    // You can enhance this logic based on your work schedule system
+    return employee.role === 'thợ' || employee.role === 'service';
+  };
+
+  // Get working employees for this date (including those without appointments)
   const getWorkingEmployees = () => {
     // Get all unique staff names from appointments for this day (excluding empty staff)
     const staffNamesInAppointments = [...new Set(staffAppointments.map(apt => apt.staff))];
@@ -144,19 +162,38 @@ export function AppointmentDayView({
     console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role })));
     console.log("Anyone appointments count:", anyoneAppointments.length);
     
-    // Instead of trying to match with existing employees, just create virtual employees from appointment staff names
-    // This ensures all staff with appointments are displayed
-    const finalEmployees = staffNamesInAppointments.map((staffName, index) => ({
+    // Get employees who have appointments today
+    const employeesWithAppointments = staffNamesInAppointments.map((staffName, index) => ({
       id: `virtual-${index}`,
       name: staffName,
       role: "thợ",
-      specialties: []
+      specialties: [],
+      hasAppointments: true
     }));
 
-    console.log("Final employees for day view:", finalEmployees.map(e => e.name));
+    // Get all service employees who are working today but don't have appointments
+    const serviceEmployees = employees.filter(emp => 
+      (emp.role === 'thợ' || emp.role === 'service') && 
+      isEmployeeWorkingOnDate(emp, dateString) &&
+      !staffNamesInAppointments.includes(emp.name)
+    );
+
+    // Add employees without appointments to the list
+    const employeesWithoutAppointments = serviceEmployees.map(emp => ({
+      id: emp.id,
+      name: emp.name,
+      role: emp.role,
+      specialties: emp.specialties || [],
+      hasAppointments: false
+    }));
+
+    // Combine both groups
+    const allWorkingEmployees = [...employeesWithAppointments, ...employeesWithoutAppointments];
+
+    console.log("Final employees for day view:", allWorkingEmployees.map(e => ({ name: e.name, hasAppointments: e.hasAppointments })));
     
-    // Sort employees by priority: those with more appointments first
-    const employeesWithData = finalEmployees.map(employee => {
+    // Sort employees: those with appointments first, then by name
+    const employeesWithData = allWorkingEmployees.map(employee => {
       const employeeAppointments = staffAppointments.filter(apt => 
         apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
       );
@@ -174,19 +211,25 @@ export function AppointmentDayView({
 
     console.log("Working employees debug:", {
       totalEmployees: employees.length,
+      serviceEmployees: serviceEmployees.length,
       dayAppointments: dayAppointments.length,
       staffNamesInAppointments: staffNamesInAppointments.length,
-      finalEmployees: finalEmployees.length,
-      employeeNames: finalEmployees.map(e => e.name)
+      employeesWithAppointments: employeesWithAppointments.length,
+      employeesWithoutAppointments: employeesWithoutAppointments.length,
+      totalWorkingEmployees: allWorkingEmployees.length,
+      employeeNames: allWorkingEmployees.map(e => e.name)
     });
 
-    // Sort by: 1) Has appointments (descending), 2) Earliest appointment time (ascending)
+    // Sort by: 1) Has appointments (descending), 2) Earliest appointment time (ascending), 3) Name (ascending)
     return employeesWithData
       .sort((a, b) => {
         if (a.appointmentCount !== b.appointmentCount) {
           return b.appointmentCount - a.appointmentCount; // More appointments first
         }
-        return a.earliestTime - b.earliestTime;
+        if (a.appointmentCount > 0) {
+          return a.earliestTime - b.earliestTime; // Earlier appointments first
+        }
+        return a.employee.name.localeCompare(b.employee.name); // Alphabetical for employees without appointments
       })
       .map(item => item.employee);
   };
@@ -406,7 +449,7 @@ export function AppointmentDayView({
             {/* Employee columns */}
             {workingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
               <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
-                Không có lịch hẹn nào hôm nay
+                Không có nhân viên nào làm việc hôm nay
               </div>
             ) : (
               workingEmployees.map((employee) => (
@@ -417,8 +460,11 @@ export function AppointmentDayView({
                       <div className="text-sm font-bold text-gray-800 truncate leading-tight">
                         {employee.name}
                       </div>
-                      <div className="text-xs text-blue-600 truncate font-medium">
-                        {employee.role}
+                      <div className={cn(
+                        "text-xs truncate font-medium",
+                        employee.hasAppointments ? "text-blue-600" : "text-gray-500"
+                      )}>
+                        {employee.role} {!employee.hasAppointments && "(trống)"}
                       </div>
                     </div>
                   </div>
