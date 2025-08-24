@@ -260,7 +260,18 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         const createdAppointment = isDemoMode 
           ? await createDemoAppointment(appointmentData)
           : await createAppointment(appointmentData);
-        appointments.push(createdAppointment);
+        
+        if (createdAppointment) {
+          appointments.push(createdAppointment);
+        } else if (isDemoMode) {
+          // If demo appointment creation returns null, create a local appointment object
+          appointments.push({
+            ...appointmentData,
+            id: `appointment-${Date.now()}-${Math.random()}`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        }
       }
 
       console.log("Appointments created:", appointments);

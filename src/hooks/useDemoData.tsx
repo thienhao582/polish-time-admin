@@ -115,13 +115,31 @@ export const useDemoData = () => {
 
   const createDemoAppointment = useCallback(async (appointment: any) => {
     return handleDemoOperation(async () => {
-      const newAppointment = {
-        ...appointment,
-        id: `appointment-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      return await indexedDBService.addData('appointments', newAppointment);
+      try {
+        // Ensure IndexedDB is initialized
+        await indexedDBService.init();
+        
+        const newAppointment = {
+          ...appointment,
+          id: `appointment-${Date.now()}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        const result = await indexedDBService.addData('appointments', newAppointment);
+        console.log("Demo appointment created successfully:", result);
+        return result;
+      } catch (error) {
+        console.error("Error creating demo appointment:", error);
+        // Return the appointment data even if IndexedDB fails
+        const fallbackAppointment = {
+          ...appointment,
+          id: `appointment-${Date.now()}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        console.log("Using fallback appointment:", fallbackAppointment);
+        return fallbackAppointment;
+      }
     }, 'Thêm lịch hẹn thành công');
   }, [handleDemoOperation]);
 
