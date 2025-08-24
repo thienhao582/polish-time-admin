@@ -199,7 +199,7 @@ export function AppointmentDayView({
     // Sort employees: those with appointments first, then by name
     const employeesWithData = allWorkingEmployees.map(employee => {
       const employeeAppointments = staffAppointments.filter(apt => 
-        apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
+        apt.staff === employee.name // Use exact matching only
       );
       
       const earliestAppointmentTime = employeeAppointments.length > 0 
@@ -275,10 +275,8 @@ export function AppointmentDayView({
     const slotEndMinutes = slotStartMinutes + 30;
     
     const appointments = staffAppointments.filter(apt => {
-      // Check if employee name matches staff field (more flexible matching)
-      const isStaffMatch = apt.staff === employee.name || 
-                          apt.staff.includes(employee.name) || 
-                          employee.name.includes(apt.staff);
+      // Check if employee name matches staff field (exact matching only)
+      const isStaffMatch = apt.staff === employee.name;
       
       if (!isStaffMatch) return false;
       
