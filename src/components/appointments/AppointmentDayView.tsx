@@ -282,10 +282,11 @@ export function AppointmentDayView({
     const slotEndMinutes = slotStartMinutes + 30;
     
     const appointments = staffAppointments.filter(apt => {
-      // Check if employee name matches staff field (exact matching only)
-      const isStaffMatch = apt.staff === employee.name;
+      // Only show appointments that are EXACTLY assigned to this specific employee
+      // No merged columns - each appointment belongs to only one staff member
+      const isExactStaffMatch = apt.staff === employee.name;
       
-      if (!isStaffMatch) return false;
+      if (!isExactStaffMatch) return false;
       
       const aptStartMinutes = timeToMinutes(apt.time);
       const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
