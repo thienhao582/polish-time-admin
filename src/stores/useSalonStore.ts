@@ -278,7 +278,7 @@ export const useSalonStore = create<SalonState>()(
             time: appointmentData.time,
             customer: appointmentData.customerName,
             phone: appointmentData.customerPhone,
-            service: service?.name || appointmentData.serviceName || "Anyone",
+            service: service?.name || appointmentData.serviceName || "Unknown Service",
             duration: `${service?.duration || appointmentData.duration || 60} phút`,
             price: `${(service?.price || appointmentData.price || 0).toLocaleString()}đ`,
             status: "confirmed",
