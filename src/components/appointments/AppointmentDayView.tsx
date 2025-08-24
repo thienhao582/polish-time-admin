@@ -173,7 +173,7 @@ export function AppointmentDayView({
 
     // Get all service employees who are working today but don't have appointments
     const serviceEmployees = employees.filter(emp => 
-      (emp.role === 'thợ' || emp.role === 'service') && 
+      (emp.role === 'thợ chính' || emp.role === 'phụ tá') && 
       isEmployeeWorkingOnDate(emp, dateString) &&
       !staffNamesInAppointments.includes(emp.name)
     );
