@@ -51,7 +51,9 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
     if (!service) return;
 
     const selectedStaff = employees.filter(e => selectedStaffIds.includes(e.id));
-    const staffNames = selectedStaff.map(s => s.name);
+    const staffNames = selectedStaffIds.includes("anyone") 
+      ? ["Bất kì"] 
+      : selectedStaff.map(s => s.name);
 
     // Prepare salary calculation data structure
     const staffSalaryInfo = selectedStaff.map(staff => ({
@@ -115,6 +117,20 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
           <div>
             <label className="block text-sm font-medium mb-2">Nhân viên (chọn nhiều)</label>
             <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-gray-50 max-h-32 overflow-y-auto">
+              {/* Anyone option */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="staff-anyone"
+                  checked={selectedStaffIds.includes("anyone")}
+                  onCheckedChange={(checked) => handleStaffSelection("anyone", checked as boolean)}
+                />
+                <label
+                  htmlFor="staff-anyone"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Bất kì
+                </label>
+              </div>
               {employees.map((employee) => (
                 <div key={employee.id} className="flex items-center space-x-2">
                   <Checkbox

@@ -4,6 +4,7 @@ import { formatTimeRange } from "@/utils/timeUtils";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserCheck } from "lucide-react";
 
 interface Appointment {
   id: number;
@@ -543,22 +544,28 @@ export function AppointmentDayView({
                                 e.stopPropagation();
                                 handleAppointmentClick(apt, e);
                               }}
-                            >
-                              <div className="font-bold truncate">
-                                {apt.customer}
-                              </div>
-                              <div className="truncate text-xs opacity-90">
-                                {apt.service}
-                              </div>
-                              <div className="text-xs opacity-80">
-                                {apt.time}
-                              </div>
-                              {durationMinutes >= 60 && (
-                                <div className="text-xs opacity-75">
-                                  {getDisplayDuration(apt)}
-                                </div>
-                              )}
-                            </div>
+                             >
+                               {/* Staff icon in top right if staff is assigned */}
+                               {apt.staff && apt.staff !== "Bất kì" && (
+                                 <div className="absolute top-1 right-1">
+                                   <UserCheck className="w-3 h-3 text-blue-600" />
+                                 </div>
+                               )}
+                               <div className="font-bold truncate">
+                                 {apt.customer}
+                               </div>
+                               <div className="truncate text-xs opacity-90">
+                                 {apt.service}
+                               </div>
+                               <div className="text-xs opacity-80">
+                                 {apt.time}
+                               </div>
+                               {durationMinutes >= 60 && (
+                                 <div className="text-xs opacity-75">
+                                   {getDisplayDuration(apt)}
+                                 </div>
+                               )}
+                             </div>
                           );
                         })}
                       </div>
@@ -588,22 +595,28 @@ export function AppointmentDayView({
                   handleAppointmentClick(apt, e);
                   setIsAnyonePopupOpen(false);
                 }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-gray-800">
-                    {apt.customer}
-                  </div>
-                  <div className="text-xs text-orange-600 font-medium">
-                    {apt.time}
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600">
-                  {apt.service}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {getDisplayDuration(apt)} • {apt.price}
-                </div>
-              </div>
+               >
+                 {/* Staff icon in top right if staff is assigned */}
+                 {apt.staff && apt.staff !== "Bất kì" && (
+                   <div className="absolute top-1 right-1">
+                     <UserCheck className="w-3 h-3 text-blue-600" />
+                   </div>
+                 )}
+                 <div className="flex justify-between items-start mb-2">
+                   <div className="font-bold text-gray-800">
+                     {apt.customer}
+                   </div>
+                   <div className="text-xs text-orange-600 font-medium">
+                     {apt.time}
+                   </div>
+                 </div>
+                 <div className="text-sm text-gray-600">
+                   {apt.service}
+                 </div>
+                 <div className="text-xs text-gray-500 mt-1">
+                   {getDisplayDuration(apt)} • {apt.price}
+                 </div>
+               </div>
             ))}
           </div>
         </DialogContent>
