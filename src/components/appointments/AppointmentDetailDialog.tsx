@@ -96,12 +96,17 @@ export function AppointmentDetailDialog({
   const handleDurationSave = () => {
     if (!appointment || !customDuration) return;
     
+    console.log("=== SAVING DURATION UPDATE ===");
+    console.log("Appointment ID:", appointment.id);
+    console.log("New duration:", customDuration);
+    
     const newDurationMinutes = parseInt(customDuration);
     if (isNaN(newDurationMinutes) || newDurationMinutes <= 0) return;
     
     const newDurationText = `${newDurationMinutes} phút`;
     
     if (isDemoMode) {
+      console.log("Updating appointment in Zustand store...");
       // Update in Zustand store for demo mode
       updateAppointment(appointment.id, {
         ...appointment,
@@ -111,6 +116,7 @@ export function AppointmentDetailDialog({
     }
     
     // Call parent callback to refresh data
+    console.log("Calling onDurationUpdate callback...");
     if (onDurationUpdate) {
       onDurationUpdate(appointment.id, newDurationMinutes);
     }

@@ -79,16 +79,21 @@ const Appointments = () => {
 
   // Load appointments on component mount and when demo mode changes or when store data changes
   useEffect(() => {
-    console.log("useEffect triggered - loadAppointments");
+    console.log("=== APPOINTMENTS PAGE useEffect TRIGGERED ===");
+    console.log("isDemoMode:", isDemoMode);
+    console.log("demoAppointments.length:", demoAppointments.length);
+    console.log("Calling loadAppointments...");
     loadAppointments();
-  }, [isDemoMode, demoAppointments.length]); // Add demoAppointments.length as dependency
+  }, [isDemoMode, demoAppointments.length, demoAppointments]); // Add full demoAppointments as dependency
 
   const loadAppointments = async () => {
     try {
+      console.log("=== LOAD APPOINTMENTS CALLED ===");
       setLoading(true);
       
       if (isDemoMode) {
         console.log("Loading demo mode appointments from Zustand store...");
+        console.log("Raw demoAppointments from store:", demoAppointments.slice(0, 3));
         
         // Use demo data from Zustand store only
         const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
@@ -107,7 +112,8 @@ const Appointments = () => {
           notes: apt.notes
         }));
         
-        console.log("Demo appointments loaded:", transformedAppointments.length);
+        console.log("Transformed appointments:", transformedAppointments.slice(0, 3));
+        console.log("Total transformed appointments:", transformedAppointments.length);
         setAppointments(transformedAppointments);
       } else {
         // Use Supabase data

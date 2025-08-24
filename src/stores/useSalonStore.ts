@@ -307,9 +307,21 @@ export const useSalonStore = create<SalonState>()(
         }
       },
 
-      updateAppointment: (id, appointment) => set((state) => ({
-        appointments: state.appointments.map(a => a.id === id ? { ...a, ...appointment } : a)
-      })),
+      updateAppointment: (id, appointment) => {
+        console.log("=== UPDATING APPOINTMENT IN STORE ===");
+        console.log("Appointment ID:", id);
+        console.log("Update data:", appointment);
+        
+        return set((state) => {
+          const updatedAppointments = state.appointments.map(a => a.id === id ? { ...a, ...appointment } : a);
+          console.log("Updated appointments count:", updatedAppointments.length);
+          console.log("Updated appointment:", updatedAppointments.find(a => a.id === id));
+          
+          return {
+            appointments: updatedAppointments
+          };
+        });
+      },
 
       deleteAppointment: (id) => set((state) => ({
         appointments: state.appointments.filter(a => a.id !== id)
