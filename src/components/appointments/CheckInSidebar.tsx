@@ -28,7 +28,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
   const [editDialogItem, setEditDialogItem] = useState<any>(null);
   const [receiptItem, setReceiptItem] = useState<any>(null);
-  const [statusFilter, setStatusFilter] = useState("waiting");
+  const [statusFilter, setStatusFilter] = useState("all"); // Changed default to show all
   const [searchTerm, setSearchTerm] = useState("");
   
   const dateString = format(selectedDate, "yyyy-MM-dd");
@@ -251,8 +251,8 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
                         <span className="text-gray-500">Dịch vụ: </span>
                         <span className="font-medium">
                           {checkIn.services && checkIn.services.length > 0 
-                            ? checkIn.services.join(", ") 
-                            : "None"}
+                            ? checkIn.services.filter(s => s && s.trim() !== '').join(", ") 
+                            : "Chưa chọn dịch vụ"}
                         </span>
                       </p>
                     </div>

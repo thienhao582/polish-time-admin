@@ -54,9 +54,11 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
 
     setIsLoading(true);
     try {
-      // Find or create customer
+      // Find or create customer - search by phone instead of customerNumber
       let customerId: string | undefined;
-      const existingCustomer = enhancedCustomers.find(c => c.phone === checkInItem.customerNumber);
+      const existingCustomer = enhancedCustomers.find(c => 
+        c.phone === checkInItem.customerNumber || c.name === checkInItem.customerName
+      );
       
       if (existingCustomer) {
         customerId = existingCustomer.id;
@@ -96,16 +98,17 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         return t;
       };
       const appointmentTime = to24h(checkInItem.checkInTime);
-      // Create a basic appointment slot (no specific service, staff "Anyone")
+      // Create appointment with proper service selection
+      const selectedServiceNames = serviceStaffItems.map(item => item.serviceName);
       const appointmentData: any = {
         appointment_date: formattedDate,
         appointment_time: appointmentTime,
         customer_name: checkInItem.customerName,
         customer_phone: checkInItem.customerNumber,
-        service_name: "", // Do not force "Anyone" as service name
-        employee_name: "Anyone", // Explicitly mark staff as "Anyone"
-        duration_minutes: 60,
-        price: 0,
+        service_name: selectedServiceNames.length > 0 ? selectedServiceNames.join(", ") : "",
+        employee_name: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffName : "Anyone",
+        duration_minutes: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
+        price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
         status: "confirmed",
         notes: notes || `Converted from check-in #${checkInItem.customerNumber}`
       };
@@ -128,16 +131,16 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         );
 
         if (!exists) {
-          // Update Zustand store so the calendar grid updates immediately
+          // Update Zustand store with selected services and staff
           addAppointment({
             date: formattedDate,
             time: appointmentTime,
             customerName: checkInItem.customerName,
             customerPhone: checkInItem.customerNumber,
-            // Do not set serviceName to "Anyone"
-            staffName: "Anyone",
-            duration: 60,
-            price: 0,
+            serviceName: selectedServiceNames.length > 0 ? selectedServiceNames.join(", ") : "",
+            staffName: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffName : "Anyone",
+            duration: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
+            price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
             notes: appointmentData.notes
           });
@@ -148,11 +151,11 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         await createAppointment(appointmentData);
       }
 
-      // Update check-in item status to booked
+      // Update check-in item status to booked with selected services
       const updatedItem: CheckInItem = {
         ...checkInItem,
         status: "booked",
-        services: serviceStaffItems.length > 0 ? serviceStaffItems.map(item => item.serviceName) : ["Anyone"],
+        services: serviceStaffItems.length > 0 ? serviceStaffItems.map(item => item.serviceName) : [],
         notes
       };
 

@@ -17,7 +17,7 @@ const CheckIn = () => {
   const { isDemoMode } = useDemoMode();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("waiting");
+  const [statusFilter, setStatusFilter] = useState<string>("all"); // Changed default to show all
   const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
   const [editDialogItem, setEditDialogItem] = useState<any>(null);
   
@@ -258,7 +258,11 @@ const CheckIn = () => {
                       </div>
                       
                        <div className="text-sm text-muted-foreground">
-                         <strong>Services:</strong> {item.services?.join(", ") || "Chưa chọn dịch vụ"}
+                         <strong>Dịch vụ:</strong> {
+                           item.services && item.services.length > 0 
+                             ? item.services.filter(s => s && s.trim() !== '').join(", ") 
+                             : "Chưa chọn dịch vụ"
+                         }
                        </div>
                     </div>
                     
@@ -280,24 +284,26 @@ const CheckIn = () => {
                           <Edit className="h-4 w-4" />
                           Edit
                         </Button>
-                        {item.status === 'waiting' && (
-                          <Button 
-                            size="sm" 
-                            variant="secondary"
-                            onClick={() => handleConvertToAppointment(item.id)}
-                            className="gap-2"
-                          >
-                            <Calendar className="h-4 w-4" />
-                            Đặt lịch
-                          </Button>
-                        )}
-                       <Button 
-                         size="sm" 
-                         variant="destructive"
-                         onClick={() => handleCheckOut(item.id)}
-                       >
-                         Check Out
-                       </Button>
+                         {item.status === 'waiting' && (
+                           <Button 
+                             size="sm" 
+                             variant="secondary"
+                             onClick={() => handleConvertToAppointment(item.id)}
+                             className="gap-2"
+                           >
+                             <Calendar className="h-4 w-4" />
+                             Đặt lịch
+                           </Button>
+                         )}
+                         {item.status !== 'completed' && (
+                           <Button 
+                             size="sm" 
+                             variant="destructive"
+                             onClick={() => handleCheckOut(item.id)}
+                           >
+                             Check Out
+                           </Button>
+                         )}
                      </div>
                   </div>
                 </CardContent>

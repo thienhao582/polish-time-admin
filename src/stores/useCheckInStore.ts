@@ -132,14 +132,24 @@ export const useCheckInStore = create<CheckInState>()(
         return checkIns
           .filter(checkIn => checkIn.date === date)
           .filter(checkIn => {
-            const matchesSearch = checkIn.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                checkIn.customerNumber.includes(searchTerm) ||
-                                (checkIn.phone && checkIn.phone.includes(searchTerm));
+            const matchesSearch = !searchTerm || 
+              checkIn.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              checkIn.customerNumber.includes(searchTerm) ||
+              (checkIn.phone && checkIn.phone.includes(searchTerm));
             const matchesStatus = statusFilter === "all" || checkIn.status === statusFilter;
             return matchesSearch && matchesStatus;
           })
           .sort((a, b) => {
-            // Sort by time, most recent first
+            // Sort by status priority first (waiting > booked > completed), then by time
+            const statusPriority = { waiting: 3, booked: 2, completed: 1 };
+            const aPriority = statusPriority[a.status as keyof typeof statusPriority] || 0;
+            const bPriority = statusPriority[b.status as keyof typeof statusPriority] || 0;
+            
+            if (aPriority !== bPriority) {
+              return bPriority - aPriority;
+            }
+            
+            // If same priority, sort by check-in time (most recent first)
             return b.checkInTime.localeCompare(a.checkInTime);
           });
       },
