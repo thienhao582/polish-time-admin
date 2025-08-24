@@ -297,14 +297,16 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
                             Edit
                           </Button>
                           
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => handleCheckOut(checkIn)}
-                            className="text-xs"
-                          >
-                            Check Out
-                          </Button>
+                          {checkIn.status === 'booked' && (
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleCheckOut(checkIn)}
+                              className="text-xs"
+                            >
+                              Check Out
+                            </Button>
+                          )}
                         </div>
                       </TooltipProvider>
                     </div>
