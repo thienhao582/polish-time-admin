@@ -138,10 +138,26 @@ export function GeneralManagement() {
         </div>
         <div className="flex gap-2">
           <Button 
-            onClick={() => {
+            onClick={async () => {
+              // Reset in-memory store
               initializeData();
-              // Also reset check-in data
+              
+              // Clear persisted stores to avoid stale "Anyone" appointments
+              try {
+                // Clear IndexedDB demo data for appointments and check-ins
+                const { indexedDBService } = await import("@/services/indexedDBService");
+                await indexedDBService.init();
+                await indexedDBService.clearStore('appointments' as any);
+                await indexedDBService.clearStore('checkins' as any);
+              } catch (e) {
+                console.log("IndexedDB clear error (safe to ignore in non-demo):", e);
+              }
+              
+              // Clear localStorage persisted states
+              localStorage.removeItem('salon-storage');
               localStorage.removeItem('checkin-storage');
+              
+              // Reload to apply pristine demo data (without Anyone)
               window.location.reload();
             }}
             variant="outline"
