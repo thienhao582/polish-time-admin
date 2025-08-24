@@ -313,9 +313,16 @@ export const useSalonStore = create<SalonState>()(
         console.log("Update data:", appointment);
         
         return set((state) => {
-          const updatedAppointments = state.appointments.map(a => a.id === id ? { ...a, ...appointment } : a);
-          console.log("Updated appointments count:", updatedAppointments.length);
-          console.log("Updated appointment:", updatedAppointments.find(a => a.id === id));
+          const currentAppointment = state.appointments.find(a => a.id === id);
+          console.log("Current appointment before update:", currentAppointment);
+          
+          const updatedAppointments = state.appointments.map(a => 
+            a.id === id ? { ...a, ...appointment } : a
+          );
+          
+          const updatedAppointment = updatedAppointments.find(a => a.id === id);
+          console.log("Updated appointment:", updatedAppointment);
+          console.log("Total appointments after update:", updatedAppointments.length);
           
           return {
             appointments: updatedAppointments

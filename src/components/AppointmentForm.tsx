@@ -56,6 +56,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [phoneInput, setPhoneInput] = useState<string>("");
   const [foundCustomer, setFoundCustomer] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -186,6 +187,12 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   };
 
   const handleSubmit = async (data: any) => {
+    if (isSubmitting) {
+      console.log("Form already submitting, ignoring duplicate submission");
+      return;
+    }
+    
+    setIsSubmitting(true);
     console.log("=== APPOINTMENT FORM SUBMIT ===");
     console.log("isDemoMode:", isDemoMode);
     console.log("editData:", editData);
@@ -195,6 +202,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     
     if (serviceStaffItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất một dịch vụ");
+      setIsSubmitting(false);
       return;
     }
 
@@ -261,7 +269,14 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         if (editData?.id) {
           // Edit existing appointment
           console.log("Updating existing appointment with ID:", editData.id);
-          const { updateAppointment } = useSalonStore.getState();
+          console.log("Update data:", {
+            time: data.time,
+            customer: data.customerName,
+            phone: data.customerPhone,
+            notes: data.notes,
+            extraTime: data.extraTime
+          });
+          
           updateAppointment(editData.id, {
             time: data.time,
             customer: data.customerName,
@@ -329,6 +344,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast.error("Có lỗi xảy ra khi tạo lịch hẹn");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -490,8 +507,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         <Button variant="outline" onClick={onClose}>
           Hủy bỏ
         </Button>
-        <Button type="submit">
-          Xác nhận
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Đang xử lý..." : "Xác nhận"}
         </Button>
       </div>
     </form>

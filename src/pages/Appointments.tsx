@@ -82,9 +82,10 @@ const Appointments = () => {
     console.log("=== APPOINTMENTS PAGE useEffect TRIGGERED ===");
     console.log("isDemoMode:", isDemoMode);
     console.log("demoAppointments.length:", demoAppointments.length);
+    console.log("Sample appointment with extraTime:", demoAppointments.find(apt => apt.extraTime));
     console.log("Calling loadAppointments...");
     loadAppointments();
-  }, [isDemoMode, demoAppointments.length, demoAppointments]); // Add full demoAppointments as dependency
+  }, [isDemoMode, demoAppointments]); // Use the full demoAppointments array as dependency
 
   const loadAppointments = async () => {
     try {
