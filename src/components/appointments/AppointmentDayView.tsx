@@ -254,6 +254,12 @@ export function AppointmentDayView({
     return baseDuration + (extraTime || 0);
   };
 
+  // Helper function to get display duration including extra time
+  const getDisplayDuration = (apt: any): string => {
+    const totalMinutes = parseDuration(apt.duration, apt.extraTime);
+    return `${totalMinutes} phút`;
+  };
+
   // Helper function to convert time string to minutes since midnight
   const timeToMinutes = (timeStr: string): number => {
     const [hours, minutes] = timeStr.split(':').map(Number);
@@ -549,7 +555,7 @@ export function AppointmentDayView({
                               </div>
                               {durationMinutes >= 60 && (
                                 <div className="text-xs opacity-75">
-                                  {apt.duration}
+                                  {getDisplayDuration(apt)}
                                 </div>
                               )}
                             </div>
@@ -595,7 +601,7 @@ export function AppointmentDayView({
                   {apt.service}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {apt.duration} • {apt.price}
+                  {getDisplayDuration(apt)} • {apt.price}
                 </div>
               </div>
             ))}
