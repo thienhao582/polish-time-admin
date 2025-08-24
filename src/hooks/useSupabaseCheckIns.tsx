@@ -49,6 +49,7 @@ export const useSupabaseCheckIns = () => {
         services: item.services || [],
         waitTime: item.wait_time,
         notes: item.notes,
+        appointmentId: item.appointment_id,
         created_at: item.created_at,
         updated_at: item.updated_at
       })) || [];
@@ -81,7 +82,8 @@ export const useSupabaseCheckIns = () => {
           tags: checkInData.tags,
           services: checkInData.services,
           wait_time: checkInData.waitTime,
-          notes: checkInData.notes
+          notes: checkInData.notes,
+          appointment_id: checkInData.appointmentId
         })
         .select()
         .single();
@@ -100,6 +102,7 @@ export const useSupabaseCheckIns = () => {
         services: data.services || [],
         waitTime: data.wait_time,
         notes: data.notes,
+        appointmentId: data.appointment_id,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -132,6 +135,7 @@ export const useSupabaseCheckIns = () => {
       if (updates.services) updateData.services = updates.services;
       if (updates.waitTime !== undefined) updateData.wait_time = updates.waitTime;
       if (updates.notes !== undefined) updateData.notes = updates.notes;
+      if (updates.appointmentId !== undefined) updateData.appointment_id = updates.appointmentId;
 
       const { data, error } = await supabase
         .from('checkins')
@@ -154,6 +158,7 @@ export const useSupabaseCheckIns = () => {
         services: data.services || [],
         waitTime: data.wait_time,
         notes: data.notes,
+        appointmentId: data.appointment_id,
         created_at: data.created_at,
         updated_at: data.updated_at
       };

@@ -103,6 +103,11 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
           }
         } else {
           await updateSupabaseCheckIn(receiptItem.id, { status: 'completed' });
+          
+          // Update related appointment status using appointmentId
+          if (receiptItem.appointmentId) {
+            updateAppointment(receiptItem.appointmentId, { status: 'completed' });
+          }
         }
         toast({
           title: "Thành công",

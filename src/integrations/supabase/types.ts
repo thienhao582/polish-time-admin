@@ -95,6 +95,7 @@ export type Database = {
       }
       checkins: {
         Row: {
+          appointment_id: string | null
           check_in_date: string
           check_in_time: string
           created_at: string
@@ -110,6 +111,7 @@ export type Database = {
           wait_time: number | null
         }
         Insert: {
+          appointment_id?: string | null
           check_in_date?: string
           check_in_time: string
           created_at?: string
@@ -125,6 +127,7 @@ export type Database = {
           wait_time?: number | null
         }
         Update: {
+          appointment_id?: string | null
           check_in_date?: string
           check_in_time?: string
           created_at?: string
@@ -139,7 +142,15 @@ export type Database = {
           updated_at?: string
           wait_time?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "checkins_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
