@@ -81,12 +81,14 @@ const Appointments = () => {
       setLoading(true);
       
       if (isDemoMode) {
-        // Use demo data from IndexedDB
+        console.log("Loading demo mode appointments...");
+        
+        // First try to get from IndexedDB
         const demoAppointmentsData = await fetchDemoAppointments();
         console.log("Demo appointments from IndexedDB:", demoAppointmentsData);
         
         if (demoAppointmentsData && demoAppointmentsData.length > 0) {
-          // Transform demo appointments to legacy format
+          // Transform demo appointments from IndexedDB to legacy format
           const transformedAppointments: LegacyAppointment[] = demoAppointmentsData.map((apt: any, index) => ({
             id: parseInt(apt.id?.replace('appointment-', '')) || index + 1,
             date: apt.appointment_date,
@@ -99,9 +101,11 @@ const Appointments = () => {
             status: apt.status,
             staff: apt.employee_name || ""
           }));
+          console.log("Using IndexedDB appointments:", transformedAppointments.length);
           setAppointments(transformedAppointments);
         } else {
-          // Fallback to store data if IndexedDB is empty
+          // Use demo data from Zustand store as primary source for demo mode
+          console.log("IndexedDB empty, using Zustand store demo appointments:", demoAppointments.length);
           const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
             id: apt.id,
             date: apt.date,
