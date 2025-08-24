@@ -1,11 +1,14 @@
 import { format } from "date-fns";
-import { X, Clock, User, Phone, Users } from "lucide-react";
+import { X, Clock, User, Phone, Users, QrCode, Edit } from "lucide-react";
 import { useCheckInStore } from "@/stores/useCheckInStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import QRCodePopup from "@/components/QRCodePopup";
+import { CheckInEditDialog } from "@/components/CheckInEditDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface CheckInSidebarProps {
   isOpen: boolean;
@@ -14,8 +17,11 @@ interface CheckInSidebarProps {
 }
 
 export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebarProps) {
-  const { checkIns, getCheckInsByDate, initializeWithDemoData } = useCheckInStore();
+  const { checkIns, getCheckInsByDate, initializeWithDemoData, updateCheckIn, deleteCheckIn } = useCheckInStore();
   const { isDemoMode } = useDemoMode();
+  const { toast } = useToast();
+  const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
+  const [editDialogItem, setEditDialogItem] = useState<any>(null);
   
   const dateString = format(selectedDate, "yyyy-MM-dd");
   
@@ -58,6 +64,22 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
       default:
         return "outline";
     }
+  };
+
+  const handleCheckOut = (id: string) => {
+    deleteCheckIn(id);
+    toast({
+      title: "Thành công",
+      description: "Khách hàng đã check out",
+    });
+  };
+
+  const handleEditCheckIn = (item: any) => {
+    setEditDialogItem(item);
+  };
+
+  const handleUpdateCheckIn = (updatedItem: any) => {
+    updateCheckIn(updatedItem.id, updatedItem);
   };
 
   const getWaitTimeColor = (waitTime: number) => {
@@ -195,6 +217,37 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
                         </p>
                       </div>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          size="sm" 
+                          className="gap-1 text-xs"
+                          onClick={() => setSelectedQRItem(checkIn)}
+                        >
+                          <QrCode className="h-3 w-3" />
+                          Show QR
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditCheckIn(checkIn)}
+                          className="gap-1 text-xs"
+                        >
+                          <Edit className="h-3 w-3" />
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleCheckOut(checkIn.id)}
+                          className="text-xs"
+                        >
+                          Check Out
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -202,6 +255,27 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
           </div>
         </ScrollArea>
       </div>
+
+      {/* QR Code Popup */}
+      {selectedQRItem && (
+        <QRCodePopup
+          isOpen={!!selectedQRItem}
+          onClose={() => setSelectedQRItem(null)}
+          itemId={selectedQRItem.id}
+          customerName={selectedQRItem.customerName}
+          customerNumber={selectedQRItem.customerNumber}
+        />
+      )}
+
+      {/* Edit Dialog */}
+      {editDialogItem && (
+        <CheckInEditDialog
+          isOpen={!!editDialogItem}
+          onClose={() => setEditDialogItem(null)}
+          checkInItem={editDialogItem}
+          onUpdate={handleUpdateCheckIn}
+        />
+      )}
     </>
   );
 }
