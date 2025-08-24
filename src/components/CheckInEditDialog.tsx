@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ interface CheckInEditDialogProps {
 
 export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAppointmentCreated }: CheckInEditDialogProps) => {
   const { toast } = useToast();
-  const { enhancedCustomers, addAppointment } = useSalonStore();
+  const { enhancedCustomers, addAppointment, appointments } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
   const { isDemoMode } = useDemoMode();
   const { createDemoAppointment, createDemoCustomer } = useDemoData();
@@ -94,15 +95,15 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
       
       const appointmentTime = `${String(adjustedTime.getHours()).padStart(2, '0')}:${String(adjustedTime.getMinutes()).padStart(2, '0')}`;
 
-      // Create a basic appointment slot (anyone - no specific service selected)
+      // Create a basic appointment slot (no specific service, staff "Anyone")
       const appointmentData: any = {
         appointment_date: formattedDate,
         appointment_time: appointmentTime,
         customer_name: checkInItem.customerName,
         customer_phone: checkInItem.customerNumber,
-        service_name: "Anyone", // Default to "Anyone" slot
-        employee_name: "", // Empty string for "Anyone" appointments
-        duration_minutes: 60, // Default 1 hour slot
+        service_name: "", // Do not force "Anyone" as service name
+        employee_name: "Anyone", // Explicitly mark staff as "Anyone"
+        duration_minutes: 60,
         price: 0,
         status: "confirmed",
         notes: notes || `Converted from check-in #${checkInItem.customerNumber}`
@@ -115,19 +116,33 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
 
       if (isDemoMode) {
         await createDemoAppointment(appointmentData);
-        // Also add to local Zustand store so the calendar grid updates immediately
-        addAppointment({
-          date: formattedDate,
-          time: appointmentTime,
-          customerName: checkInItem.customerName,
-          customerPhone: checkInItem.customerNumber,
-          serviceName: "Anyone",
-          staffName: "",
-          duration: 60,
-          price: 0,
-          status: "confirmed",
-          notes: appointmentData.notes
-        });
+
+        // Prevent duplicates: only add to store if identical one doesn't exist
+        const exists = appointments.some(a =>
+          a.date === formattedDate &&
+          a.time === appointmentTime &&
+          a.phone === checkInItem.customerNumber &&
+          a.customer === checkInItem.customerName &&
+          a.staff === "Anyone"
+        );
+
+        if (!exists) {
+          // Update Zustand store so the calendar grid updates immediately
+          addAppointment({
+            date: formattedDate,
+            time: appointmentTime,
+            customerName: checkInItem.customerName,
+            customerPhone: checkInItem.customerNumber,
+            // Do not set serviceName to "Anyone"
+            staffName: "Anyone",
+            duration: 60,
+            price: 0,
+            status: "confirmed",
+            notes: appointmentData.notes
+          });
+        } else {
+          console.log("[CheckInEditDialog] Skipped adding duplicate 'Anyone' appointment to store.");
+        }
       } else {
         await createAppointment(appointmentData);
       }
