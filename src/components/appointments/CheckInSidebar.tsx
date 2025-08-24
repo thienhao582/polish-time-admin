@@ -1,5 +1,6 @@
 import { format } from "date-fns";
-import { X, Clock, User, Phone, Users, QrCode, Edit, Search, Calendar } from "lucide-react";
+import { X, Clock, Phone, Users, QrCode, Edit, Search } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCheckInStore } from "@/stores/useCheckInStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { Button } from "@/components/ui/button";
@@ -256,44 +257,44 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
 
                     {/* Action Buttons */}
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex flex-wrap gap-2">
-                        <Button 
-                          size="sm" 
-                          className="gap-1 text-xs"
-                          onClick={() => setSelectedQRItem(checkIn)}
-                        >
-                          <QrCode className="h-3 w-3" />
-                          Show QR
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditCheckIn(checkIn)}
-                          className="gap-1 text-xs"
-                        >
-                          <Edit className="h-3 w-3" />
-                          Edit
-                        </Button>
-                        {checkIn.status === 'waiting' && (
+                      <TooltipProvider>
+                        <div className="flex gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setSelectedQRItem(checkIn)}
+                                className="p-2"
+                              >
+                                <QrCode className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Show QR checkin</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          
                           <Button 
                             size="sm" 
-                            variant="secondary"
-                            onClick={() => handleConvertToAppointment(checkIn.id)}
+                            variant="outline"
+                            onClick={() => handleEditCheckIn(checkIn)}
                             className="gap-1 text-xs"
                           >
-                            <Calendar className="h-3 w-3" />
-                            Đặt lịch
+                            <Edit className="h-3 w-3" />
+                            Edit
                           </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => handleCheckOut(checkIn.id)}
-                          className="text-xs"
-                        >
-                          Check Out
-                        </Button>
-                      </div>
+                          
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => handleCheckOut(checkIn.id)}
+                            className="text-xs"
+                          >
+                            Check Out
+                          </Button>
+                        </div>
+                      </TooltipProvider>
                     </div>
                   </div>
                 ))}

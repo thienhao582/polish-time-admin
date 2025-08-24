@@ -42,12 +42,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
   }, [checkInItem, isOpen]);
 
   const handleConvertToAppointment = async () => {
-    if (!checkInItem || serviceStaffItems.length === 0) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng chọn ít nhất một dịch vụ",
-        variant: "destructive"
-      });
+    if (!checkInItem) {
       return;
     }
 
@@ -68,51 +63,56 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
         customerId = newCustomer?.id;
       }
 
-      // Create appointments for each service
+      // Create appointment with closest available time slot
       const currentDate = new Date();
       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-      const currentTime = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
-
-      for (const serviceStaffItem of serviceStaffItems) {
-        const appointmentData: any = {
-          appointment_date: formattedDate,
-          appointment_time: currentTime,
-          customer_name: checkInItem.customerName,
-          customer_phone: checkInItem.customerNumber,
-          service_name: serviceStaffItem.serviceName || "Unknown Service",
-          employee_name: serviceStaffItem.staffNames[0] || "Unknown Staff",
-          duration_minutes: serviceStaffItem.duration || 0,
-          price: serviceStaffItem.price || 0,
-          status: "in_progress",
-          notes: notes
-        };
-
-        // Add UUID fields if valid
-        if (customerId && customerId.length > 10) {
-          appointmentData.customer_id = customerId;
-        }
-        if (serviceStaffItem.serviceId && serviceStaffItem.serviceId.length > 10) {
-          appointmentData.service_id = serviceStaffItem.serviceId;
-        }
-        if (serviceStaffItem.staffIds[0] && serviceStaffItem.staffIds[0].length > 10) {
-          appointmentData.employee_id = serviceStaffItem.staffIds[0];
-        }
-
-        await createAppointment(appointmentData);
+      
+      // Find the closest time slot (round up to next 15-minute interval)
+      const currentMinutes = currentDate.getMinutes();
+      const roundedMinutes = Math.ceil(currentMinutes / 15) * 15;
+      const adjustedTime = new Date(currentDate);
+      adjustedTime.setMinutes(roundedMinutes, 0, 0);
+      
+      // If rounded time exceeds 59 minutes, move to next hour
+      if (adjustedTime.getMinutes() >= 60) {
+        adjustedTime.setHours(adjustedTime.getHours() + 1, 0, 0, 0);
       }
+      
+      const appointmentTime = `${String(adjustedTime.getHours()).padStart(2, '0')}:${String(adjustedTime.getMinutes()).padStart(2, '0')}`;
+
+      // Create a basic appointment slot (anyone - no specific service selected)
+      const appointmentData: any = {
+        appointment_date: formattedDate,
+        appointment_time: appointmentTime,
+        customer_name: checkInItem.customerName,
+        customer_phone: checkInItem.customerNumber,
+        service_name: "Anyone", // Default to "Anyone" slot
+        employee_name: "Anyone", // No specific staff assigned
+        duration_minutes: 60, // Default 1 hour slot
+        price: 0,
+        status: "scheduled",
+        notes: notes || `Converted from check-in #${checkInItem.customerNumber}`
+      };
+
+      // Add customer ID if available
+      if (customerId && customerId.length > 10) {
+        appointmentData.customer_id = customerId;
+      }
+
+      await createAppointment(appointmentData);
 
       // Update check-in item
       const updatedItem: CheckInItem = {
         ...checkInItem,
-        status: "in_service",
-        services: serviceStaffItems.map(item => item.serviceName),
+        status: "booked",
+        services: serviceStaffItems.length > 0 ? serviceStaffItems.map(item => item.serviceName) : ["Anyone"],
         notes
       };
 
       onUpdate(updatedItem);
       toast({
         title: "Thành công",
-        description: "Đã chuyển đổi check-in thành lịch hẹn và bắt đầu phục vụ"
+        description: `Đã chuyển thành lịch hẹn lúc ${appointmentTime}`
       });
       onClose();
     } catch (error) {
@@ -219,7 +219,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
             </Button>
             <Button 
               onClick={handleConvertToAppointment}
-              disabled={isLoading || serviceStaffItems.length === 0}
+              disabled={isLoading}
               className="bg-pink-600 hover:bg-pink-700"
             >
               {isLoading ? "Đang xử lý..." : "Chuyển thành lịch hẹn"}
