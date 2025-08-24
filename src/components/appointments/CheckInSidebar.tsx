@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import QRCodePopup from "@/components/QRCodePopup";
 import { CheckInEditDialog } from "@/components/CheckInEditDialog";
 import { useToast } from "@/hooks/use-toast";
+import { ReceiptPopup } from "@/components/ReceiptPopup";
 
 interface CheckInSidebarProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   const { toast } = useToast();
   const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
   const [editDialogItem, setEditDialogItem] = useState<any>(null);
+  const [receiptItem, setReceiptItem] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("waiting");
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -67,12 +69,19 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
     }
   };
 
-  const handleCheckOut = (id: string) => {
-    checkOut(id);
-    toast({
-      title: "Thành công",
-      description: "Khách hàng đã check out",
-    });
+  const handleCheckOut = (checkInItem: any) => {
+    setReceiptItem(checkInItem);
+  };
+
+  const handleConfirmCheckOut = () => {
+    if (receiptItem) {
+      checkOut(receiptItem.id);
+      toast({
+        title: "Thành công",
+        description: "Khách hàng đã check out",
+      });
+      setReceiptItem(null);
+    }
   };
 
   const handleConvertToAppointment = (id: string) => {
@@ -291,7 +300,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleCheckOut(checkIn.id)}
+                            onClick={() => handleCheckOut(checkIn)}
                             className="text-xs"
                           >
                             Check Out
@@ -326,6 +335,16 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
           checkInItem={editDialogItem}
           onUpdate={handleUpdateCheckIn}
           onAppointmentCreated={onAppointmentCreated}
+        />
+      )}
+
+      {/* Receipt Popup */}
+      {receiptItem && (
+        <ReceiptPopup
+          isOpen={!!receiptItem}
+          onClose={() => setReceiptItem(null)}
+          checkInItem={receiptItem}
+          onConfirmCheckOut={handleConfirmCheckOut}
         />
       )}
     </>
