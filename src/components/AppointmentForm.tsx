@@ -47,9 +47,8 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment } = useSalonStore();
+  const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment, addCustomer } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
-  const { createDemoCustomer } = useDemoData();
   const { isDemoMode } = useDemoMode();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
@@ -182,6 +181,8 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   };
 
   const handleSubmit = async (data: any) => {
+    console.log("=== APPOINTMENT FORM SUBMIT ===");
+    console.log("isDemoMode:", isDemoMode);
     console.log("Form data submitted:", data);
     console.log("Service staff items:", serviceStaffItems);
     
@@ -202,21 +203,30 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           customerId = existingCustomer.id;
           toast.info("Khách hàng đã tồn tại, sử dụng thông tin khách cũ");
         } else {
+          console.log("Creating new customer, isDemoMode:", isDemoMode);
           // Use demo or database mode based on context
-          const newCustomer = isDemoMode 
-            ? await createDemoCustomer({
-                name: data.customerName,
-                phone: data.customerPhone,
-                email: data.customerEmail || null
-              })
-            : await createCustomer({
-                name: data.customerName,
-                phone: data.customerPhone,
-                email: data.customerEmail || null
-              });
+          let newCustomer;
+          if (isDemoMode) {
+            console.log("Using Zustand store customer creation");
+            newCustomer = addCustomer({
+              name: data.customerName,
+              phone: data.customerPhone,
+              email: data.customerEmail || undefined
+            });
+            console.log("Zustand customer created:", newCustomer);
+          } else {
+            console.log("Using database customer creation");
+            newCustomer = await createCustomer({
+              name: data.customerName,
+              phone: data.customerPhone,
+              email: data.customerEmail || null
+            });
+          }
           customerId = newCustomer?.id;
           if (newCustomer) {
             toast.success("Đã thêm khách hàng mới vào hệ thống");
+          } else {
+            console.error("Failed to create customer");
           }
         }
       }
