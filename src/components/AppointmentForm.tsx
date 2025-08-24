@@ -48,7 +48,7 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
-  const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment, addCustomer } = useSalonStore();
+  const { enhancedCustomers, deduplicateCustomers, services, employees, addAppointment, addCustomer, updateAppointment } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
   const { isDemoMode } = useDemoMode();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
@@ -188,8 +188,10 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   const handleSubmit = async (data: any) => {
     console.log("=== APPOINTMENT FORM SUBMIT ===");
     console.log("isDemoMode:", isDemoMode);
+    console.log("editData:", editData);
     console.log("Form data submitted:", data);
     console.log("Service staff items:", serviceStaffItems);
+    console.log("Is this an edit?", !!editData);
     
     if (serviceStaffItems.length === 0) {
       toast.error("Vui lòng chọn ít nhất một dịch vụ");
@@ -254,10 +256,28 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           serviceStaffItems: serviceStaffItems
         };
         
-        console.log("Creating demo appointment with Zustand store:", appointmentData);
-        const newAppointment = addAppointment(appointmentData);
-        console.log("Demo appointment created:", newAppointment);
-        appointments.push(newAppointment);
+        console.log("Demo mode - Is edit mode?", !!editData?.id);
+        
+        if (editData?.id) {
+          // Edit existing appointment
+          console.log("Updating existing appointment with ID:", editData.id);
+          const { updateAppointment } = useSalonStore.getState();
+          updateAppointment(editData.id, {
+            time: data.time,
+            customer: data.customerName,
+            phone: data.customerPhone,
+            notes: data.notes,
+            extraTime: data.extraTime
+          });
+          console.log("Appointment updated successfully");
+          appointments.push({ id: editData.id }); // Just for response consistency
+        } else {
+          // Create new appointment
+          console.log("Creating new demo appointment with Zustand store:", appointmentData);
+          const newAppointment = addAppointment(appointmentData);
+          console.log("Demo appointment created:", newAppointment);
+          appointments.push(newAppointment);
+        }
       } else {
         // Database mode: create separate appointments for each service
         for (const serviceStaffItem of serviceStaffItems) {
@@ -301,8 +321,9 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         }
       }
 
-      console.log("Appointments created:", appointments);
-      toast.success("Tạo lịch hẹn thành công!");
+      console.log("Appointments processed:", appointments);
+      const successMessage = editData?.id ? "Lịch hẹn đã được cập nhật!" : "Tạo lịch hẹn thành công!";
+      toast.success(successMessage);
       onSubmit({ appointments });
       onClose();
     } catch (error) {

@@ -223,6 +223,10 @@ const Appointments = () => {
   };
 
   const handleAppointmentEdit = async (appointmentData: any) => {
+    console.log("=== HANDLE APPOINTMENT EDIT ===");
+    console.log("Appointment data received:", appointmentData);
+    console.log("Selected appointment before edit:", selectedAppointment);
+    
     setIsEditMode(false);
     setIsAppointmentDetailOpen(false);
     // Refresh appointments after editing
