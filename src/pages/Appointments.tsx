@@ -499,9 +499,16 @@ const Appointments = () => {
         appointment={selectedAppointment}
         onEdit={handleEditClick}
         onDelete={handleDeleteAppointment}
-        onDurationUpdate={async () => {
+        onDurationUpdate={async (appointmentId) => {
           // Refresh appointments when duration or extra time is updated
           await loadAppointments();
+          // Find the updated appointment and update selected appointment
+          setTimeout(() => {
+            const updatedAppointment = appointments.find(apt => apt.id === appointmentId);
+            if (updatedAppointment) {
+              setSelectedAppointment(updatedAppointment);
+            }
+          }, 100);
         }}
       />
 

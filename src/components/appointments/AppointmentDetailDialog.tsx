@@ -53,7 +53,7 @@ interface AppointmentDetailDialogProps {
   appointment: Appointment | null;
   onEdit: () => void;
   onDelete: (id: number) => void;
-  onDurationUpdate?: (appointmentId: number, newDuration: number) => void;
+  onDurationUpdate?: (appointmentId: number, newDuration?: number) => void;
 }
 
 export function AppointmentDetailDialog({
@@ -107,9 +107,10 @@ export function AppointmentDetailDialog({
         ...appointment,
         duration: newDurationText
       });
+      toast.success("Đã cập nhật thời gian thực hiện");
     }
     
-    // Call parent callback if provided
+    // Call parent callback to refresh data
     if (onDurationUpdate) {
       onDurationUpdate(appointment.id, newDurationMinutes);
     }

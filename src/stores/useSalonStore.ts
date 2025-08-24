@@ -233,6 +233,7 @@ export const useSalonStore = create<SalonState>()(
                 staff: staffName,
                 customerId,
                 notes: appointmentData.notes,
+                extraTime: appointmentData.extraTime || 0,
                 serviceId: serviceStaffItem.serviceId,
                 staffId: staffId,
                 staffSalaryData: [{
@@ -286,6 +287,7 @@ export const useSalonStore = create<SalonState>()(
             serviceId: appointmentData.serviceId,
             staffId: appointmentData.staffId,
             notes: appointmentData.notes,
+            extraTime: appointmentData.extraTime || 0,
             staffSalaryData: appointmentData.staffSalaryData
           };
 
