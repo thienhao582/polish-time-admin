@@ -119,7 +119,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         await createAppointment(appointmentData);
       }
 
-      // Update check-in item
+      // Update check-in item status to booked
       const updatedItem: CheckInItem = {
         ...checkInItem,
         status: "booked",
@@ -128,6 +128,8 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
       };
 
       onUpdate(updatedItem);
+      
+      // Call the appointment created callback to refresh the appointment list
       onAppointmentCreated?.();
       toast({
         title: "Thành công",
@@ -188,10 +190,12 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
                 <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
                   checkInItem.status === 'waiting' ? 'bg-yellow-100 text-yellow-800' :
                   checkInItem.status === 'in_service' ? 'bg-blue-100 text-blue-800' :
-                  'bg-green-100 text-green-800'
+                  checkInItem.status === 'booked' ? 'bg-green-100 text-green-800' :
+                  'bg-gray-100 text-gray-800'
                 }`}>
                   {checkInItem.status === 'waiting' ? 'Đang chờ' :
                    checkInItem.status === 'in_service' ? 'Đang phục vụ' :
+                   checkInItem.status === 'booked' ? 'Đã đặt lịch' :
                    'Hoàn thành'}
                 </span>
               </div>

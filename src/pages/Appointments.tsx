@@ -96,6 +96,14 @@ const Appointments = () => {
         console.log("Loading demo mode appointments from Zustand store...");
         console.log("Raw demoAppointments from store:", demoAppointments.slice(0, 3));
         
+        // Also fetch from IndexedDB to include newly created appointments
+        try {
+          const demoAppointmentsFromDB = await fetchDemoAppointments();
+          console.log("Demo appointments from IndexedDB:", demoAppointmentsFromDB?.length || 0);
+        } catch (error) {
+          console.log("Could not fetch from IndexedDB, using store data:", error);
+        }
+        
         // Use demo data from Zustand store only
         const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
           id: apt.id,
