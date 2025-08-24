@@ -32,6 +32,16 @@ interface LegacyAppointment {
   price: string;
   status: string;
   staff: string;
+  email?: string;
+  notes?: string;
+  services?: Array<{
+    serviceId: string;
+    serviceName: string;
+    staffIds: string[];
+    staffNames: string[];
+    price: number;
+    duration: number;
+  }>;
 }
 
 const Appointments = () => {
@@ -207,6 +217,19 @@ const Appointments = () => {
 
   const handleEditClick = () => {
     setIsAppointmentDetailOpen(false);
+    // Set up edit data with full appointment info including services
+    setInitialFormData({
+      ...selectedAppointment,
+      date: selectedAppointment?.date,
+      time: selectedAppointment?.time,
+      customer: selectedAppointment?.customer,
+      phone: selectedAppointment?.phone,
+      email: selectedAppointment?.email || "",
+      notes: selectedAppointment?.notes || "",
+      service: selectedAppointment?.service,
+      staff: selectedAppointment?.staff,
+      services: selectedAppointment?.services || [],
+    });
     setIsEditMode(true);
   };
 
@@ -473,14 +496,7 @@ const Appointments = () => {
               <AppointmentForm 
                 onClose={() => setIsEditMode(false)} 
                 onSubmit={handleAppointmentEdit}
-                editData={{
-                  date: selectedAppointment.date,
-                  time: selectedAppointment.time,
-                  customer: selectedAppointment.customer,
-                  phone: selectedAppointment.phone,
-                  service: selectedAppointment.service,
-                  notes: ""
-                }}
+                editData={initialFormData}
               />
             )}
           </div>

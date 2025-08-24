@@ -76,9 +76,20 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       }
       if (editData.customer) {
         form.setValue("customerName", editData.customer);
+        // Auto-fill customer info from existing customers
+        const customer = enhancedCustomers.find(c => c.name === editData.customer);
+        if (customer) {
+          setFoundCustomer(customer);
+          setCustomerType("existing");
+          setSelectedCustomerId(customer.id);
+          form.setValue("customerPhone", customer.phone);
+          form.setValue("customerEmail", customer.email || "");
+          setPhoneInput(customer.phone);
+        }
       }
       if (editData.phone) {
         form.setValue("customerPhone", editData.phone);
+        setPhoneInput(editData.phone);
       }
       if (editData.email) {
         form.setValue("customerEmail", editData.email);
@@ -87,16 +98,45 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         form.setValue("notes", editData.notes);
       }
       
+      // Auto-populate services from existing appointment
+      if (editData.services && editData.services.length > 0) {
+        const populatedServices = editData.services.map((service: any) => ({
+          serviceId: service.serviceId,
+          serviceName: service.serviceName,
+          staffIds: service.staffIds || [],
+          staffNames: service.staffNames || [],
+          price: service.price,
+          duration: service.duration,
+          staffSalaryInfo: []
+        }));
+        setServiceStaffItems(populatedServices);
+      } else if (editData.service && editData.staff) {
+        // Handle single service case (legacy format)
+        const service = services.find(s => s.name === editData.service);
+        const employee = employees.find(e => e.name === editData.staff);
+        
+        if (service) {
+          setServiceStaffItems([{
+            serviceId: service.id,
+            serviceName: service.name,
+            staffIds: employee ? [employee.id] : [],
+            staffNames: employee ? [employee.name] : [],
+            price: service.price,
+            duration: service.duration,
+            staffSalaryInfo: []
+          }]);
+        }
+      }
+      
       // If we have an employee name from time slot click, pre-select it in service staff
       if (editData.employeeName && serviceStaffItems.length === 0) {
         const employee = employees.find(e => e.name === editData.employeeName);
         if (employee) {
-          // We'll handle this in the ServiceStaffSelector component
           console.log("Pre-selected employee:", employee.name);
         }
       }
     }
-  }, [editData, form, employees]);
+  }, [editData, form, employees, services, enhancedCustomers]);
 
   // Deduplicate customers when component loads
   useEffect(() => {
