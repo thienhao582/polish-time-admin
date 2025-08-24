@@ -11,7 +11,6 @@ import { EmployeeForm } from "@/components/EmployeeForm";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-
 export function GeneralManagement() {
   const { language } = useLanguage();
   const { employees, deleteEmployee, initializeData } = useSalonStore();

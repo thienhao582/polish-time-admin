@@ -270,10 +270,24 @@ export function AppointmentDayView({
 
   // Helper function to convert time string to minutes since midnight
   const timeToMinutes = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    if (!timeStr) return 0;
+    // Handle formats like "09:08 AM" or "9:08 pm"
+    const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (ampmMatch) {
+      let hours = parseInt(ampmMatch[1], 10);
+      const minutes = parseInt(ampmMatch[2], 10);
+      const period = ampmMatch[3].toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+    // Fallback to 24h format HH:mm
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || '0', 10);
+    const minutes = parseInt((parts[1] || '0').slice(0, 2), 10);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
     return hours * 60 + minutes;
   };
-
   // Helper function to calculate end time from start time and duration
   const timeToEndTime = (startTime: string, durationMinutes: number): string => {
     const startMinutes = timeToMinutes(startTime);

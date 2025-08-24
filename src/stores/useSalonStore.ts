@@ -548,7 +548,8 @@ export const useSalonStore = create<SalonState>()(
         set({
           services: [...initialServices],
           customers: [...initialCustomers],
-          appointments: [...initialAppointments],
+          // Ensure demo reset has NO 'Anyone' or empty-staff appointments
+          appointments: initialAppointments.filter(a => a.staff && a.staff.trim() !== '' && a.staff.toLowerCase() !== 'anyone'),
           nextAppointmentId: 1500, // Updated for many appointments
           nextCustomerId: 101, // Updated for 100 customers
           employees: [...initialEmployees],

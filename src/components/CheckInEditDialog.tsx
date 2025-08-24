@@ -82,9 +82,20 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
       const currentDate = new Date();
       const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
       
-      // Use the check-in time instead of current time
-      const appointmentTime = checkInItem.checkInTime;
-
+      // Normalize the check-in time to 24h format HH:mm
+      const to24h = (t: string) => {
+        const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (m) {
+          let h = parseInt(m[1], 10);
+          const min = m[2];
+          const period = m[3].toUpperCase();
+          if (period === 'PM' && h !== 12) h += 12;
+          if (period === 'AM' && h === 12) h = 0;
+          return `${String(h).padStart(2,'0')}:${min}`;
+        }
+        return t;
+      };
+      const appointmentTime = to24h(checkInItem.checkInTime);
       // Create a basic appointment slot (no specific service, staff "Anyone")
       const appointmentData: any = {
         appointment_date: formattedDate,
