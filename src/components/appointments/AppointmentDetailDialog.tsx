@@ -1,4 +1,4 @@
-import { CalendarIcon, Edit, Trash2, Clock, Plus } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState } from "react";
@@ -68,8 +68,6 @@ export function AppointmentDetailDialog({
   const { isDemoMode } = useDemoMode();
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [customDuration, setCustomDuration] = useState("");
-  const [isEditingExtraTime, setIsEditingExtraTime] = useState(false);
-  const [customExtraTime, setCustomExtraTime] = useState("");
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -122,33 +120,6 @@ export function AppointmentDetailDialog({
   const handleDurationCancel = () => {
     setIsEditingDuration(false);
     setCustomDuration("");
-  };
-
-  const handleExtraTimeEdit = () => {
-    setCustomExtraTime((appointment?.extraTime || 0).toString());
-    setIsEditingExtraTime(true);
-  };
-
-  const handleExtraTimeSave = () => {
-    if (!appointment) return;
-    
-    const newExtraTime = parseInt(customExtraTime) || 0;
-    
-    if (isDemoMode) {
-      // Update in Zustand store for demo mode
-      updateAppointment(appointment.id, {
-        ...appointment,
-        extraTime: newExtraTime
-      });
-      toast.success("Đã cập nhật thời gian cộng thêm");
-    }
-    
-    setIsEditingExtraTime(false);
-  };
-
-  const handleExtraTimeCancel = () => {
-    setIsEditingExtraTime(false);
-    setCustomExtraTime("");
   };
 
   if (!appointment) return null;
@@ -271,46 +242,7 @@ export function AppointmentDetailDialog({
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Thời gian cộng thêm</label>
-              {isEditingExtraTime ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <Input
-                    type="number"
-                    value={customExtraTime}
-                    onChange={(e) => setCustomExtraTime(e.target.value)}
-                    placeholder="Phút"
-                    className="w-20 h-8 text-sm"
-                    min="0"
-                  />
-                  <span className="text-sm text-gray-500">phút</span>
-                  <Button
-                    size="sm"
-                    onClick={handleExtraTimeSave}
-                    className="h-8 px-2 bg-green-600 hover:bg-green-700"
-                  >
-                    Lưu
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleExtraTimeCancel}
-                    className="h-8 px-2"
-                  >
-                    Hủy
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm">{appointment.extraTime ? `${appointment.extraTime} phút` : "0 phút"}</p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleExtraTimeEdit}
-                    className="h-6 w-6 p-0 hover:bg-gray-100"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
+              <p className="text-sm text-gray-600">{appointment.extraTime ? `${appointment.extraTime} phút` : "0 phút"}</p>
             </div>
           </div>
 

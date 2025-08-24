@@ -36,6 +36,7 @@ const appointmentFormSchema = z.object({
   }),
   customerEmail: z.string().email().optional(),
   notes: z.string().optional(),
+  extraTime: z.number().min(0).optional(),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
@@ -65,6 +66,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       customerPhone: editData?.phone || "",
       customerEmail: editData?.email || "",
       notes: editData?.notes || "",
+      extraTime: editData?.extraTime || 0,
     },
   });
 
@@ -99,6 +101,9 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       }
       if (editData.notes) {
         form.setValue("notes", editData.notes);
+      }
+      if (editData.extraTime !== undefined) {
+        form.setValue("extraTime", editData.extraTime);
       }
       
       // Auto-populate services from existing appointment
@@ -245,6 +250,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           customerEmail: data.customerEmail,
           customerId: customerId,
           notes: data.notes,
+          extraTime: data.extraTime,
           serviceStaffItems: serviceStaffItems
         };
         
@@ -437,11 +443,26 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
         />
       </div>
 
-      <div>
-        <Label htmlFor="notes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-          Ghi chú (tùy chọn)
-        </Label>
-        <Textarea id="notes" placeholder="Nhập ghi chú" {...form.register("notes")} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label htmlFor="notes" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Ghi chú (tùy chọn)
+          </Label>
+          <Textarea id="notes" placeholder="Nhập ghi chú" {...form.register("notes")} />
+        </div>
+        <div>
+          <Label htmlFor="extraTime" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+            Thời gian cộng thêm (phút)
+          </Label>
+          <Input 
+            id="extraTime" 
+            type="number" 
+            placeholder="0" 
+            min="0"
+            max="300"
+            {...form.register("extraTime", { valueAsNumber: true })}
+          />
+        </div>
       </div>
 
       <div className="flex justify-end gap-4">
