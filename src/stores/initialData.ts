@@ -262,16 +262,6 @@ const generateAppointmentsForRange = () => {
 const generateAug6TestData = () => {
   const appointments: Appointment[] = [];
   let appointmentId = 5000; // Start with high ID to avoid conflicts
-  
-  // Create "Anyone" appointments (no specific staff assigned)
-  const anyoneAppointments = [
-    { time: "08:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Nguyễn Thi Lan" },
-    { time: "11:00", service: "French Manicure", duration: 75, price: 280000, customer: "Trần Thi Mai" },
-    { time: "14:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Lê Thi Hoa" },
-    { time: "16:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Phạm Thi Thu" },
-  ];
-
-  console.log("Creating Anyone appointments:", anyoneAppointments.length);
 
   // Create appointments for 15 employees to test horizontal scrolling
   const employeeAppointments = [
@@ -343,41 +333,6 @@ const generateAug6TestData = () => {
     { staff: "Huỳnh Anh", time: "16:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hoàng Thi Hiền" },
   ];
   
-  // Add "Anyone" appointments (no staff assigned)
-  anyoneAppointments.forEach((aptData, index) => {
-    const customerIndex = Math.floor(Math.random() * 100);
-    const customer = initialCustomers[customerIndex];
-    
-    const anyoneAppt = {
-      id: appointmentId + index,
-      date: "2025-08-06",
-      time: aptData.time,
-      customer: aptData.customer,
-      phone: customer.phone,
-      service: aptData.service,
-      duration: `${aptData.duration} phút`,
-      price: `${aptData.price.toLocaleString()}đ`,
-      status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
-      staff: "", // Explicitly empty string for "Anyone" column
-      customerId: customerIndex.toString(),
-      serviceId: "1",
-      staffId: "",
-      notes: "Không yêu cầu nhân viên cụ thể",
-      staffSalaryData: []
-    };
-    
-    console.log(`Creating Anyone appointment ${index + 1}:`, {
-      id: anyoneAppt.id,
-      time: anyoneAppt.time,
-      customer: anyoneAppt.customer,
-      staff: `"${anyoneAppt.staff}"`,
-      service: anyoneAppt.service
-    });
-    
-    appointments.push(anyoneAppt);
-  });
-  
-  appointmentId += anyoneAppointments.length;
   
   // Add employee appointments
   employeeAppointments.forEach((aptData, index) => {
