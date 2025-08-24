@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { X, Clock, Phone, Users, QrCode, Edit, Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCheckInStore } from "@/stores/useCheckInStore";
+import { useSalonStore } from "@/stores/useSalonStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useSupabaseCheckIns } from "@/hooks/useSupabaseCheckIns";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   // Demo mode hooks
   const { checkIns: demoCheckIns, getFilteredCheckIns: getDemoFiltered, initializeWithDemoData, updateCheckIn: updateDemoCheckIn, convertToAppointment, checkOut: demoCheckOut } = useCheckInStore();
   const { isDemoMode } = useDemoMode();
+  const { updateAppointment, appointments } = useSalonStore();
   
   // Supabase hooks
   const { checkIns: supabaseCheckIns, getFilteredCheckIns: getSupabaseFiltered, fetchCheckInsByDate, updateCheckIn: updateSupabaseCheckIn, deleteCheckIn } = useSupabaseCheckIns();
@@ -92,7 +94,19 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
     if (receiptItem) {
       try {
         if (isDemoMode) {
+          // Update check-in status
           demoCheckOut(receiptItem.id);
+          
+          // Find and update related appointment status
+          const relatedAppointment = appointments.find(app => 
+            app.customer === receiptItem.customerName &&
+            app.phone === receiptItem.phone &&
+            app.date === receiptItem.date
+          );
+          
+          if (relatedAppointment) {
+            updateAppointment(relatedAppointment.id, { status: 'completed' });
+          }
         } else {
           await updateSupabaseCheckIn(receiptItem.id, { status: 'completed' });
         }
@@ -101,6 +115,9 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
           description: "Khách hàng đã check out",
         });
         setReceiptItem(null);
+        
+        // Refresh appointment list if callback provided
+        onAppointmentCreated?.();
       } catch (error) {
         // Error handling is in the hook
       }
