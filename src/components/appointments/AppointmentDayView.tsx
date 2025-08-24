@@ -311,14 +311,13 @@ export function AppointmentDayView({
     const slotStartMinutes = timeToMinutes(timeSlot);
     const slotEndMinutes = slotStartMinutes + 60; // 1 hour slot
     
-    const appointments = anyoneAppointments.filter(apt => {
-      const aptStartMinutes = timeToMinutes(apt.time);
-      const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
-      const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
-      
-      // Check if appointment overlaps with this 1-hour slot
-      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
-    });
+    // Show appointments that START within this hour only to avoid duplicates across hours
+    const appointments = anyoneAppointments
+      .filter(apt => {
+        const aptStartMinutes = timeToMinutes(apt.time);
+        return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotEndMinutes;
+      })
+      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     
     return appointments;
   };
