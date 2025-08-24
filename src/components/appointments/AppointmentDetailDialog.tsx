@@ -1,11 +1,15 @@
-import { CalendarIcon, Edit, Trash2 } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSalonStore } from "@/stores/useSalonStore";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 interface Appointment {
   id: number;
@@ -46,6 +50,7 @@ interface AppointmentDetailDialogProps {
   appointment: Appointment | null;
   onEdit: () => void;
   onDelete: (id: number) => void;
+  onDurationUpdate?: (appointmentId: number, newDuration: number) => void;
 }
 
 export function AppointmentDetailDialog({
@@ -53,9 +58,13 @@ export function AppointmentDetailDialog({
   onOpenChange,
   appointment,
   onEdit,
-  onDelete
+  onDelete,
+  onDurationUpdate
 }: AppointmentDetailDialogProps) {
-  const { services, employees } = useSalonStore();
+  const { services, employees, updateAppointment } = useSalonStore();
+  const { isDemoMode } = useDemoMode();
+  const [isEditingDuration, setIsEditingDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState("");
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -74,6 +83,40 @@ export function AppointmentDetailDialog({
         {config.label}
       </Badge>
     );
+  };
+
+  const handleDurationEdit = () => {
+    setCustomDuration(appointment?.duration?.replace(' phút', '') || '');
+    setIsEditingDuration(true);
+  };
+
+  const handleDurationSave = () => {
+    if (!appointment || !customDuration) return;
+    
+    const newDurationMinutes = parseInt(customDuration);
+    if (isNaN(newDurationMinutes) || newDurationMinutes <= 0) return;
+    
+    const newDurationText = `${newDurationMinutes} phút`;
+    
+    if (isDemoMode) {
+      // Update in Zustand store for demo mode
+      updateAppointment(appointment.id, {
+        ...appointment,
+        duration: newDurationText
+      });
+    }
+    
+    // Call parent callback if provided
+    if (onDurationUpdate) {
+      onDurationUpdate(appointment.id, newDurationMinutes);
+    }
+    
+    setIsEditingDuration(false);
+  };
+
+  const handleDurationCancel = () => {
+    setIsEditingDuration(false);
+    setCustomDuration("");
   };
 
   if (!appointment) return null;
@@ -153,7 +196,46 @@ export function AppointmentDetailDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-600">Tổng thời lượng</label>
-              <p className="text-sm">{appointment.duration}</p>
+              {isEditingDuration ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="number"
+                    value={customDuration}
+                    onChange={(e) => setCustomDuration(e.target.value)}
+                    placeholder="Phút"
+                    className="w-20 h-8 text-sm"
+                    min="1"
+                  />
+                  <span className="text-sm text-gray-500">phút</span>
+                  <Button
+                    size="sm"
+                    onClick={handleDurationSave}
+                    className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                  >
+                    Lưu
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDurationCancel}
+                    className="h-8 px-2"
+                  >
+                    Hủy
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm">{appointment.duration}</p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleDurationEdit}
+                    className="h-6 w-6 p-0 hover:bg-gray-100"
+                  >
+                    <Clock className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Tổng giá</label>
