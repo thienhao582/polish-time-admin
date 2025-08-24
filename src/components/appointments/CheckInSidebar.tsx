@@ -97,15 +97,9 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
           // Update check-in status
           demoCheckOut(receiptItem.id);
           
-          // Find and update related appointment status
-          const relatedAppointment = appointments.find(app => 
-            app.customer === receiptItem.customerName &&
-            app.phone === receiptItem.phone &&
-            app.date === receiptItem.date
-          );
-          
-          if (relatedAppointment) {
-            updateAppointment(relatedAppointment.id, { status: 'completed' });
+          // Update related appointment status using appointmentId
+          if (receiptItem.appointmentId) {
+            updateAppointment(receiptItem.appointmentId, { status: 'completed' });
           }
         } else {
           await updateSupabaseCheckIn(receiptItem.id, { status: 'completed' });

@@ -122,7 +122,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
 
         if (!exists) {
           // Update Zustand store with selected services and staff
-          addAppointment({
+          const newAppointmentData = {
             date: formattedDate,
             time: appointmentTime,
             customerName: checkInItem.customerName,
@@ -133,7 +133,11 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
             price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
             notes: appointmentData.notes
-          });
+          };
+          const createdAppointment = addAppointment(newAppointmentData);
+          
+          // Store appointment ID for linking
+          appointmentData.appointmentId = createdAppointment?.id;
         } else {
           console.log("[CheckInEditDialog] Skipped adding duplicate 'Anyone' appointment to store.");
         }
@@ -146,7 +150,8 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         ...checkInItem,
         status: "booked",
         services: serviceStaffItems.length > 0 ? serviceStaffItems.map(item => item.serviceName) : [],
-        notes
+        notes,
+        appointmentId: appointmentData.appointmentId // Link to created appointment
       };
 
       onUpdate(updatedItem);

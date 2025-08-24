@@ -13,6 +13,7 @@ export interface CheckInItem {
   phone?: string;
   waitTime?: number;
   notes?: string;
+  appointmentId?: string; // Link to appointment when converted
   created_at?: string;
   updated_at?: string;
 }
