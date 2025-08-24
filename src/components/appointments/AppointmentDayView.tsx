@@ -545,12 +545,12 @@ export function AppointmentDayView({
                                 handleAppointmentClick(apt, e);
                               }}
                              >
-                               {/* Staff icon in top right if staff is assigned */}
-                               {apt.staff && apt.staff !== "Bất kì" && (
-                                 <div className="absolute top-1 right-1">
-                                   <UserCheck className="w-3 h-3 text-blue-600" />
-                                 </div>
-                               )}
+                                {/* Staff icon in top right if staff is assigned */}
+                                {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
+                                  <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
+                                    <UserCheck className="w-2.5 h-2.5 text-white" />
+                                  </div>
+                                )}
                                <div className="font-bold truncate">
                                  {apt.customer}
                                </div>
@@ -597,9 +597,9 @@ export function AppointmentDayView({
                 }}
                >
                  {/* Staff icon in top right if staff is assigned */}
-                 {apt.staff && apt.staff !== "Bất kì" && (
-                   <div className="absolute top-1 right-1">
-                     <UserCheck className="w-3 h-3 text-blue-600" />
+                 {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
+                   <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
+                     <UserCheck className="w-2.5 h-2.5 text-white" />
                    </div>
                  )}
                  <div className="flex justify-between items-start mb-2">
