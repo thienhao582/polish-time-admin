@@ -139,7 +139,12 @@ export function GeneralManagement() {
         </div>
         <div className="flex gap-2">
           <Button 
-            onClick={initializeData}
+            onClick={() => {
+              initializeData();
+              // Also reset check-in data
+              localStorage.removeItem('checkin-storage');
+              window.location.reload();
+            }}
             variant="outline"
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
           >

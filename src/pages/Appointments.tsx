@@ -341,8 +341,9 @@ const Appointments = () => {
           <Button 
             variant="outline" 
             onClick={() => {
-              // Clear localStorage to force refresh
+              // Clear localStorage to force refresh all stores including check-ins
               localStorage.removeItem('salon-store');
+              localStorage.removeItem('checkin-storage');
               window.location.reload();
             }}
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
