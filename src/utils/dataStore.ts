@@ -35,6 +35,7 @@ export interface Appointment {
   serviceId?: string;
   staffId?: string;
   notes?: string;
+  extraTime?: number; // Extra time in minutes
   // New fields for multi-service appointments
   services?: Array<{
     serviceId: string;

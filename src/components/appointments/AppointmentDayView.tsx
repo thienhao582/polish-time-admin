@@ -16,6 +16,7 @@ interface Appointment {
   price: string;
   status: string;
   staff: string;
+  extraTime?: number;
 }
 
 interface AppointmentDayViewProps {
@@ -247,9 +248,10 @@ export function AppointmentDayView({
   }
 
   // Helper function to parse duration from string like "60 phút" to minutes
-  const parseDuration = (durationStr: string): number => {
+  const parseDuration = (durationStr: string, extraTime?: number): number => {
     const match = durationStr.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 30;
+    const baseDuration = match ? parseInt(match[1]) : 30;
+    return baseDuration + (extraTime || 0);
   };
 
   // Helper function to convert time string to minutes since midnight
@@ -281,7 +283,7 @@ export function AppointmentDayView({
       if (!isStaffMatch) return false;
       
       const aptStartMinutes = timeToMinutes(apt.time);
-      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
       const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
       
       // Check if appointment overlaps with this time slot
@@ -298,7 +300,7 @@ export function AppointmentDayView({
     
     const appointments = anyoneAppointments.filter(apt => {
       const aptStartMinutes = timeToMinutes(apt.time);
-      const aptDurationMinutes = parseDuration(apt.duration);
+      const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
       const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
       
       // Check if appointment overlaps with this 1-hour slot
@@ -338,7 +340,7 @@ export function AppointmentDayView({
           const aptStartMinutes = timeToMinutes(apt.time);
           const slotStartMinutes = timeToMinutes(timeSlot);
           const slotEndMinutes = slotStartMinutes + 30;
-          return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration) > slotStartMinutes;
+          return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration, (apt as any).extraTime) > slotStartMinutes;
         });
         
         if (hasAppointment && timeSlot === "08:00") {
@@ -509,7 +511,7 @@ export function AppointmentDayView({
                           </div>
                         )}
                         {startingAppointments.map((apt, aptIndex) => {
-                          const durationMinutes = parseDuration(apt.duration);
+                          const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
                           const slotsSpanned = Math.ceil(durationMinutes / 30);
                           const heightInPixels = slotsSpanned * 56 - 4; // 56px per slot (h-14) minus border
                           

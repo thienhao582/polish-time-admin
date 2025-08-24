@@ -1,6 +1,6 @@
 // Utility functions for time calculations
 
-export function calculateEndTime(startTime: string, duration: string): string {
+export function calculateEndTime(startTime: string, duration: string, extraTime?: number): string {
   // Parse start time
   const [startHour, startMinute] = startTime.split(':').map(Number);
   
@@ -9,10 +9,11 @@ export function calculateEndTime(startTime: string, duration: string): string {
   if (!durationMatch) return startTime;
   
   const durationMinutes = parseInt(durationMatch[1]);
+  const totalMinutes = durationMinutes + (extraTime || 0);
   
   // Calculate end time
   const startTotalMinutes = startHour * 60 + startMinute;
-  const endTotalMinutes = startTotalMinutes + durationMinutes;
+  const endTotalMinutes = startTotalMinutes + totalMinutes;
   
   const endHour = Math.floor(endTotalMinutes / 60);
   const endMinute = endTotalMinutes % 60;
@@ -21,10 +22,10 @@ export function calculateEndTime(startTime: string, duration: string): string {
   return `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
 }
 
-export function formatTimeRange(startTime: string, duration: string): string {
+export function formatTimeRange(startTime: string, duration: string, extraTime?: number): string {
   // Format start time to HH:MM (remove seconds if present)
   const formattedStartTime = startTime.substring(0, 5);
-  const endTime = calculateEndTime(formattedStartTime, duration);
+  const endTime = calculateEndTime(formattedStartTime, duration, extraTime);
   return `${formattedStartTime} - ${endTime}`;
 }
 

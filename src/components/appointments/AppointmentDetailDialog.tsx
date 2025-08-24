@@ -1,4 +1,4 @@
-import { CalendarIcon, Edit, Trash2, Clock } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Clock, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState } from "react";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
+import { formatTimeRange } from "@/utils/timeUtils";
+import { toast } from "sonner";
 
 interface Appointment {
   id: number;
@@ -25,6 +27,7 @@ interface Appointment {
   serviceId?: string;
   staffId?: string;
   notes?: string;
+  extraTime?: number; // Extra time in minutes
   services?: Array<{
     serviceId: string;
     serviceName: string;
@@ -65,6 +68,8 @@ export function AppointmentDetailDialog({
   const { isDemoMode } = useDemoMode();
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [customDuration, setCustomDuration] = useState("");
+  const [isEditingExtraTime, setIsEditingExtraTime] = useState(false);
+  const [customExtraTime, setCustomExtraTime] = useState("");
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -119,6 +124,33 @@ export function AppointmentDetailDialog({
     setCustomDuration("");
   };
 
+  const handleExtraTimeEdit = () => {
+    setCustomExtraTime((appointment?.extraTime || 0).toString());
+    setIsEditingExtraTime(true);
+  };
+
+  const handleExtraTimeSave = () => {
+    if (!appointment) return;
+    
+    const newExtraTime = parseInt(customExtraTime) || 0;
+    
+    if (isDemoMode) {
+      // Update in Zustand store for demo mode
+      updateAppointment(appointment.id, {
+        ...appointment,
+        extraTime: newExtraTime
+      });
+      toast.success("Đã cập nhật thời gian cộng thêm");
+    }
+    
+    setIsEditingExtraTime(false);
+  };
+
+  const handleExtraTimeCancel = () => {
+    setIsEditingExtraTime(false);
+    setCustomExtraTime("");
+  };
+
   if (!appointment) return null;
 
   // Check if this is a multi-service appointment
@@ -141,8 +173,8 @@ export function AppointmentDetailDialog({
               <p className="text-sm">{format(new Date(appointment.date), "dd/MM/yyyy", { locale: vi })}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Giờ</label>
-              <p className="text-sm">{appointment.time}</p>
+              <label className="text-sm font-medium text-gray-600">Thời gian</label>
+              <p className="text-sm">{formatTimeRange(appointment.time, appointment.duration, appointment.extraTime)}</p>
             </div>
           </div>
           
@@ -195,7 +227,7 @@ export function AppointmentDetailDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">Tổng thời lượng</label>
+              <label className="text-sm font-medium text-gray-600">Thời gian dự kiến</label>
               {isEditingDuration ? (
                 <div className="flex items-center gap-2 mt-1">
                   <Input
@@ -236,6 +268,62 @@ export function AppointmentDetailDialog({
                   </Button>
                 </div>
               )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600">Thời gian cộng thêm</label>
+              {isEditingExtraTime ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="number"
+                    value={customExtraTime}
+                    onChange={(e) => setCustomExtraTime(e.target.value)}
+                    placeholder="Phút"
+                    className="w-20 h-8 text-sm"
+                    min="0"
+                  />
+                  <span className="text-sm text-gray-500">phút</span>
+                  <Button
+                    size="sm"
+                    onClick={handleExtraTimeSave}
+                    className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                  >
+                    Lưu
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleExtraTimeCancel}
+                    className="h-8 px-2"
+                  >
+                    Hủy
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm">{appointment.extraTime ? `${appointment.extraTime} phút` : "0 phút"}</p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleExtraTimeEdit}
+                    className="h-6 w-6 p-0 hover:bg-gray-100"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-600">Tổng thời gian</label>
+              <p className="text-sm font-semibold text-blue-600">
+                {(() => {
+                  const baseDuration = parseInt(appointment.duration?.match(/(\d+)/)?.[1] || "0");
+                  const extraTime = appointment.extraTime || 0;
+                  return `${baseDuration + extraTime} phút`;
+                })()}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-600">Tổng giá</label>
