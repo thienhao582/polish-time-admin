@@ -204,75 +204,63 @@ export const useSalonStore = create<SalonState>()(
           }
         }
 
-        // Handle multi-service appointments
+        // Handle multi-service appointments - create separate appointments for each staff member
         if (appointmentData.serviceStaffItems && appointmentData.serviceStaffItems.length > 0) {
-          // Create a single appointment with multiple services
-          const totalPrice = appointmentData.serviceStaffItems.reduce((sum: number, item: any) => sum + item.price, 0);
-          const totalDuration = appointmentData.serviceStaffItems.reduce((sum: number, item: any) => sum + item.duration, 0);
+          const appointments = [];
           
-          // Get all unique staff names
-          const allStaffNames = Array.from(new Set(
-            appointmentData.serviceStaffItems.flatMap((item: any) => item.staffNames)
-          ));
-          
-          // Get all service names
-          const allServiceNames = appointmentData.serviceStaffItems.map((item: any) => item.serviceName);
-
-          // Prepare staff salary data
-          const staffSalaryData = appointmentData.serviceStaffItems.flatMap((item: any) => 
-            item.staffSalaryInfo?.map((staffInfo: any) => ({
-              staffId: staffInfo.staffId,
-              staffName: staffInfo.staffName,
-              serviceId: item.serviceId,
-              serviceName: item.serviceName,
-              commissionRate: staffInfo.commissionRate || 0.3,
-              fixedAmount: staffInfo.fixedAmount || 0,
-              servicePrice: item.price
-            })) || []
-          );
-
           // Format date properly - preserve local timezone
           const formattedDate = appointmentData.date instanceof Date 
             ? `${appointmentData.date.getFullYear()}-${String(appointmentData.date.getMonth() + 1).padStart(2, '0')}-${String(appointmentData.date.getDate()).padStart(2, '0')}`
             : appointmentData.date;
 
-          const newAppointment: Appointment = {
-            id: state.nextAppointmentId,
-            date: formattedDate,
-            time: appointmentData.time,
-            customer: appointmentData.customerName,
-            phone: appointmentData.customerPhone,
-            service: allServiceNames.join(" + "), // Combined service names
-            duration: `${totalDuration} phút`,
-            price: `${totalPrice.toLocaleString()}đ`,
-            status: "confirmed",
-            staff: allStaffNames.join(", "), // Combined staff names
-            customerId,
-            notes: appointmentData.notes,
-            services: appointmentData.serviceStaffItems.map((item: any) => ({
-              serviceId: item.serviceId,
-              serviceName: item.serviceName,
-              staffIds: item.staffIds,
-              staffNames: item.staffNames,
-              price: item.price,
-              duration: item.duration
-            })),
-            staffSalaryData
-          };
+          // Create separate appointments for each service-staff combination
+          for (const serviceStaffItem of appointmentData.serviceStaffItems) {
+            // Create appointment for each staff member assigned to this service
+            for (let i = 0; i < serviceStaffItem.staffIds.length; i++) {
+              const staffId = serviceStaffItem.staffIds[i];
+              const staffName = serviceStaffItem.staffNames[i];
+              
+              const newAppointment: Appointment = {
+                id: state.nextAppointmentId + appointments.length,
+                date: formattedDate,
+                time: appointmentData.time,
+                customer: appointmentData.customerName,
+                phone: appointmentData.customerPhone,
+                service: serviceStaffItem.serviceName,
+                duration: `${serviceStaffItem.duration} phút`,
+                price: `${serviceStaffItem.price.toLocaleString()}đ`,
+                status: "confirmed",
+                staff: staffName,
+                customerId,
+                notes: appointmentData.notes,
+                serviceId: serviceStaffItem.serviceId,
+                staffId: staffId,
+                staffSalaryData: [{
+                  staffId: staffId,
+                  staffName: staffName,
+                  serviceId: serviceStaffItem.serviceId,
+                  serviceName: serviceStaffItem.serviceName,
+                  commissionRate: 0.3,
+                  fixedAmount: 0,
+                  servicePrice: serviceStaffItem.price
+                }]
+              };
+              
+              appointments.push(newAppointment);
+            }
+          }
 
-          console.log("New appointment created:", newAppointment);
-
+          // Update store with all new appointments
           set((state) => {
             const newState = {
-              appointments: [...state.appointments, newAppointment],
-              nextAppointmentId: state.nextAppointmentId + 1
+              appointments: [...state.appointments, ...appointments],
+              nextAppointmentId: state.nextAppointmentId + appointments.length
             };
-            console.log("Updated appointments count:", newState.appointments.length);
-            console.log("All appointments:", newState.appointments);
+            console.log("Created", appointments.length, "separate appointments for multi-service");
             return newState;
           });
 
-          return newAppointment;
+          return appointments[0]; // Return the first appointment for compatibility
         } else {
           // Handle single service appointment (legacy support)
           const service = state.services.find(s => s.id === appointmentData.serviceId);
