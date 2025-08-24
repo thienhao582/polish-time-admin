@@ -31,7 +31,7 @@ interface CheckInEditDialogProps {
 
 export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAppointmentCreated }: CheckInEditDialogProps) => {
   const { toast } = useToast();
-  const { enhancedCustomers } = useSalonStore();
+  const { enhancedCustomers, addAppointment } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
   const { isDemoMode } = useDemoMode();
   const { createDemoAppointment, createDemoCustomer } = useDemoData();
@@ -115,6 +115,19 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
 
       if (isDemoMode) {
         await createDemoAppointment(appointmentData);
+        // Also add to local Zustand store so the calendar grid updates immediately
+        addAppointment({
+          date: formattedDate,
+          time: appointmentTime,
+          customerName: checkInItem.customerName,
+          customerPhone: checkInItem.customerNumber,
+          serviceName: "Anyone",
+          staffName: "",
+          duration: 60,
+          price: 0,
+          status: "confirmed",
+          notes: appointmentData.notes
+        });
       } else {
         await createAppointment(appointmentData);
       }
