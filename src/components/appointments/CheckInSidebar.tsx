@@ -1,10 +1,12 @@
 import { format } from "date-fns";
-import { X, Clock, User, Phone, Users, QrCode, Edit } from "lucide-react";
+import { X, Clock, User, Phone, Users, QrCode, Edit, Search, Calendar } from "lucide-react";
 import { useCheckInStore } from "@/stores/useCheckInStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import QRCodePopup from "@/components/QRCodePopup";
 import { CheckInEditDialog } from "@/components/CheckInEditDialog";
@@ -17,11 +19,13 @@ interface CheckInSidebarProps {
 }
 
 export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebarProps) {
-  const { checkIns, getCheckInsByDate, initializeWithDemoData, updateCheckIn, deleteCheckIn } = useCheckInStore();
+  const { checkIns, getFilteredCheckIns, initializeWithDemoData, updateCheckIn, convertToAppointment, checkOut } = useCheckInStore();
   const { isDemoMode } = useDemoMode();
   const { toast } = useToast();
   const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
   const [editDialogItem, setEditDialogItem] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState("waiting");
+  const [searchTerm, setSearchTerm] = useState("");
   
   const dateString = format(selectedDate, "yyyy-MM-dd");
   
@@ -32,20 +36,15 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
     }
   }, [isDemoMode, checkIns.length, initializeWithDemoData]);
   
-  // Filter check-ins for the selected date
-  const dayCheckIns = getCheckInsByDate(dateString);
-  
-  // Sort by check-in time
-  const sortedCheckIns = dayCheckIns.sort((a, b) => {
-    return a.checkInTime.localeCompare(b.checkInTime);
-  });
+  // Get filtered and sorted check-ins
+  const filteredCheckIns = getFilteredCheckIns(dateString, statusFilter, searchTerm);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'waiting':
         return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Đang chờ</Badge>;
-      case 'in_service':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Đang phục vụ</Badge>;
+      case 'booked':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Đã đặt lịch</Badge>;
       case 'completed':
         return <Badge variant="secondary" className="bg-green-100 text-green-800">Hoàn thành</Badge>;
       default:
@@ -67,10 +66,18 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
   };
 
   const handleCheckOut = (id: string) => {
-    deleteCheckIn(id);
+    checkOut(id);
     toast({
       title: "Thành công",
       description: "Khách hàng đã check out",
+    });
+  };
+
+  const handleConvertToAppointment = (id: string) => {
+    convertToAppointment(id);
+    toast({
+      title: "Thành công", 
+      description: "Đã chuyển thành lịch hẹn",
     });
   };
 
@@ -127,21 +134,50 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
           
           {/* Summary */}
           <div className="mt-3 text-sm text-gray-600">
-            <span className="font-medium">{dayCheckIns.length}</span> khách hàng đã check-in
+            <span className="font-medium">{filteredCheckIns.length}</span> khách hàng đã check-in
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="p-4 border-b border-gray-200 bg-gray-50/50">
+          <div className="space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Tìm theo tên hoặc số điện thoại..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 text-sm"
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Lọc theo trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="waiting">Đang chờ</SelectItem>
+                <SelectItem value="booked">Đã đặt lịch</SelectItem>
+                <SelectItem value="completed">Hoàn thành</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 h-[calc(100vh-120px)]">
+        <ScrollArea className="flex-1 h-[calc(100vh-220px)]">
           <div className="p-4">
-            {sortedCheckIns.length === 0 ? (
+            {filteredCheckIns.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Chưa có khách hàng check-in trong ngày này</p>
+                <p>Không tìm thấy khách hàng nào</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedCheckIns.map((checkIn) => (
+                {filteredCheckIns.map((checkIn) => (
                   <div 
                     key={checkIn.id} 
                     className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
@@ -238,6 +274,17 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate }: CheckInSidebar
                           <Edit className="h-3 w-3" />
                           Edit
                         </Button>
+                        {checkIn.status === 'waiting' && (
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => handleConvertToAppointment(checkIn.id)}
+                            className="gap-1 text-xs"
+                          >
+                            <Calendar className="h-3 w-3" />
+                            Đặt lịch
+                          </Button>
+                        )}
                         <Button 
                           size="sm" 
                           variant="destructive"

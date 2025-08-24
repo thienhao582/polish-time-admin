@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Clock, Users, Search, Plus, QrCode, Edit } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, Users, Search, Plus, QrCode, Edit, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,73 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import QRCodePopup from "@/components/QRCodePopup";
 import { CheckInEditDialog } from "@/components/CheckInEditDialog";
-
-interface CheckInItem {
-  id: string;
-  customerNumber: string;
-  customerName: string;
-  status: string;
-  checkInTime: string;
-  tags: string[];
-  services?: string[];
-  phone?: string;
-  waitTime?: number;
-  notes?: string;
-}
+import { useCheckInStore } from "@/stores/useCheckInStore";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const CheckIn = () => {
   const { toast } = useToast();
-  const [checkInItems, setCheckInItems] = useState<CheckInItem[]>([
-    {
-      id: "1",
-      customerNumber: "3760",
-      customerName: "Misteri Crowder",
-      status: "waiting",
-      checkInTime: "10:23 AM",
-      tags: ["NEW"],
-      services: ["Haircut", "Wash"],
-      phone: "0123456789",
-      waitTime: 15
-    },
-    {
-      id: "2", 
-      customerNumber: "3141",
-      customerName: "Sophie",
-      status: "waiting",
-      checkInTime: "09:08 AM",
-      tags: ["VIP"],
-      services: ["Color", "Style"],
-      phone: "0987654321",
-      waitTime: 45
-    },
-    {
-      id: "3",
-      customerNumber: "2895",
-      customerName: "John Doe",
-      status: "waiting",
-      checkInTime: "11:15 AM",
-      tags: ["REGULAR"],
-      services: ["Trim"],
-      phone: "0555123456",
-      waitTime: 5
-    },
-    {
-      id: "4",
-      customerNumber: "2701",
-      customerName: "Maria Garcia",
-      status: "waiting",
-      checkInTime: "11:30 AM",
-      tags: ["NEW"],
-      services: ["Manicure", "Pedicure"],
-      phone: "0444987654",
-      waitTime: 20
-    }
-  ]);
-
+  const { checkIns, getFilteredCheckIns, initializeWithDemoData, updateCheckIn, convertToAppointment, checkOut } = useCheckInStore();
+  const { isDemoMode } = useDemoMode();
+  
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedQRItem, setSelectedQRItem] = useState<CheckInItem | null>(null);
-  const [editDialogItem, setEditDialogItem] = useState<CheckInItem | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("waiting");
+  const [selectedQRItem, setSelectedQRItem] = useState<any>(null);
+  const [editDialogItem, setEditDialogItem] = useState<any>(null);
+  
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Initialize demo data if in demo mode and no check-ins exist
+  useEffect(() => {
+    if (isDemoMode && checkIns.length === 0) {
+      initializeWithDemoData();
+    }
+  }, [isDemoMode, checkIns.length, initializeWithDemoData]);
 
   const getTagVariant = (tag: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (tag) {
@@ -95,34 +49,39 @@ const CheckIn = () => {
     return "text-red-600";
   };
 
-  const filteredItems = checkInItems.filter(item => {
-    const matchesSearch = item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.customerNumber.includes(searchTerm);
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredItems = getFilteredCheckIns(today, statusFilter, searchTerm);
 
   const handleCheckOut = (id: string) => {
-    setCheckInItems(items => items.filter(item => item.id !== id));
+    checkOut(id);
+    toast({
+      title: "Thành công",
+      description: "Khách hàng đã check out",
+    });
   };
 
-  const handleEditCheckIn = (item: CheckInItem) => {
+  const handleConvertToAppointment = (id: string) => {
+    convertToAppointment(id);
+    toast({
+      title: "Thành công", 
+      description: "Đã chuyển thành lịch hẹn",
+    });
+  };
+
+  const handleEditCheckIn = (item: any) => {
     setEditDialogItem(item);
   };
 
-  const handleUpdateCheckIn = (updatedItem: CheckInItem) => {
-    setCheckInItems(items => 
-      items.map(item => 
-        item.id === updatedItem.id ? updatedItem : item
-      )
-    );
+  const handleUpdateCheckIn = (updatedItem: any) => {
+    updateCheckIn(updatedItem.id, updatedItem);
   };
 
+  const todayCheckIns = checkIns.filter(item => item.date === today);
   const stats = {
-    total: checkInItems.length,
-    waiting: checkInItems.filter(item => item.status === "waiting").length,
-    inService: checkInItems.filter(item => item.status === "in_service").length,
-    avgWaitTime: Math.round(checkInItems.reduce((acc, item) => acc + (item.waitTime || 0), 0) / checkInItems.length)
+    total: todayCheckIns.length,
+    waiting: todayCheckIns.filter(item => item.status === "waiting").length,
+    booked: todayCheckIns.filter(item => item.status === "booked").length,
+    completed: todayCheckIns.filter(item => item.status === "completed").length,
+    avgWaitTime: todayCheckIns.length > 0 ? Math.round(todayCheckIns.reduce((acc, item) => acc + (item.waitTime || 0), 0) / todayCheckIns.length) : 0
   };
 
   return (
@@ -172,12 +131,26 @@ const CheckIn = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-blue-600" />
               </div>
                <div>
-                 <p className="text-sm font-medium text-muted-foreground">In Service</p>
-                 <p className="text-2xl font-bold">{stats.inService}</p>
+                 <p className="text-sm font-medium text-muted-foreground">Đã đặt lịch</p>
+                 <p className="text-2xl font-bold">{stats.booked}</p>
+               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+               <div>
+                 <p className="text-sm font-medium text-muted-foreground">Hoàn thành</p>
+                 <p className="text-2xl font-bold">{stats.completed}</p>
                </div>
             </div>
           </CardContent>
@@ -204,11 +177,11 @@ const CheckIn = () => {
           <CardTitle>Check-in Queue</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 mb-6">
+            <div className="flex gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or number..."
+                placeholder="Tìm theo tên hoặc số điện thoại..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm pl-10"
@@ -216,12 +189,13 @@ const CheckIn = () => {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Lọc theo trạng thái" />
               </SelectTrigger>
                <SelectContent>
-                 <SelectItem value="all">All Status</SelectItem>
-                 <SelectItem value="waiting">Waiting</SelectItem>
-                 <SelectItem value="in_service">In Service</SelectItem>
+                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                 <SelectItem value="waiting">Đang chờ</SelectItem>
+                 <SelectItem value="booked">Đã đặt lịch</SelectItem>
+                 <SelectItem value="completed">Hoàn thành</SelectItem>
                </SelectContent>
             </Select>
           </div>
@@ -245,15 +219,15 @@ const CheckIn = () => {
                         </div>
                       </div>
                       
-                       <div className="flex items-center gap-4 mb-3">
-                         <div className="flex items-center gap-2">
-                           <span className={`font-medium text-sm ${
-                             item.status === 'waiting' ? 'text-yellow-600' : 
-                             item.status === 'in_service' ? 'text-blue-600' : 'text-green-600'
-                           }`}>
-                             {item.status === 'waiting' ? 'Đang chờ' :
-                              item.status === 'in_service' ? 'Đang phục vụ' : item.status}
-                           </span>
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium text-sm ${
+                              item.status === 'waiting' ? 'text-yellow-600' : 
+                              item.status === 'booked' ? 'text-blue-600' : 'text-green-600'
+                            }`}>
+                              {item.status === 'waiting' ? 'Đang chờ' :
+                               item.status === 'booked' ? 'Đã đặt lịch' : 'Hoàn thành'}
+                            </span>
                           <span className="text-muted-foreground">•</span>
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
@@ -288,32 +262,43 @@ const CheckIn = () => {
                        </div>
                     </div>
                     
-                    <div className="flex flex-col gap-2 ml-6">
-                      <Button 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={() => setSelectedQRItem(item)}
-                      >
-                        <QrCode className="h-4 w-4" />
-                        Show QR
-                      </Button>
+                     <div className="flex flex-col gap-2 ml-6">
                        <Button 
                          size="sm" 
-                         variant="outline"
-                         onClick={() => handleEditCheckIn(item)}
                          className="gap-2"
+                         onClick={() => setSelectedQRItem(item)}
                        >
-                         <Edit className="h-4 w-4" />
-                         Edit
+                         <QrCode className="h-4 w-4" />
+                         Show QR
                        </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => handleCheckOut(item.id)}
-                      >
-                        Check Out
-                      </Button>
-                    </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditCheckIn(item)}
+                          className="gap-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Edit
+                        </Button>
+                        {item.status === 'waiting' && (
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => handleConvertToAppointment(item.id)}
+                            className="gap-2"
+                          >
+                            <Calendar className="h-4 w-4" />
+                            Đặt lịch
+                          </Button>
+                        )}
+                       <Button 
+                         size="sm" 
+                         variant="destructive"
+                         onClick={() => handleCheckOut(item.id)}
+                       >
+                         Check Out
+                       </Button>
+                     </div>
                   </div>
                 </CardContent>
               </Card>

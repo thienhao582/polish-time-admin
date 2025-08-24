@@ -23,6 +23,9 @@ interface CheckInState {
   updateCheckIn: (id: string, updates: Partial<CheckInItem>) => void;
   deleteCheckIn: (id: string) => void;
   getCheckInsByDate: (date: string) => CheckInItem[];
+  getFilteredCheckIns: (date: string, statusFilter: string, searchTerm: string) => CheckInItem[];
+  convertToAppointment: (id: string) => void;
+  checkOut: (id: string) => void;
   initializeWithDemoData: () => void;
 }
 
@@ -122,6 +125,43 @@ export const useCheckInStore = create<CheckInState>()(
       getCheckInsByDate: (date) => {
         const { checkIns } = get();
         return checkIns.filter(checkIn => checkIn.date === date);
+      },
+      
+      getFilteredCheckIns: (date, statusFilter, searchTerm) => {
+        const { checkIns } = get();
+        return checkIns
+          .filter(checkIn => checkIn.date === date)
+          .filter(checkIn => {
+            const matchesSearch = checkIn.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                checkIn.customerNumber.includes(searchTerm) ||
+                                (checkIn.phone && checkIn.phone.includes(searchTerm));
+            const matchesStatus = statusFilter === "all" || checkIn.status === statusFilter;
+            return matchesSearch && matchesStatus;
+          })
+          .sort((a, b) => {
+            // Sort by time, most recent first
+            return b.checkInTime.localeCompare(a.checkInTime);
+          });
+      },
+      
+      convertToAppointment: (id) => {
+        set((state) => ({
+          checkIns: state.checkIns.map(checkIn =>
+            checkIn.id === id 
+              ? { ...checkIn, status: 'booked', updated_at: new Date().toISOString() }
+              : checkIn
+          )
+        }));
+      },
+      
+      checkOut: (id) => {
+        set((state) => ({
+          checkIns: state.checkIns.map(checkIn =>
+            checkIn.id === id 
+              ? { ...checkIn, status: 'completed', updated_at: new Date().toISOString() }
+              : checkIn
+          )
+        }));
       },
       
       initializeWithDemoData: () => {
