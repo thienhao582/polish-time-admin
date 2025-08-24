@@ -470,17 +470,17 @@ export function AppointmentDayView({
               </div>
             ) : (
               filteredWorkingEmployees.map((employee) => (
-                <div key={employee.id} className="flex-shrink-0 border-r border-gray-200 w-36">
-                  {/* Employee header - Fixed and more prominent */}
+                <div key={employee.id} className="min-w-[144px] max-w-[144px] flex-shrink-0 border-r border-gray-200">
+                  {/* Employee header - Fixed width and truncated */}
                   <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 flex items-center justify-center sticky top-0 z-20">
-                    <div className="text-center w-full">
-                      <div className="text-sm font-bold text-gray-800 truncate leading-tight">
+                    <div className="text-center w-full min-w-0">
+                      <div className="text-sm font-bold text-gray-800 truncate leading-tight" title={employee.name}>
                         {employee.name}
                       </div>
                       <div className={cn(
                         "text-xs truncate font-medium",
                         employee.hasAppointments ? "text-blue-600" : "text-gray-500"
-                      )}>
+                      )} title={`${employee.role} ${!employee.hasAppointments ? "(trống)" : ""}`}>
                         {employee.role} {!employee.hasAppointments && "(trống)"}
                       </div>
                     </div>
