@@ -7,6 +7,8 @@ import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSele
 import { useToast } from "@/hooks/use-toast";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { useDemoMode } from "@/contexts/DemoModeContext";
+import { useDemoData } from "@/hooks/useDemoData";
 
 interface CheckInItem {
   id: string;
@@ -30,6 +32,8 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
   const { toast } = useToast();
   const { enhancedCustomers } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
+  const { isDemoMode } = useDemoMode();
+  const { createDemoAppointment, createDemoCustomer } = useDemoData();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -55,12 +59,21 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
       if (existingCustomer) {
         customerId = existingCustomer.id;
       } else {
-        const newCustomer = await createCustomer({
-          name: checkInItem.customerName,
-          phone: checkInItem.customerNumber,
-          email: null
-        });
-        customerId = newCustomer?.id;
+        if (isDemoMode) {
+          const newCustomer = await createDemoCustomer({
+            name: checkInItem.customerName,
+            phone: checkInItem.customerNumber,
+            email: null
+          });
+          customerId = newCustomer?.id;
+        } else {
+          const newCustomer = await createCustomer({
+            name: checkInItem.customerName,
+            phone: checkInItem.customerNumber,
+            email: null
+          });
+          customerId = newCustomer?.id;
+        }
       }
 
       // Create appointment with closest available time slot
@@ -99,7 +112,11 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate }: Ch
         appointmentData.customer_id = customerId;
       }
 
-      await createAppointment(appointmentData);
+      if (isDemoMode) {
+        await createDemoAppointment(appointmentData);
+      } else {
+        await createAppointment(appointmentData);
+      }
 
       // Update check-in item
       const updatedItem: CheckInItem = {
