@@ -17,6 +17,8 @@ import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSele
 import { CustomerHistoryPopup } from "@/components/appointments/CustomerHistoryPopup";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { useDemoData } from "@/hooks/useDemoData";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { generateTimeOptions } from "@/utils/timeUtils";
 
 const appointmentFormSchema = z.object({
@@ -47,6 +49,8 @@ interface AppointmentFormProps {
 export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentFormProps) {
   const { enhancedCustomers, deduplicateCustomers, services, employees } = useSalonStore();
   const { createAppointment, createCustomer } = useSupabaseData();
+  const { createDemoCustomer, createDemoAppointment } = useDemoData();
+  const { isDemoMode } = useDemoMode();
   const [serviceStaffItems, setServiceStaffItems] = useState<any[]>([]);
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
@@ -198,13 +202,22 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           customerId = existingCustomer.id;
           toast.info("Khách hàng đã tồn tại, sử dụng thông tin khách cũ");
         } else {
-          const newCustomer = await createCustomer({
-            name: data.customerName,
-            phone: data.customerPhone,
-            email: data.customerEmail || null
-          });
-          customerId = newCustomer.id;
-          toast.success("Đã thêm khách hàng mới vào hệ thống");
+          // Use demo or database mode based on context
+          const newCustomer = isDemoMode 
+            ? await createDemoCustomer({
+                name: data.customerName,
+                phone: data.customerPhone,
+                email: data.customerEmail || null
+              })
+            : await createCustomer({
+                name: data.customerName,
+                phone: data.customerPhone,
+                email: data.customerEmail || null
+              });
+          customerId = newCustomer?.id;
+          if (newCustomer) {
+            toast.success("Đã thêm khách hàng mới vào hệ thống");
+          }
         }
       }
 
@@ -244,7 +257,9 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           appointmentData.employee_id = employee.id;
         }
 
-        const createdAppointment = await createAppointment(appointmentData);
+        const createdAppointment = isDemoMode 
+          ? await createDemoAppointment(appointmentData)
+          : await createAppointment(appointmentData);
         appointments.push(createdAppointment);
       }
 
