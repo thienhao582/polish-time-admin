@@ -100,7 +100,7 @@ export function AppointmentMonthView({
               <div className="space-y-1">
                 <AppointmentOverflow
                   appointments={dayAppointments}
-                  maxVisible={6}
+                  maxVisible={3}
                   displayMode={displayMode}
                   onAppointmentClick={handleAppointmentClick}
                 />
