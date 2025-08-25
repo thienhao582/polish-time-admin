@@ -46,15 +46,8 @@ export function AppointmentMonthView({
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const allCalendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Filter days based on showFullView setting
-  const calendarDays = showFullView 
-    ? allCalendarDays 
-    : allCalendarDays.filter(day => {
-        const dayAppointments = getAppointmentsForDate(day);
-        const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
-        // Always show current month days, and other days only if they have appointments
-        return isCurrentMonth || dayAppointments.length > 0;
-      });
+  // Always show full calendar view - all days including previous/next month's days
+  const calendarDays = allCalendarDays;
 
   const dayHeaders = [
     t('day.monday'), t('day.tuesday'), t('day.wednesday'), 
