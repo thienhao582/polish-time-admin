@@ -76,7 +76,7 @@ export function AppointmentMonthView({
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[160px] border-r border-b last:border-r-0 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+              className={`min-h-[200px] h-auto border-r border-b last:border-r-0 p-3 cursor-pointer hover:bg-gray-50 transition-colors ${
                 !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
               } ${isSelected ? 'border-4 border-pink-500' : ''}`}
               onClick={() => setSelectedDate(day)}
@@ -100,7 +100,7 @@ export function AppointmentMonthView({
               <div className="space-y-1">
                 <AppointmentOverflow
                   appointments={dayAppointments}
-                  maxVisible={3}
+                  maxVisible={6}
                   displayMode={displayMode}
                   onAppointmentClick={handleAppointmentClick}
                 />
