@@ -327,7 +327,7 @@ const Appointments = () => {
   }
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+    <div className={`flex flex-col overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       {/* Fixed Header with Action Buttons - Hide when maximized */}
       {!isMaximized && (
         <>
