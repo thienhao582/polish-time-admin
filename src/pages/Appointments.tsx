@@ -474,7 +474,7 @@ const Appointments = () => {
                   filteredAppointments={filteredAppointments}
                   handleAppointmentClick={handleAppointmentClick}
                   displayMode={displayMode}
-                  showFullView={showFullView || !hasActiveFilters}
+                  showFullView={true}
                 />
               )}
               {viewMode === "week" && (
@@ -483,7 +483,7 @@ const Appointments = () => {
                   filteredAppointments={filteredAppointments}
                   handleAppointmentClick={handleAppointmentClick}
                   displayMode={displayMode}
-                  showFullView={showFullView || !hasActiveFilters}
+                  showFullView={true}
                 />
               )}
               {viewMode === "day" && (
