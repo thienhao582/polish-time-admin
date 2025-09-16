@@ -1,9 +1,10 @@
 
-import { ArrowLeft, Star, Calendar, Phone, Mail, Gift, TrendingUp } from "lucide-react";
+import { ArrowLeft, Star, Calendar, Phone, Mail, Gift, TrendingUp, FileText, Users, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -13,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CustomerEnhanced } from "@/stores/useSalonStore";
+import { useInvoiceStore } from "@/stores/useInvoiceStore";
 import { formatCurrency } from "@/lib/currencyUtils";
 
 interface CustomerDetailsProps {
@@ -21,6 +23,39 @@ interface CustomerDetailsProps {
 }
 
 export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
+  const { getInvoicesByCustomer } = useInvoiceStore();
+  
+  // Get customer's invoices
+  const customerInvoices = getInvoicesByCustomer(customer.id);
+  
+  // Get unique employees who served this customer
+  const getUniqueEmployees = () => {
+    const employeeMap = new Map();
+    customerInvoices.forEach(invoice => {
+      invoice.items.forEach(item => {
+        if (!employeeMap.has(item.employeeId)) {
+          employeeMap.set(item.employeeId, {
+            id: item.employeeId,
+            name: item.employeeName,
+            servicesCount: 1,
+            totalRevenue: item.price,
+            services: [item.serviceName]
+          });
+        } else {
+          const employee = employeeMap.get(item.employeeId);
+          employee.servicesCount += 1;
+          employee.totalRevenue += item.price;
+          if (!employee.services.includes(item.serviceName)) {
+            employee.services.push(item.serviceName);
+          }
+        }
+      });
+    });
+    return Array.from(employeeMap.values());
+  };
+
+  const uniqueEmployees = getUniqueEmployees();
+
   const getMemberLevelColor = (level: string) => {
     switch (level) {
       case "VVIP":
@@ -187,56 +222,201 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
         </Card>
       </div>
 
-      {/* Visit History */}
+      {/* Detailed Information Tabs */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lịch sử đến tiệm</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {customer.visitHistory.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày</TableHead>
-                  <TableHead>Dịch vụ</TableHead>
-                  <TableHead>Số tiền</TableHead>
-                  <TableHead>Điểm tích lũy</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customer.visitHistory.map((visit) => (
-                  <TableRow key={visit.id}>
-                    <TableCell>
-                      {new Date(visit.date).toLocaleDateString('vi-VN')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {visit.services.map((service, index) => (
-                          <div key={index} className="text-sm">
-                            {service}
+        <CardContent className="p-6">
+          <Tabs defaultValue="history" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="history">Lịch sử đến tiệm</TabsTrigger>
+              <TabsTrigger value="invoices">Hóa đơn chi tiết</TabsTrigger>
+              <TabsTrigger value="employees">Nhân viên phục vụ</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="history" className="mt-6">
+              {customer.visitHistory.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ngày</TableHead>
+                      <TableHead>Dịch vụ</TableHead>
+                      <TableHead>Số tiền</TableHead>
+                      <TableHead>Điểm tích lũy</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customer.visitHistory.map((visit) => (
+                      <TableRow key={visit.id}>
+                        <TableCell>
+                          {new Date(visit.date).toLocaleDateString('vi-VN')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            {visit.services.map((service, index) => (
+                              <div key={index} className="text-sm">
+                                {service}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium text-green-600">
-                      {formatCurrency(visit.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        <span className="text-yellow-600">+{visit.pointsEarned}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Chưa có lịch sử đến tiệm</p>
-            </div>
-          )}
+                        </TableCell>
+                        <TableCell className="font-medium text-green-600">
+                          {formatCurrency(visit.amount)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span className="text-yellow-600">+{visit.pointsEarned}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Chưa có lịch sử đến tiệm</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="invoices" className="mt-6">
+              {customerInvoices.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Danh sách hóa đơn</h3>
+                    <Badge variant="secondary">
+                      Tổng: {customerInvoices.length} hóa đơn
+                    </Badge>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mã hóa đơn</TableHead>
+                        <TableHead>Ngày tạo</TableHead>
+                        <TableHead>Dịch vụ</TableHead>
+                        <TableHead>Nhân viên</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Tổng tiền</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {customerInvoices.map((invoice) => (
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">
+                            {invoice.invoiceNumber}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {invoice.items.map((item, index) => (
+                                <div key={index} className="text-sm">
+                                  {item.serviceName}
+                                  <span className="text-gray-500 ml-2">
+                                    ({formatCurrency(item.price)})
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {Array.from(new Set(invoice.items.map(item => item.employeeName))).map((employeeName, index) => (
+                                <div key={index} className="text-sm">
+                                  {employeeName}
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                invoice.status === 'paid' ? 'default' : 
+                                invoice.status === 'unpaid' ? 'destructive' : 'secondary'
+                              }
+                            >
+                              {invoice.status === 'paid' ? 'Đã thanh toán' : 
+                               invoice.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã hủy'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium text-green-600">
+                            {formatCurrency(invoice.total)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Chưa có hóa đơn nào</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="employees" className="mt-6">
+              {uniqueEmployees.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Nhân viên đã phục vụ</h3>
+                    <Badge variant="secondary">
+                      {uniqueEmployees.length} nhân viên
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {uniqueEmployees.map((employee) => (
+                      <Card key={employee.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start space-x-4">
+                            <Avatar className="w-12 h-12">
+                              <AvatarFallback className="bg-blue-100 text-blue-600">
+                                {employee.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 space-y-2">
+                              <h4 className="font-semibold">{employee.name}</h4>
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="w-4 h-4 text-gray-400" />
+                                  <span>{employee.servicesCount} dịch vụ</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <DollarSign className="w-4 h-4 text-gray-400" />
+                                  <span>{formatCurrency(employee.totalRevenue)}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-gray-500">Dịch vụ đã thực hiện:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {employee.services.slice(0, 3).map((service, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      {service}
+                                    </Badge>
+                                  ))}
+                                  {employee.services.length > 3 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{employee.services.length - 3} khác
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Chưa có nhân viên nào phục vụ</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
