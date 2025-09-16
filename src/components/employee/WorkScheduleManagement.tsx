@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CalendarIcon, Save, Edit, Plus, X, Clock, Settings } from "lucide-react";
+import { CalendarIcon, Save, Edit, Plus, X, Clock, Settings, Search } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -44,6 +44,7 @@ export function WorkScheduleManagement() {
   const [selectedWeek, setSelectedWeek] = useState(new Date());
   const [editingSchedule, setEditingSchedule] = useState<WorkSchedule | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const translations = {
     vi: {
@@ -98,7 +99,9 @@ export function WorkScheduleManagement() {
       previousWeek: "Tuần trước",
       workType: "Loại ca làm",
       weeklyViewTab: "Xem theo tuần",
-      defaultScheduleTab: "Lịch mặc định"
+      defaultScheduleTab: "Lịch mặc định",
+      searchEmployee: "Tìm kiếm nhân viên...",
+      noEmployeesFound: "Không tìm thấy nhân viên nào"
     },
     en: {
       title: "Work Schedule Management",
@@ -152,7 +155,9 @@ export function WorkScheduleManagement() {
       previousWeek: "Previous Week",
       workType: "Work Type",
       weeklyViewTab: "Weekly View",
-      defaultScheduleTab: "Default Schedule"
+      defaultScheduleTab: "Default Schedule",
+      searchEmployee: "Search employee...",
+      noEmployeesFound: "No employees found"
     }
   };
 
@@ -280,6 +285,11 @@ export function WorkScheduleManagement() {
     return workType;
   };
 
+  // Filter schedules based on search query
+  const filteredSchedules = schedules.filter(schedule =>
+    schedule.employeeName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -324,6 +334,19 @@ export function WorkScheduleManagement() {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Search Bar for Weekly View */}
+              <div className="mb-4">
+                <div className="relative max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder={text.searchEmployee}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -339,10 +362,17 @@ export function WorkScheduleManagement() {
                           </div>
                         </TableHead>
                       ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {schedules.map((schedule) => (
+                   </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {filteredSchedules.length === 0 ? (
+                       <TableRow>
+                         <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                           {text.noEmployeesFound}
+                         </TableCell>
+                       </TableRow>
+                     ) : (
+                       filteredSchedules.map((schedule) => (
                       <TableRow key={schedule.employeeId}>
                         <TableCell className="font-medium">{schedule.employeeName}</TableCell>
                         {getWeekDays(selectedWeek).map((date, index) => {
@@ -395,10 +425,11 @@ export function WorkScheduleManagement() {
                               </div>
                             </TableCell>
                           );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                         })}
+                       </TableRow>
+                       ))
+                     )}
+                   </TableBody>
                 </Table>
               </div>
             </CardContent>
@@ -412,8 +443,26 @@ export function WorkScheduleManagement() {
               <CardTitle>{text.defaultSchedule}</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Search Bar for Default Schedule */}
+              <div className="mb-4">
+                <div className="relative max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder={text.searchEmployee}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
               <div className="space-y-4">
-                {schedules.map((schedule) => (
+                {filteredSchedules.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    {text.noEmployeesFound}
+                  </div>
+                ) : (
+                  filteredSchedules.map((schedule) => (
                   <div key={schedule.employeeId} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg mb-2">{schedule.employeeName}</h3>
@@ -434,7 +483,8 @@ export function WorkScheduleManagement() {
                       Chỉnh sửa
                     </Button>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
