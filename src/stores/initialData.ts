@@ -104,6 +104,46 @@ export const initialEmployees: Employee[] = Array.from({ length: 50 }, (_, index
     specialtiesList[Math.floor(Math.random() * specialtiesList.length)] : [];
   const specialties = [...new Set([...specialtySet, ...extraSpecialties])];
   
+  // Create work schedule with some blocked time on 2025-09-18
+  const workSchedule = {
+    employeeId: (index + 1).toString(),
+    employeeName: `${lastName} ${firstName}`,
+    defaultSchedule: {
+      0: { workType: 'off' as const }, // Sunday off
+      1: { workType: 'full' as const, startTime: '08:00', endTime: '18:00' }, // Monday
+      2: { workType: 'full' as const, startTime: '08:00', endTime: '18:00' }, // Tuesday
+      3: { workType: 'full' as const, startTime: '08:00', endTime: '18:00' }, // Wednesday
+      4: { workType: 'full' as const, startTime: '08:00', endTime: '18:00' }, // Thursday
+      5: { workType: 'full' as const, startTime: '08:00', endTime: '18:00' }, // Friday
+      6: { workType: 'half' as const, startTime: '08:00', endTime: '13:00' }, // Saturday half day
+    },
+    scheduleOverrides: [] as any[]
+  };
+
+  // Add blocked schedules for September 18, 2025 (Wednesday)
+  if (index < 10) {
+    // First 10 employees have different types of blocked time
+    const blockTypes = [
+      { workType: 'off' as const, reason: 'Nghỉ ốm' },
+      { workType: 'off' as const, startTime: '12:00', endTime: '18:00', reason: 'Xin về sớm' },
+      { workType: 'off' as const, startTime: '08:00', endTime: '12:00', reason: 'Đến muộn' },
+      { workType: 'off' as const, startTime: '14:00', endTime: '16:00', reason: 'Nghỉ giải lao' },
+      { workType: 'off' as const, reason: 'Nghỉ phép' },
+      { workType: 'off' as const, startTime: '10:00', endTime: '15:00', reason: 'Việc cá nhân' },
+      { workType: 'off' as const, startTime: '08:00', endTime: '10:00', reason: 'Khám bác sĩ' },
+      { workType: 'off' as const, startTime: '16:00', endTime: '18:00', reason: 'Học tập' },
+      { workType: 'off' as const, startTime: '11:00', endTime: '14:00', reason: 'Nghỉ trưa dài' },
+      { workType: 'off' as const, startTime: '13:00', endTime: '18:00', reason: 'Xin về sớm' }
+    ];
+    
+    const blockType = blockTypes[index];
+    workSchedule.scheduleOverrides.push({
+      date: '2025-09-18',
+      schedule: blockType,
+      reason: blockType.reason
+    });
+  }
+  
   return {
     id: (index + 1).toString(),
     name: `${lastName} ${firstName}`,
@@ -113,6 +153,7 @@ export const initialEmployees: Employee[] = Array.from({ length: 50 }, (_, index
     assignedServices,
     specialties,
     startDate: `2024-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+    workSchedule,
   };
 });
 
