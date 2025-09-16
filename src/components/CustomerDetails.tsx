@@ -222,201 +222,100 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
         </Card>
       </div>
 
-      {/* Detailed Information Tabs */}
+      {/* Invoice List */}
       <Card>
-        <CardContent className="p-6">
-          <Tabs defaultValue="history" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="history">Lịch sử đến tiệm</TabsTrigger>
-              <TabsTrigger value="invoices">Hóa đơn chi tiết</TabsTrigger>
-              <TabsTrigger value="employees">Nhân viên phục vụ</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="history" className="mt-6">
-              {customer.visitHistory.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ngày</TableHead>
-                      <TableHead>Dịch vụ</TableHead>
-                      <TableHead>Số tiền</TableHead>
-                      <TableHead>Điểm tích lũy</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customer.visitHistory.map((visit) => (
-                      <TableRow key={visit.id}>
-                        <TableCell>
-                          {new Date(visit.date).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {visit.services.map((service, index) => (
-                              <div key={index} className="text-sm">
-                                {service}
-                              </div>
-                            ))}
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">Danh sách hóa đơn</CardTitle>
+            <Badge variant="secondary">
+              Tổng: {customerInvoices.length} hóa đơn
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {customerInvoices.length > 0 ? (
+            <div className="space-y-6">
+              {customerInvoices.map((invoice) => (
+                <Card key={invoice.id} className="border border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      {/* Invoice Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <h4 className="font-semibold text-lg">
+                              {invoice.invoiceNumber}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
+                            </p>
                           </div>
-                        </TableCell>
-                        <TableCell className="font-medium text-green-600">
-                          {formatCurrency(visit.amount)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-4 h-4 text-yellow-500" />
-                            <span className="text-yellow-600">+{visit.pointsEarned}</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Chưa có lịch sử đến tiệm</p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="invoices" className="mt-6">
-              {customerInvoices.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Danh sách hóa đơn</h3>
-                    <Badge variant="secondary">
-                      Tổng: {customerInvoices.length} hóa đơn
-                    </Badge>
-                  </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mã hóa đơn</TableHead>
-                        <TableHead>Ngày tạo</TableHead>
-                        <TableHead>Dịch vụ</TableHead>
-                        <TableHead>Nhân viên</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead>Tổng tiền</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {customerInvoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell className="font-medium">
-                            {invoice.invoiceNumber}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {invoice.items.map((item, index) => (
-                                <div key={index} className="text-sm">
-                                  {item.serviceName}
-                                  <span className="text-gray-500 ml-2">
-                                    ({formatCurrency(item.price)})
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {Array.from(new Set(invoice.items.map(item => item.employeeName))).map((employeeName, index) => (
-                                <div key={index} className="text-sm">
-                                  {employeeName}
-                                </div>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={
-                                invoice.status === 'paid' ? 'default' : 
-                                invoice.status === 'unpaid' ? 'destructive' : 'secondary'
-                              }
-                            >
-                              {invoice.status === 'paid' ? 'Đã thanh toán' : 
-                               invoice.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã hủy'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-medium text-green-600">
+                          <Badge 
+                            variant={
+                              invoice.status === 'paid' ? 'default' : 
+                              invoice.status === 'unpaid' ? 'destructive' : 'secondary'
+                            }
+                          >
+                            {invoice.status === 'paid' ? 'Đã thanh toán' : 
+                             invoice.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã hủy'}
+                          </Badge>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-green-600">
                             {formatCurrency(invoice.total)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Chưa có hóa đơn nào</p>
-                </div>
-              )}
-            </TabsContent>
+                          </p>
+                        </div>
+                      </div>
 
-            <TabsContent value="employees" className="mt-6">
-              {uniqueEmployees.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Nhân viên đã phục vụ</h3>
-                    <Badge variant="secondary">
-                      {uniqueEmployees.length} nhân viên
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {uniqueEmployees.map((employee) => (
-                      <Card key={employee.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start space-x-4">
-                            <Avatar className="w-12 h-12">
-                              <AvatarFallback className="bg-blue-100 text-blue-600">
-                                {employee.name.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 space-y-2">
-                              <h4 className="font-semibold">{employee.name}</h4>
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className="flex items-center space-x-1">
-                                  <Users className="w-4 h-4 text-gray-400" />
-                                  <span>{employee.servicesCount} dịch vụ</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <DollarSign className="w-4 h-4 text-gray-400" />
-                                  <span>{formatCurrency(employee.totalRevenue)}</span>
+                      {/* Services and Employees */}
+                      <div className="border-t pt-4">
+                        <h5 className="font-medium mb-3 text-gray-800">Chi tiết dịch vụ:</h5>
+                        <div className="space-y-3">
+                          {invoice.items.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div>
+                                  <p className="font-medium">{item.serviceName}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Nhân viên: <span className="font-medium">{item.employeeName}</span>
+                                  </p>
                                 </div>
                               </div>
-                              <div className="space-y-1">
-                                <p className="text-xs text-gray-500">Dịch vụ đã thực hiện:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {employee.services.slice(0, 3).map((service, index) => (
-                                    <Badge key={index} variant="outline" className="text-xs">
-                                      {service}
-                                    </Badge>
-                                  ))}
-                                  {employee.services.length > 3 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      +{employee.services.length - 3} khác
-                                    </Badge>
-                                  )}
-                                </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-green-600">
+                                  {formatCurrency(item.price)}
+                                </p>
                               </div>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      <div className="border-t pt-4">
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-gray-600">
+                            <span>{invoice.items.length} dịch vụ • </span>
+                            <span>{Array.from(new Set(invoice.items.map(item => item.employeeName))).length} nhân viên</span>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Chưa có nhân viên nào phục vụ</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+                          <div className="text-sm text-gray-600">
+                            Tổng cộng: <span className="font-bold text-green-600">{formatCurrency(invoice.total)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Chưa có hóa đơn nào</h3>
+              <p>Khách hàng này chưa có hóa đơn nào trong hệ thống</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
