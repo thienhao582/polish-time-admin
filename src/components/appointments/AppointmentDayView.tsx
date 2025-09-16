@@ -1,10 +1,11 @@
 import { format } from "date-fns";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { formatTimeRange } from "@/utils/timeUtils";
+import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserCheck, ClipboardList } from "lucide-react";
+import { UserCheck, ClipboardList, Clock, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CheckInSidebar } from "./CheckInSidebar";
 
@@ -514,10 +515,19 @@ export function AppointmentDayView({
                         {employee.name}
                       </div>
                       <div className={cn(
-                        "text-xs truncate font-medium",
+                        "text-xs truncate font-medium flex items-center justify-center gap-1",
                         employee.hasAppointments ? "text-blue-600" : "text-gray-500"
                       )} title={`${employee.role} ${!employee.hasAppointments ? "(trống)" : ""}`}>
                         {employee.role} {!employee.hasAppointments && "(trống)"}
+                        {(() => {
+                          const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
+                          if (scheduleStatus.status === 'off') {
+                            return <span title="Nghỉ"><Ban className="w-3 h-3 text-red-500" /></span>;
+                          } else if (scheduleStatus.status === 'partial') {
+                            return <span title={scheduleStatus.details}><Clock className="w-3 h-3 text-orange-500" /></span>;
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -529,8 +539,12 @@ export function AppointmentDayView({
                       appointmentStartsAtSlot(apt, timeSlot)
                     );
 
+                    // Check if employee is available at this time
+                    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+                    const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
+
                     const handleTimeSlotClick = () => {
-                      if (onTimeSlotClick && startingAppointments.length === 0) {
+                      if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
                         onTimeSlotClick(dateString, timeSlot, employee.name);
                       }
                     };
@@ -539,13 +553,28 @@ export function AppointmentDayView({
                       <div 
                         key={`${employee.id}-${timeSlot}`} 
                         className={cn(
-                          "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors",
-                          startingAppointments.length === 0 
-                            ? "hover:bg-blue-50 cursor-pointer" 
-                            : "hover:bg-gray-50"
+                          "h-14 border-b border-gray-200 relative p-1 transition-colors",
+                          !availability.available 
+                            ? "bg-gray-100 cursor-not-allowed" 
+                            : startingAppointments.length === 0 
+                              ? "bg-white hover:bg-blue-50 cursor-pointer" 
+                              : "bg-white hover:bg-gray-50"
                         )}
                         onClick={handleTimeSlotClick}
+                        title={!availability.available ? availability.reason : ""}
                       >
+                        {/* Show blocked time indicator if not available */}
+                        {!availability.available && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 rounded">
+                            <div className="flex flex-col items-center gap-1">
+                              <Ban className="w-4 h-4 text-gray-500" />
+                              <span className="text-xs text-gray-600 text-center px-1">
+                                {availability.reason}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
                         {startingAppointments.length > 0 && (
                           <div className="text-xs text-blue-600 absolute top-0 left-0">
                             {startingAppointments.length} apt
