@@ -178,7 +178,7 @@ export function AppointmentDayView({
     const staffNamesInAppointments = [...new Set(staffAppointments.map(apt => apt.staff))];
     
     console.log("Staff names in appointments:", staffNamesInAppointments);
-    console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role })));
+    console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role, workSchedule: e.workSchedule ? 'HAS_SCHEDULE' : 'NO_SCHEDULE' })));
     console.log("Anyone appointments count:", anyoneAppointments.length);
     
     // Get employees who have appointments today
@@ -564,6 +564,12 @@ export function AppointmentDayView({
                     const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
                     const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
 
+                    console.log(`Time slot ${timeSlot} for ${employee.name}:`, {
+                      available: availability.available,
+                      reason: availability.reason,
+                      hasAppointments: startingAppointments.length > 0
+                    });
+
                     const handleTimeSlotClick = () => {
                       if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
                         onTimeSlotClick(dateString, timeSlot, employee.name);
@@ -576,7 +582,7 @@ export function AppointmentDayView({
                         className={cn(
                           "h-14 border-b border-gray-200 relative p-1 transition-colors",
                           !availability.available 
-                            ? "bg-gray-100 cursor-not-allowed" 
+                            ? "bg-gray-200 cursor-not-allowed opacity-60" 
                             : startingAppointments.length === 0 
                               ? "bg-white hover:bg-blue-50 cursor-pointer" 
                               : "bg-white hover:bg-gray-50"
@@ -586,10 +592,13 @@ export function AppointmentDayView({
                       >
                         {/* Show blocked time indicator if not available */}
                         {!availability.available && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-200/80 rounded">
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-300/90 rounded border-2 border-red-200">
                             <div className="flex flex-col items-center gap-1">
-                              <Ban className="w-4 h-4 text-gray-500" />
-                              <span className="text-xs text-gray-600 text-center px-1">
+                              <Ban className="w-5 h-5 text-red-600" />
+                              <span className="text-xs text-red-700 font-semibold text-center px-1">
+                                BLOCK
+                              </span>
+                              <span className="text-xs text-red-600 text-center px-1">
                                 {availability.reason}
                               </span>
                             </div>

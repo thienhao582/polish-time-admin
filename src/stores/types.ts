@@ -27,6 +27,26 @@ export interface Employee {
   startDate: string;
   start_date?: string; // For Supabase compatibility
   commission_rate?: number; // Commission rate as decimal (0.10 = 10%)
+  workSchedule?: {
+    employeeId: string;
+    employeeName: string;
+    defaultSchedule: {
+      [key: number]: {
+        workType: 'off' | 'full' | 'half' | 'quarter' | 'custom';
+        startTime?: string;
+        endTime?: string;
+      };
+    };
+    scheduleOverrides: {
+      date: string;
+      schedule: {
+        workType: 'off' | 'full' | 'half' | 'quarter' | 'custom';
+        startTime?: string;
+        endTime?: string;
+      };
+      reason?: string;
+    }[];
+  };
 }
 
 export interface TimeRecord {
