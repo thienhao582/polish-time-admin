@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CalendarIcon, Save, Edit, Plus, X, Clock } from "lucide-react";
+import { CalendarIcon, Save, Edit, Plus, X, Clock, Settings } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -39,10 +40,9 @@ export function WorkScheduleManagement() {
   const { language } = useLanguage();
   const { employees, updateEmployee } = useSalonStore();
   const [schedules, setSchedules] = useState<WorkSchedule[]>([]);
-  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [overrideReason, setOverrideReason] = useState("");
   const [selectedWeek, setSelectedWeek] = useState(new Date());
+  const [editingSchedule, setEditingSchedule] = useState<WorkSchedule | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const translations = {
     vi: {
@@ -202,65 +202,40 @@ export function WorkScheduleManagement() {
     ));
   };
 
-  const saveSchedule = async (employeeId: string) => {
-    const schedule = schedules.find(s => s.employeeId === employeeId);
-    if (schedule) {
-      await updateEmployee(employeeId, {
-        workSchedule: {
-          defaultSchedule: schedule.defaultSchedule,
-          scheduleOverrides: schedule.scheduleOverrides
+  const saveSchedule = async (schedule: WorkSchedule) => {
+    await updateEmployee(schedule.employeeId, {
+      workSchedule: {
+        defaultSchedule: schedule.defaultSchedule,
+        scheduleOverrides: schedule.scheduleOverrides
+      }
+    } as any);
+    
+    // Update local state
+    setSchedules(prev => prev.map(s => 
+      s.employeeId === schedule.employeeId ? schedule : s
+    ));
+    
+    setIsDialogOpen(false);
+    setEditingSchedule(null);
+  };
+
+  const openEditDialog = (schedule: WorkSchedule) => {
+    setEditingSchedule({ ...schedule });
+    setIsDialogOpen(true);
+  };
+
+  const getDefaultScheduleSummary = (schedule: WorkSchedule): string => {
+    const workingDays = Object.entries(schedule.defaultSchedule)
+      .filter(([_, daySchedule]) => daySchedule.workType !== 'off')
+      .map(([day, daySchedule]) => {
+        const dayName = text.dayOfWeek[parseInt(day) as keyof typeof text.dayOfWeek];
+        if (daySchedule.startTime && daySchedule.endTime) {
+          return `${dayName} (${daySchedule.startTime}-${daySchedule.endTime})`;
         }
-      } as any);
-    }
-    setEditingEmployee(null);
-  };
-
-  const handleDayScheduleChange = (employeeId: string, dayIndex: number, workType: WorkType) => {
-    const schedule = schedules.find(s => s.employeeId === employeeId);
-    if (schedule) {
-      const defaultHours = getDefaultHours(workType);
-      const newSchedule = {
-        ...schedule.defaultSchedule,
-        [dayIndex]: {
-          workType,
-          ...defaultHours
-        }
-      };
-      updateSchedule(employeeId, { defaultSchedule: newSchedule });
-    }
-  };
-
-  const handleTimeChange = (employeeId: string, dayIndex: number, field: 'startTime' | 'endTime', value: string) => {
-    const schedule = schedules.find(s => s.employeeId === employeeId);
-    if (schedule && schedule.defaultSchedule[dayIndex]) {
-      const newSchedule = {
-        ...schedule.defaultSchedule,
-        [dayIndex]: {
-          ...schedule.defaultSchedule[dayIndex],
-          [field]: value
-        }
-      };
-      updateSchedule(employeeId, { defaultSchedule: newSchedule });
-    }
-  };
-
-  const addOverride = (employeeId: string, date: string, scheduleData: DaySchedule, reason: string) => {
-    const schedule = schedules.find(s => s.employeeId === employeeId);
-    if (schedule) {
-      const newOverrides = [
-        ...schedule.scheduleOverrides.filter(o => o.date !== date),
-        { date, schedule: scheduleData, reason }
-      ];
-      updateSchedule(employeeId, { scheduleOverrides: newOverrides });
-    }
-  };
-
-  const removeOverride = (employeeId: string, date: string) => {
-    const schedule = schedules.find(s => s.employeeId === employeeId);
-    if (schedule) {
-      const newOverrides = schedule.scheduleOverrides.filter(o => o.date !== date);
-      updateSchedule(employeeId, { scheduleOverrides: newOverrides });
-    }
+        return `${dayName} (${text.workTypes[daySchedule.workType]})`;
+      });
+    
+    return workingDays.length > 0 ? workingDays.join(', ') : 'Không có ngày làm việc';
   };
 
   const getWeekDays = (date: Date) => {
@@ -388,191 +363,278 @@ export function WorkScheduleManagement() {
         </CardContent>
       </Card>
 
-      {/* Employee Schedules Management */}
+      {/* Employee Schedules Summary */}
       <Card>
         <CardHeader>
           <CardTitle>{text.defaultSchedule}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {schedules.map((schedule) => (
-              <Card key={schedule.employeeId} className="p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="font-semibold text-lg">{schedule.employeeName}</h3>
-                  <div className="flex gap-2">
-                    {editingEmployee === schedule.employeeId ? (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => saveSchedule(schedule.employeeId)}
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          {text.save}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingEmployee(null)}
-                        >
-                          {text.cancel}
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingEmployee(schedule.employeeId)}
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        {text.edit}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Default Work Schedule */}
-                <div className="mb-6">
-                  <Label className="text-sm font-medium mb-3 block">{text.defaultSchedule}</Label>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => {
-                      const daySchedule = schedule.defaultSchedule[dayIndex] || { workType: 'off' };
-                      
-                      return (
-                        <div key={dayIndex} className="border rounded-lg p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="font-medium">
-                              {text.dayOfWeekFull[dayIndex as keyof typeof text.dayOfWeekFull]}
-                            </Label>
-                          </div>
-                          
-                          <div>
-                            <Label className="text-xs text-gray-500 mb-1 block">{text.workType}</Label>
-                            <Select
-                              value={daySchedule.workType}
-                              onValueChange={(value: WorkType) => 
-                                editingEmployee === schedule.employeeId && 
-                                handleDayScheduleChange(schedule.employeeId, dayIndex, value)
-                              }
-                              disabled={editingEmployee !== schedule.employeeId}
-                            >
-                              <SelectTrigger className="h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="off">{text.workTypes.off}</SelectItem>
-                                <SelectItem value="full">{text.workTypes.full}</SelectItem>
-                                <SelectItem value="half">{text.workTypes.half}</SelectItem>
-                                <SelectItem value="quarter">{text.workTypes.quarter}</SelectItem>
-                                <SelectItem value="custom">{text.workTypes.custom}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {daySchedule.workType !== 'off' && (
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Label className="text-xs text-gray-500 mb-1 block">{text.startTime}</Label>
-                                <Input
-                                  type="time"
-                                  value={daySchedule.startTime || ''}
-                                  onChange={(e) => 
-                                    editingEmployee === schedule.employeeId && 
-                                    handleTimeChange(schedule.employeeId, dayIndex, 'startTime', e.target.value)
-                                  }
-                                  disabled={editingEmployee !== schedule.employeeId}
-                                  className="h-8"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs text-gray-500 mb-1 block">{text.endTime}</Label>
-                                <Input
-                                  type="time"
-                                  value={daySchedule.endTime || ''}
-                                  onChange={(e) => 
-                                    editingEmployee === schedule.employeeId && 
-                                    handleTimeChange(schedule.employeeId, dayIndex, 'endTime', e.target.value)
-                                  }
-                                  disabled={editingEmployee !== schedule.employeeId}
-                                  className="h-8"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Schedule Overrides */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <Label className="text-sm font-medium">{text.scheduleOverrides}</Label>
-                    {editingEmployee === schedule.employeeId && (
-                      <ScheduleOverrideDialog
-                        schedule={schedule}
-                        onAddOverride={addOverride}
-                        text={text}
-                      />
-                    )}
-                  </div>
-                  
-                  {schedule.scheduleOverrides.length > 0 ? (
-                    <div className="space-y-2">
-                      {schedule.scheduleOverrides.map((override, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm font-medium">
-                              {format(new Date(override.date), 'dd/MM/yyyy')}
-                            </div>
-                            <Badge 
-                              variant={override.schedule.workType === 'off' ? "secondary" : "default"}
-                              className={override.schedule.workType === 'off' 
-                                ? "bg-gray-100 text-gray-700" 
-                                : "bg-blue-100 text-blue-700"
-                              }
-                            >
-                              {formatScheduleDisplay(override.schedule)}
-                            </Badge>
-                            {override.reason && (
-                              <span className="text-xs text-gray-500">({override.reason})</span>
-                            )}
-                          </div>
-                          {editingEmployee === schedule.employeeId && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeOverride(schedule.employeeId, override.date)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500 italic">
-                      Chưa có điều chỉnh nào
-                    </div>
+              <div key={schedule.employeeId} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-2">{schedule.employeeName}</h3>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <strong>Lịch mặc định:</strong> {getDefaultScheduleSummary(schedule)}
+                  </p>
+                  {schedule.scheduleOverrides.length > 0 && (
+                    <p className="text-sm text-blue-600">
+                      {schedule.scheduleOverrides.length} điều chỉnh đặc biệt
+                    </p>
                   )}
                 </div>
-              </Card>
+                <Button
+                  variant="outline"
+                  onClick={() => openEditDialog(schedule)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Chỉnh sửa
+                </Button>
+              </div>
             ))}
           </div>
         </CardContent>
       </Card>
+
+      {/* Schedule Edit Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Chỉnh sửa lịch làm việc - {editingSchedule?.employeeName}
+            </DialogTitle>
+          </DialogHeader>
+          {editingSchedule && (
+            <ScheduleEditForm
+              schedule={editingSchedule}
+              onSave={saveSchedule}
+              onCancel={() => {
+                setIsDialogOpen(false);
+                setEditingSchedule(null);
+              }}
+              text={text}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// Schedule Override Dialog Component
+// Schedule Edit Form Component
+function ScheduleEditForm({ 
+  schedule, 
+  onSave, 
+  onCancel, 
+  text 
+}: { 
+  schedule: WorkSchedule; 
+  onSave: (schedule: WorkSchedule) => void;
+  onCancel: () => void;
+  text: any;
+}) {
+  const [editedSchedule, setEditedSchedule] = useState<WorkSchedule>(schedule);
+
+  const getDefaultHours = (workType: WorkType): { startTime?: string; endTime?: string } => {
+    switch (workType) {
+      case 'full':
+        return { startTime: '08:00', endTime: '18:00' };
+      case 'half':
+        return { startTime: '08:00', endTime: '13:00' };
+      case 'quarter':
+        return { startTime: '08:00', endTime: '10:30' };
+      default:
+        return {};
+    }
+  };
+
+  const handleDayScheduleChange = (dayIndex: number, workType: WorkType) => {
+    const defaultHours = getDefaultHours(workType);
+    setEditedSchedule(prev => ({
+      ...prev,
+      defaultSchedule: {
+        ...prev.defaultSchedule,
+        [dayIndex]: {
+          workType,
+          ...defaultHours
+        }
+      }
+    }));
+  };
+
+  const handleTimeChange = (dayIndex: number, field: 'startTime' | 'endTime', value: string) => {
+    setEditedSchedule(prev => ({
+      ...prev,
+      defaultSchedule: {
+        ...prev.defaultSchedule,
+        [dayIndex]: {
+          ...prev.defaultSchedule[dayIndex],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const addOverride = (date: string, scheduleData: DaySchedule, reason: string) => {
+    setEditedSchedule(prev => ({
+      ...prev,
+      scheduleOverrides: [
+        ...prev.scheduleOverrides.filter(o => o.date !== date),
+        { date, schedule: scheduleData, reason }
+      ]
+    }));
+  };
+
+  const removeOverride = (date: string) => {
+    setEditedSchedule(prev => ({
+      ...prev,
+      scheduleOverrides: prev.scheduleOverrides.filter(o => o.date !== date)
+    }));
+  };
+
+  const formatScheduleDisplay = (daySchedule: DaySchedule): string => {
+    const workType = text.workTypes[daySchedule.workType];
+    if (daySchedule.workType === 'custom' || (daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime)) {
+      return `${workType} (${daySchedule.startTime}-${daySchedule.endTime})`;
+    }
+    return workType;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Default Schedule */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Lịch mặc định</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => {
+            const daySchedule = editedSchedule.defaultSchedule[dayIndex] || { workType: 'off' };
+            
+            return (
+              <div key={dayIndex} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium">
+                    {text.dayOfWeekFull[dayIndex as keyof typeof text.dayOfWeekFull]}
+                  </Label>
+                </div>
+                
+                <div>
+                  <Label className="text-xs text-gray-500 mb-1 block">{text.workType}</Label>
+                  <Select
+                    value={daySchedule.workType}
+                    onValueChange={(value: WorkType) => handleDayScheduleChange(dayIndex, value)}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="off">{text.workTypes.off}</SelectItem>
+                      <SelectItem value="full">{text.workTypes.full}</SelectItem>
+                      <SelectItem value="half">{text.workTypes.half}</SelectItem>
+                      <SelectItem value="quarter">{text.workTypes.quarter}</SelectItem>
+                      <SelectItem value="custom">{text.workTypes.custom}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {daySchedule.workType !== 'off' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs text-gray-500 mb-1 block">{text.startTime}</Label>
+                      <Input
+                        type="time"
+                        value={daySchedule.startTime || ''}
+                        onChange={(e) => handleTimeChange(dayIndex, 'startTime', e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 mb-1 block">{text.endTime}</Label>
+                      <Input
+                        type="time"
+                        value={daySchedule.endTime || ''}
+                        onChange={(e) => handleTimeChange(dayIndex, 'endTime', e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Schedule Overrides */}
+      <div>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-semibold">Điều chỉnh lịch</h3>
+          <ScheduleOverrideDialog
+            schedule={editedSchedule}
+            onAddOverride={addOverride}
+            text={text}
+          />
+        </div>
+        
+        {editedSchedule.scheduleOverrides.length > 0 ? (
+          <div className="space-y-2">
+            {editedSchedule.scheduleOverrides.map((override, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-medium">
+                    {format(new Date(override.date), 'dd/MM/yyyy')}
+                  </div>
+                  <Badge 
+                    variant={override.schedule.workType === 'off' ? "secondary" : "default"}
+                    className={override.schedule.workType === 'off' 
+                      ? "bg-gray-100 text-gray-700" 
+                      : "bg-blue-100 text-blue-700"
+                    }
+                  >
+                    {formatScheduleDisplay(override.schedule)}
+                  </Badge>
+                  {override.reason && (
+                    <span className="text-xs text-gray-500">({override.reason})</span>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeOverride(override.date)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 italic">
+            Chưa có điều chỉnh nào
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button variant="outline" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button onClick={() => onSave(editedSchedule)}>
+          <Save className="w-4 h-4 mr-2" />
+          Lưu thay đổi
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Schedule Override Dialog Component  
 function ScheduleOverrideDialog({ 
   schedule, 
   onAddOverride, 
   text 
 }: { 
   schedule: WorkSchedule; 
-  onAddOverride: (employeeId: string, date: string, scheduleData: DaySchedule, reason: string) => void;
+  onAddOverride: (date: string, scheduleData: DaySchedule, reason: string) => void;
   text: any;
 }) {
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -610,7 +672,6 @@ function ScheduleOverrideDialog({
       };
       
       onAddOverride(
-        schedule.employeeId,
         format(selectedDate, 'yyyy-MM-dd'),
         scheduleData,
         overrideReason
@@ -631,18 +692,18 @@ function ScheduleOverrideDialog({
       <PopoverTrigger asChild>
         <Button size="sm" variant="outline">
           <Plus className="w-4 h-4 mr-2" />
-          {text.addOverride}
+          Thêm điều chỉnh
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96">
         <div className="space-y-4">
           <div>
-            <Label>{text.selectDate}</Label>
+            <Label>Chọn ngày</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-start text-left">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "dd/MM/yyyy") : text.selectDate}
+                  {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Chọn ngày"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -656,17 +717,17 @@ function ScheduleOverrideDialog({
           </div>
           
           <div>
-            <Label>{text.workType}</Label>
+            <Label>Loại ca làm</Label>
             <Select value={workType} onValueChange={handleWorkTypeChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="off">{text.workTypes.off}</SelectItem>
-                <SelectItem value="full">{text.workTypes.full}</SelectItem>
-                <SelectItem value="half">{text.workTypes.half}</SelectItem>
-                <SelectItem value="quarter">{text.workTypes.quarter}</SelectItem>
-                <SelectItem value="custom">{text.workTypes.custom}</SelectItem>
+                <SelectItem value="off">Nghỉ</SelectItem>
+                <SelectItem value="full">Cả ngày</SelectItem>
+                <SelectItem value="half">Nửa ngày</SelectItem>
+                <SelectItem value="quarter">1/4 ngày</SelectItem>
+                <SelectItem value="custom">Tùy chỉnh</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -674,7 +735,7 @@ function ScheduleOverrideDialog({
           {workType !== 'off' && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label>{text.startTime}</Label>
+                <Label>Giờ bắt đầu</Label>
                 <Input
                   type="time"
                   value={startTime}
@@ -682,7 +743,7 @@ function ScheduleOverrideDialog({
                 />
               </div>
               <div>
-                <Label>{text.endTime}</Label>
+                <Label>Giờ kết thúc</Label>
                 <Input
                   type="time"
                   value={endTime}
@@ -693,17 +754,17 @@ function ScheduleOverrideDialog({
           )}
 
           <div>
-            <Label>{text.reason}</Label>
+            <Label>Lý do</Label>
             <Select value={overrideReason} onValueChange={setOverrideReason}>
               <SelectTrigger>
-                <SelectValue placeholder={text.overrideReason} />
+                <SelectValue placeholder="Chọn lý do" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sick">{text.sickLeave}</SelectItem>
-                <SelectItem value="vacation">{text.vacation}</SelectItem>
-                <SelectItem value="extra">{text.extraWork}</SelectItem>
-                <SelectItem value="personal">{text.personalLeave}</SelectItem>
-                <SelectItem value="other">{text.other}</SelectItem>
+                <SelectItem value="sick">Nghỉ ốm</SelectItem>
+                <SelectItem value="vacation">Nghỉ phép</SelectItem>
+                <SelectItem value="extra">Làm thêm</SelectItem>
+                <SelectItem value="personal">Nghỉ phép riêng</SelectItem>
+                <SelectItem value="other">Khác</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -713,8 +774,8 @@ function ScheduleOverrideDialog({
             onClick={handleAddOverride}
             disabled={!selectedDate || !overrideReason}
           >
-            <Clock className="w-4 h-4 mr-2" />
-            {text.addOverride}
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm điều chỉnh
           </Button>
         </div>
       </PopoverContent>
