@@ -496,7 +496,6 @@ const Appointments = () => {
                   onTimeSlotClick={handleTimeSlotClick}
                   searchQuery={searchQuery}
                   onAppointmentCreated={loadAppointments}
-                  onScheduleUpdate={loadAppointments}
                 />
               )}
             </CardContent>

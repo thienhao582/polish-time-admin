@@ -726,8 +726,8 @@ export function AppointmentDayView({
         employee={selectedEmployee}
         selectedDate={selectedDate}
         onScheduleUpdate={() => {
-          // Call parent callback to refresh data without page reload
-          onScheduleUpdate?.();
+          // No need to do anything here, the state will update automatically
+          console.log('Schedule updated, UI should re-render automatically');
         }}
       />
     </div>

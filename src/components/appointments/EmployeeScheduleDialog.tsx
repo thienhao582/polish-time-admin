@@ -141,16 +141,12 @@ export function EmployeeScheduleDialog({
         scheduleOverrides: []
       };
 
-      console.log('Current schedule before update:', currentSchedule);
-
       // Create new schedule entry
       const newSchedule: DaySchedule = {
         workType,
         ...(workType !== 'off' && startTime && endTime ? { startTime, endTime } : {}),
         ...(workType === 'off' && startTime && endTime ? { startTime, endTime } : {})
       };
-
-      console.log('New schedule entry:', newSchedule);
 
       // Remove existing override for this date
       const filteredOverrides = currentSchedule.scheduleOverrides.filter(
@@ -164,8 +160,6 @@ export function EmployeeScheduleDialog({
         reason: reason.trim() || undefined
       };
 
-      console.log('New override:', newOverride);
-
       const updatedSchedule = {
         ...currentSchedule,
         scheduleOverrides: [...filteredOverrides, newOverride]
@@ -173,15 +167,17 @@ export function EmployeeScheduleDialog({
 
       console.log('Updated complete schedule:', updatedSchedule);
 
-      // Update employee with new schedule
+      // Update employee with new schedule - this only updates the local store
       await updateEmployee(employee.id, {
         workSchedule: updatedSchedule
       } as any);
 
       console.log('Employee updated successfully');
       toast.success(`Đã cập nhật lịch làm việc cho ${employee.name}`);
-      onScheduleUpdate();
+      
+      // Just close the dialog, no need to reload
       onClose();
+      
     } catch (error) {
       console.error('Error updating schedule:', error);
       toast.error('Có lỗi xảy ra khi cập nhật lịch làm việc');

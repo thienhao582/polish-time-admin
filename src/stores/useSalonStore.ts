@@ -339,9 +339,25 @@ export const useSalonStore = create<SalonState>()(
         nextEmployeeId: state.nextEmployeeId + 1
       })),
 
-      updateEmployee: (id, employee) => set((state) => ({
-        employees: state.employees.map(e => e.id === id ? { ...e, ...employee } : e)
-      })),
+      updateEmployee: (id, employee) => {
+        console.log('=== ZUSTAND UPDATE EMPLOYEE ===');
+        console.log('Employee ID:', id);
+        console.log('Update data:', employee);
+        
+        set((state) => {
+          const updatedEmployees = state.employees.map(e => {
+            if (e.id === id) {
+              const updated = { ...e, ...employee };
+              console.log('Updated employee:', updated);
+              return updated;
+            }
+            return e;
+          });
+          
+          console.log('All employees after update:', updatedEmployees.slice(0, 3));
+          return { employees: updatedEmployees };
+        });
+      },
 
       deleteEmployee: (id) => set((state) => ({
         employees: state.employees.filter(e => e.id !== id)
