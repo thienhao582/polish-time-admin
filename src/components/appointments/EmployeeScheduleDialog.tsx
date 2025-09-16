@@ -117,6 +117,13 @@ export function EmployeeScheduleDialog({
       setLoading(true);
       
       const dateString = format(selectedDate, 'yyyy-MM-dd');
+      console.log('=== SAVING SCHEDULE ===');
+      console.log('Employee:', employee?.name);
+      console.log('Date:', dateString);
+      console.log('Work type:', workType);
+      console.log('Start time:', startTime);
+      console.log('End time:', endTime);
+      console.log('Reason:', reason);
       
       // Get current work schedule or create new one
       const currentSchedule = employee.workSchedule || {
@@ -134,12 +141,16 @@ export function EmployeeScheduleDialog({
         scheduleOverrides: []
       };
 
+      console.log('Current schedule before update:', currentSchedule);
+
       // Create new schedule entry
       const newSchedule: DaySchedule = {
         workType,
         ...(workType !== 'off' && startTime && endTime ? { startTime, endTime } : {}),
         ...(workType === 'off' && startTime && endTime ? { startTime, endTime } : {})
       };
+
+      console.log('New schedule entry:', newSchedule);
 
       // Remove existing override for this date
       const filteredOverrides = currentSchedule.scheduleOverrides.filter(
@@ -153,16 +164,21 @@ export function EmployeeScheduleDialog({
         reason: reason.trim() || undefined
       };
 
+      console.log('New override:', newOverride);
+
       const updatedSchedule = {
         ...currentSchedule,
         scheduleOverrides: [...filteredOverrides, newOverride]
       };
+
+      console.log('Updated complete schedule:', updatedSchedule);
 
       // Update employee with new schedule
       await updateEmployee(employee.id, {
         workSchedule: updatedSchedule
       } as any);
 
+      console.log('Employee updated successfully');
       toast.success(`Đã cập nhật lịch làm việc cho ${employee.name}`);
       onScheduleUpdate();
       onClose();

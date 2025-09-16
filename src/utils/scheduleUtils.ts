@@ -27,25 +27,37 @@ export const isEmployeeAvailableAtTime = (
   const dateString = format(date, 'yyyy-MM-dd');
   const dayOfWeek = date.getDay();
   
+  console.log('=== CHECKING AVAILABILITY ===');
+  console.log('Employee:', employee?.name);
+  console.log('Date:', dateString);
+  console.log('Time slot:', timeSlot);
+  console.log('Employee workSchedule:', employee?.workSchedule);
+  
   // Get work schedule from employee data
   const workSchedule = employee.workSchedule as WorkSchedule | undefined;
   
   if (!workSchedule) {
+    console.log('No work schedule defined, assuming available');
     // If no schedule defined, assume available (default behavior)
     return { available: true };
   }
   
   // Check for schedule overrides first
   const override = workSchedule.scheduleOverrides?.find(o => o.date === dateString);
+  console.log('Found override for date:', override);
+  
   const schedule = override ? override.schedule : workSchedule.defaultSchedule?.[dayOfWeek];
+  console.log('Effective schedule:', schedule);
   
   if (!schedule) {
+    console.log('No schedule defined for this day, assuming available');
     // No schedule defined for this day, assume available
     return { available: true };
   }
   
   // If employee is off for the entire day
   if (schedule.workType === 'off' && !schedule.startTime && !schedule.endTime) {
+    console.log('Employee is off for entire day');
     return { 
       available: false, 
       reason: override?.reason || 'Nghỉ'
@@ -58,26 +70,38 @@ export const isEmployeeAvailableAtTime = (
     const startMinutes = timeToMinutes(schedule.startTime);
     const endMinutes = timeToMinutes(schedule.endTime);
     
+    console.log('Time comparison:');
+    console.log('- Time slot minutes:', timeSlotMinutes);
+    console.log('- Start minutes:', startMinutes);
+    console.log('- End minutes:', endMinutes);
+    
     // For off periods with specific times (partial day off)
     if (schedule.workType === 'off') {
+      console.log('Checking OFF period with specific times');
       // Check if time slot is within the OFF period
       if (timeSlotMinutes >= startMinutes && timeSlotMinutes < endMinutes) {
+        console.log('Time slot is within OFF period - NOT AVAILABLE');
         return { 
           available: false, 
           reason: override?.reason || `Nghỉ ${schedule.startTime}-${schedule.endTime}`
         };
       }
+      console.log('Time slot is outside OFF period - AVAILABLE');
     } else {
+      console.log('Checking WORK period with specific times');
       // For work periods, check if time slot is within working hours
       if (timeSlotMinutes < startMinutes || timeSlotMinutes >= endMinutes) {
+        console.log('Time slot is outside work hours - NOT AVAILABLE');
         return { 
           available: false, 
           reason: `Không trong giờ làm việc (${schedule.startTime}-${schedule.endTime})`
         };
       }
+      console.log('Time slot is within work hours - AVAILABLE');
     }
   }
   
+  console.log('Final result: AVAILABLE');
   return { available: true };
 };
 
