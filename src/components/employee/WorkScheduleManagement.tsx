@@ -238,6 +238,14 @@ export function WorkScheduleManagement() {
     return workingDays.length > 0 ? workingDays.join(', ') : 'Không có ngày làm việc';
   };
 
+  // Helper function to calculate work duration in hours
+  const getWorkDuration = (startTime: string, endTime: string): number => {
+    const start = new Date(`2000-01-01T${startTime}:00`);
+    const end = new Date(`2000-01-01T${endTime}:00`);
+    const diffMs = end.getTime() - start.getTime();
+    return Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10; // Round to 1 decimal place
+  };
+
   const getWeekDays = (date: Date) => {
     const start = startOfWeek(date, { weekStartsOn: 1 }); // Start from Monday
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -310,7 +318,7 @@ export function WorkScheduleManagement() {
                 <TableRow>
                   <TableHead className="w-48">{text.employee}</TableHead>
                   {getWeekDays(selectedWeek).map((date, index) => (
-                    <TableHead key={index} className="text-center min-w-32">
+                    <TableHead key={index} className="text-center min-w-36">
                       <div className="text-xs text-gray-500">
                         {text.dayOfWeek[date.getDay() as keyof typeof text.dayOfWeek]}
                       </div>
@@ -332,22 +340,43 @@ export function WorkScheduleManagement() {
                       return (
                         <TableCell key={index} className="text-center">
                           <div className="flex flex-col items-center gap-1">
-                            <Badge 
-                              variant={daySchedule.workType === 'off' ? "secondary" : "default"}
-                              className={daySchedule.workType === 'off' 
-                                ? "bg-gray-100 text-gray-700" 
-                                : "bg-green-100 text-green-700"
-                              }
-                            >
-                              {text.workTypes[daySchedule.workType]}
-                            </Badge>
-                            {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
-                              <div className="text-xs text-gray-600">
-                                {daySchedule.startTime}-{daySchedule.endTime}
-                              </div>
-                            )}
+                            {/* Work Type Badge */}
+                            <div className="flex flex-col items-center gap-1">
+                              <Badge 
+                                variant={daySchedule.workType === 'off' ? "secondary" : "default"}
+                                className={
+                                  daySchedule.workType === 'off' 
+                                    ? "bg-gray-100 text-gray-700 text-xs" 
+                                    : daySchedule.workType === 'full'
+                                      ? "bg-green-100 text-green-700 text-xs"
+                                      : daySchedule.workType === 'half'
+                                        ? "bg-blue-100 text-blue-700 text-xs"
+                                        : daySchedule.workType === 'quarter'
+                                          ? "bg-yellow-100 text-yellow-700 text-xs"
+                                          : "bg-purple-100 text-purple-700 text-xs"
+                                }
+                              >
+                                {text.workTypes[daySchedule.workType]}
+                              </Badge>
+                              
+                              {/* Time Range */}
+                              {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
+                                <div className="text-xs text-gray-600 font-mono">
+                                  {daySchedule.startTime}-{daySchedule.endTime}
+                                </div>
+                              )}
+                              
+                              {/* Work Duration Indicator */}
+                              {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
+                                <div className="text-xs text-gray-500">
+                                  {getWorkDuration(daySchedule.startTime, daySchedule.endTime)}h
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Override reason */}
                             {override && (
-                              <div className="text-xs text-gray-500 max-w-20 truncate">
+                              <div className="text-xs text-orange-600 bg-orange-50 px-1 rounded max-w-20 truncate">
                                 {override.reason}
                               </div>
                             )}
