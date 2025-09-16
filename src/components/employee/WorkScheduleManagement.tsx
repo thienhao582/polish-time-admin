@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CalendarIcon, Save, Edit, Plus, X, Clock, Settings } from "lucide-react";
@@ -95,7 +96,9 @@ export function WorkScheduleManagement() {
       thisWeek: "Tuần này",
       nextWeek: "Tuần sau",
       previousWeek: "Tuần trước",
-      workType: "Loại ca làm"
+      workType: "Loại ca làm",
+      weeklyViewTab: "Xem theo tuần",
+      defaultScheduleTab: "Lịch mặc định"
     },
     en: {
       title: "Work Schedule Management",
@@ -147,7 +150,9 @@ export function WorkScheduleManagement() {
       thisWeek: "This Week",
       nextWeek: "Next Week",
       previousWeek: "Previous Week",
-      workType: "Work Type"
+      workType: "Work Type",
+      weeklyViewTab: "Weekly View",
+      defaultScheduleTab: "Default Schedule"
     }
   };
 
@@ -284,146 +289,157 @@ export function WorkScheduleManagement() {
         </div>
       </div>
 
-      {/* Weekly View */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>{text.weeklyView}</CardTitle>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedWeek(addDays(selectedWeek, -7))}
-              >
-                {text.previousWeek}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedWeek(new Date())}
-              >
-                {text.thisWeek}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setSelectedWeek(addDays(selectedWeek, 7))}
-              >
-                {text.nextWeek}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-48">{text.employee}</TableHead>
-                  {getWeekDays(selectedWeek).map((date, index) => (
-                    <TableHead key={index} className="text-center min-w-36">
-                      <div className="text-xs text-gray-500">
-                        {text.dayOfWeek[date.getDay() as keyof typeof text.dayOfWeek]}
-                      </div>
-                      <div className="font-semibold">
-                        {format(date, 'dd/MM', { locale: vi })}
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schedules.map((schedule) => (
-                  <TableRow key={schedule.employeeId}>
-                    <TableCell className="font-medium">{schedule.employeeName}</TableCell>
-                    {getWeekDays(selectedWeek).map((date, index) => {
-                      const daySchedule = getEmployeeScheduleForDate(schedule, date);
-                      const override = getOverrideForDate(schedule, date);
-                      
-                      return (
-                        <TableCell key={index} className="text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            {/* Work Type Badge */}
-                            <div className="flex flex-col items-center gap-1">
-                              <Badge 
-                                variant={daySchedule.workType === 'off' ? "secondary" : "default"}
-                                className={
-                                  daySchedule.workType === 'off' 
-                                    ? "bg-gray-100 text-gray-700 text-xs" 
-                                    : daySchedule.workType === 'full'
-                                      ? "bg-green-100 text-green-700 text-xs"
-                                      : daySchedule.workType === 'half'
-                                        ? "bg-blue-100 text-blue-700 text-xs"
-                                        : daySchedule.workType === 'quarter'
-                                          ? "bg-yellow-100 text-yellow-700 text-xs"
-                                          : "bg-purple-100 text-purple-700 text-xs"
-                                }
-                              >
-                                {text.workTypes[daySchedule.workType]}
-                              </Badge>
-                              
-                              {/* Time Range */}
-                              {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
-                                <div className="text-xs text-gray-600 font-mono">
-                                  {daySchedule.startTime}-{daySchedule.endTime}
-                                </div>
-                              )}
-                              
-                              {/* Work Duration Indicator */}
-                              {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
-                                <div className="text-xs text-gray-500">
-                                  {getWorkDuration(daySchedule.startTime, daySchedule.endTime)}h
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Override reason */}
-                            {override && (
-                              <div className="text-xs text-orange-600 bg-orange-50 px-1 rounded max-w-20 truncate">
-                                {override.reason}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="weekly" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="weekly">{text.weeklyViewTab}</TabsTrigger>
+          <TabsTrigger value="schedule">{text.defaultScheduleTab}</TabsTrigger>
+        </TabsList>
 
-      {/* Employee Schedules Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{text.defaultSchedule}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {schedules.map((schedule) => (
-              <div key={schedule.employeeId} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">{schedule.employeeName}</h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Lịch mặc định:</strong> {getDefaultScheduleSummary(schedule)}
-                  </p>
-                  {schedule.scheduleOverrides.length > 0 && (
-                    <p className="text-sm text-blue-600">
-                      {schedule.scheduleOverrides.length} điều chỉnh đặc biệt
-                    </p>
-                  )}
+        {/* Weekly View Tab */}
+        <TabsContent value="weekly">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>{text.weeklyView}</CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedWeek(addDays(selectedWeek, -7))}
+                  >
+                    {text.previousWeek}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedWeek(new Date())}
+                  >
+                    {text.thisWeek}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedWeek(addDays(selectedWeek, 7))}
+                  >
+                    {text.nextWeek}
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => openEditDialog(schedule)}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Chỉnh sửa
-                </Button>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-48">{text.employee}</TableHead>
+                      {getWeekDays(selectedWeek).map((date, index) => (
+                        <TableHead key={index} className="text-center min-w-36">
+                          <div className="text-xs text-gray-500">
+                            {text.dayOfWeek[date.getDay() as keyof typeof text.dayOfWeek]}
+                          </div>
+                          <div className="font-semibold">
+                            {format(date, 'dd/MM', { locale: vi })}
+                          </div>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {schedules.map((schedule) => (
+                      <TableRow key={schedule.employeeId}>
+                        <TableCell className="font-medium">{schedule.employeeName}</TableCell>
+                        {getWeekDays(selectedWeek).map((date, index) => {
+                          const daySchedule = getEmployeeScheduleForDate(schedule, date);
+                          const override = getOverrideForDate(schedule, date);
+                          
+                          return (
+                            <TableCell key={index} className="text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                {/* Work Type Badge */}
+                                <div className="flex flex-col items-center gap-1">
+                                  <Badge 
+                                    variant={daySchedule.workType === 'off' ? "secondary" : "default"}
+                                    className={
+                                      daySchedule.workType === 'off' 
+                                        ? "bg-gray-100 text-gray-700 text-xs" 
+                                        : daySchedule.workType === 'full'
+                                          ? "bg-green-100 text-green-700 text-xs"
+                                          : daySchedule.workType === 'half'
+                                            ? "bg-blue-100 text-blue-700 text-xs"
+                                            : daySchedule.workType === 'quarter'
+                                              ? "bg-yellow-100 text-yellow-700 text-xs"
+                                              : "bg-purple-100 text-purple-700 text-xs"
+                                    }
+                                  >
+                                    {text.workTypes[daySchedule.workType]}
+                                  </Badge>
+                                  
+                                  {/* Time Range */}
+                                  {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
+                                    <div className="text-xs text-gray-600 font-mono">
+                                      {daySchedule.startTime}-{daySchedule.endTime}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Work Duration Indicator */}
+                                  {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
+                                    <div className="text-xs text-gray-500">
+                                      {getWorkDuration(daySchedule.startTime, daySchedule.endTime)}h
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Override reason */}
+                                {override && (
+                                  <div className="text-xs text-orange-600 bg-orange-50 px-1 rounded max-w-20 truncate">
+                                    {override.reason}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Default Schedule Tab */}
+        <TabsContent value="schedule">
+          <Card>
+            <CardHeader>
+              <CardTitle>{text.defaultSchedule}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {schedules.map((schedule) => (
+                  <div key={schedule.employeeId} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">{schedule.employeeName}</h3>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Lịch mặc định:</strong> {getDefaultScheduleSummary(schedule)}
+                      </p>
+                      {schedule.scheduleOverrides.length > 0 && (
+                        <p className="text-sm text-blue-600">
+                          {schedule.scheduleOverrides.length} điều chỉnh đặc biệt
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => openEditDialog(schedule)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Chỉnh sửa
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Schedule Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
