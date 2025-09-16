@@ -33,6 +33,7 @@ interface AppointmentDayViewProps {
   onTimeSlotClick?: (date: string, time: string, employeeName: string) => void;
   searchQuery?: string;
   onAppointmentCreated?: () => void;
+  onScheduleUpdate?: () => void;
 }
 
 export function AppointmentDayView({
@@ -43,7 +44,8 @@ export function AppointmentDayView({
   showFullView,
   onTimeSlotClick,
   searchQuery,
-  onAppointmentCreated
+  onAppointmentCreated,
+  onScheduleUpdate
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -724,8 +726,8 @@ export function AppointmentDayView({
         employee={selectedEmployee}
         selectedDate={selectedDate}
         onScheduleUpdate={() => {
-          // Trigger a refresh if needed
-          window.location.reload();
+          // Call parent callback to refresh data without page reload
+          onScheduleUpdate?.();
         }}
       />
     </div>
