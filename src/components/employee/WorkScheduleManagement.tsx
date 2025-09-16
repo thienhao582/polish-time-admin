@@ -401,12 +401,13 @@ export function WorkScheduleManagement() {
                                     {text.workTypes[daySchedule.workType]}
                                   </Badge>
                                   
-                                  {/* Time Range */}
-                                  {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
-                                    <div className="text-xs text-gray-600 font-mono">
-                                      {daySchedule.startTime}-{daySchedule.endTime}
-                                    </div>
-                                  )}
+                                   {/* Time Range - Show for all types including 'off' when there are specific times */}
+                                   {((daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime) || 
+                                     (daySchedule.workType === 'off' && daySchedule.startTime && daySchedule.endTime)) && (
+                                     <div className="text-xs text-gray-600 font-mono">
+                                       {daySchedule.startTime}-{daySchedule.endTime}
+                                     </div>
+                                   )}
                                   
                                   {/* Work Duration Indicator */}
                                   {daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime && (
