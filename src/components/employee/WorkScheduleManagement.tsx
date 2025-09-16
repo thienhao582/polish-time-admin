@@ -278,11 +278,35 @@ export function WorkScheduleManagement() {
   };
 
   const formatScheduleDisplay = (daySchedule: DaySchedule): string => {
-    const workType = text.workTypes[daySchedule.workType];
-    if (daySchedule.workType === 'custom' || (daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime)) {
-      return `${workType} (${daySchedule.startTime}-${daySchedule.endTime})`;
+    // If it's a custom schedule or has specific times, show the hours
+    if (daySchedule.startTime && daySchedule.endTime) {
+      if (daySchedule.workType === 'off') {
+        return `${text.workTypes[daySchedule.workType]} (${daySchedule.startTime}-${daySchedule.endTime})`;
+      } else {
+        return `${text.workTypes[daySchedule.workType]} (${daySchedule.startTime}-${daySchedule.endTime})`;
+      }
     }
-    return workType;
+    return text.workTypes[daySchedule.workType];
+  };
+
+  // Helper function to determine display type for partial schedules
+  const getDisplayType = (daySchedule: DaySchedule): string => {
+    if (daySchedule.startTime && daySchedule.endTime) {
+      const start = new Date(`2000-01-01T${daySchedule.startTime}:00`);
+      const end = new Date(`2000-01-01T${daySchedule.endTime}:00`);
+      const hours = getWorkDuration(daySchedule.startTime, daySchedule.endTime);
+      
+      // If it's an off period with specific times, show as partial off
+      if (daySchedule.workType === 'off') {
+        return 'Nghỉ một phần';
+      }
+      
+      // For work periods, determine if it's partial based on hours
+      if (hours < 8) {
+        return language === 'vi' ? 'Một phần' : 'Partial';
+      }
+    }
+    return text.workTypes[daySchedule.workType];
   };
 
   // Filter schedules based on search query
@@ -383,23 +407,26 @@ export function WorkScheduleManagement() {
                             <TableCell key={index} className="text-center">
                               <div className="flex flex-col items-center gap-1">
                                 {/* Work Type Badge */}
-                                <div className="flex flex-col items-center gap-1">
-                                  <Badge 
-                                    variant={daySchedule.workType === 'off' ? "secondary" : "default"}
-                                    className={
-                                      daySchedule.workType === 'off' 
-                                        ? "bg-gray-100 text-gray-700 text-xs" 
-                                        : daySchedule.workType === 'full'
-                                          ? "bg-green-100 text-green-700 text-xs"
-                                          : daySchedule.workType === 'half'
-                                            ? "bg-blue-100 text-blue-700 text-xs"
-                                            : daySchedule.workType === 'quarter'
-                                              ? "bg-yellow-100 text-yellow-700 text-xs"
-                                              : "bg-purple-100 text-purple-700 text-xs"
-                                    }
-                                  >
-                                    {text.workTypes[daySchedule.workType]}
-                                  </Badge>
+                                 <div className="flex flex-col items-center gap-1">
+                                   <Badge 
+                                     variant={daySchedule.workType === 'off' ? "secondary" : "default"}
+                                     className={
+                                       daySchedule.workType === 'off' 
+                                         ? "bg-gray-100 text-gray-700 text-xs" 
+                                         : daySchedule.workType === 'full'
+                                           ? "bg-green-100 text-green-700 text-xs"
+                                           : daySchedule.workType === 'half'
+                                             ? "bg-blue-100 text-blue-700 text-xs"
+                                             : daySchedule.workType === 'quarter'
+                                               ? "bg-yellow-100 text-yellow-700 text-xs"
+                                               : "bg-purple-100 text-purple-700 text-xs"
+                                     }
+                                   >
+                                     {daySchedule.startTime && daySchedule.endTime 
+                                       ? getDisplayType(daySchedule)
+                                       : text.workTypes[daySchedule.workType]
+                                     }
+                                   </Badge>
                                   
                                    {/* Time Range - Show for all types including 'off' when there are specific times */}
                                    {((daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime) || 
