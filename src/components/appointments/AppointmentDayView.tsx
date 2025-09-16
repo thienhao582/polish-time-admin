@@ -5,9 +5,10 @@ import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/sc
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserCheck, ClipboardList, Clock, Ban } from "lucide-react";
+import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CheckInSidebar } from "./CheckInSidebar";
+import { EmployeeScheduleDialog } from "./EmployeeScheduleDialog";
 
 interface Appointment {
   id: number;
@@ -54,6 +55,10 @@ export function AppointmentDayView({
   
   // State for check-in sidebar
   const [isCheckInSidebarOpen, setIsCheckInSidebarOpen] = useState(false);
+  
+  // State for employee schedule dialog
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -511,8 +516,22 @@ export function AppointmentDayView({
                   {/* Employee header - Fixed width and truncated */}
                   <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 flex items-center justify-center sticky top-0 z-20">
                     <div className="text-center w-full min-w-0">
-                      <div className="text-sm font-bold text-gray-800 truncate leading-tight" title={employee.name}>
-                        {employee.name}
+                      <div className="flex items-center justify-center gap-1">
+                        <div className="text-sm font-bold text-gray-800 truncate leading-tight" title={employee.name}>
+                          {employee.name}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 hover:bg-blue-100"
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsScheduleDialogOpen(true);
+                          }}
+                          title="Thiết lập lịch làm việc"
+                        >
+                          <Settings className="w-3 h-3 text-gray-600 hover:text-blue-600" />
+                        </Button>
                       </div>
                       <div className={cn(
                         "text-xs truncate font-medium flex items-center justify-center gap-1",
@@ -693,6 +712,21 @@ export function AppointmentDayView({
         onClose={() => setIsCheckInSidebarOpen(false)}
         selectedDate={selectedDate}
         onAppointmentCreated={onAppointmentCreated}
+      />
+
+      {/* Employee Schedule Dialog */}
+      <EmployeeScheduleDialog
+        isOpen={isScheduleDialogOpen}
+        onClose={() => {
+          setIsScheduleDialogOpen(false);
+          setSelectedEmployee(null);
+        }}
+        employee={selectedEmployee}
+        selectedDate={selectedDate}
+        onScheduleUpdate={() => {
+          // Trigger a refresh if needed
+          window.location.reload();
+        }}
       />
     </div>
   );
