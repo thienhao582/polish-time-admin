@@ -570,8 +570,6 @@ export function AppointmentDayView({
                             draggable={isDragEnabled}
                            onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
                             onDragEnd={isDragEnabled ? handleDragEnd : undefined}
-                           }
-                           }
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
@@ -693,7 +691,7 @@ export function AppointmentDayView({
                          onDragEnter={isDragEnabled ? handleDragEnter : undefined}
                          onDragOver={isDragEnabled ? handleDragOver : undefined}
                          onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                         onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}}
+                         onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
                          title={!availability.available ? availability.reason : ""}
                        >
                         {/* Show blocked time indicator if not available */}
@@ -745,7 +743,7 @@ export function AppointmentDayView({
                                   zIndex: draggedAppointmentId === apt.id ? 50 : 10
                                 }}
                                  draggable={isDragEnabled}
-                                 onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}}
+                                 onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}
                                  onDragEnd={isDragEnabled ? handleDragEnd : undefined}
                                  onClick={(e) => {
                                    e.stopPropagation();
