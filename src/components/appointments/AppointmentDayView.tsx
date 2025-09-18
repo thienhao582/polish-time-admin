@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useDragStore } from "@/stores/useDragStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
@@ -76,11 +76,14 @@ export function AppointmentDayView({
   const isDragEnabled = useDragStore(s => s.isDragEnabled);
 
   
-  // Filter appointments for the selected day
-  const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
+  // Memoize expensive calculations to prevent re-renders
+  const dayAppointments = useMemo(() => 
+    filteredAppointments.filter(apt => apt.date === dateString), 
+    [filteredAppointments, dateString]
+  );
   
   // Create test data for "Anyone" column if on Aug 6, 2025
-  const testAnyoneData = dateString === "2025-08-06" ? [
+  const testAnyoneData = useMemo(() => dateString === "2025-08-06" ? [
     {
       id: 9001, date: "2025-08-06", time: "09:22", customer: "Ngô Thị Linh", phone: "0912345678", 
       service: "Gel Polish + Nail Art", duration: "90 phút", price: "450,000đ", status: "confirmed", staff: "", 
@@ -141,18 +144,22 @@ export function AppointmentDayView({
       service: "Basic Manicure", duration: "60 phút", price: "200,000đ", status: "confirmed", staff: "", 
       customerId: "12", serviceId: "12", staffId: "", notes: "Không yêu cầu nhân viên cụ thể"
     }
-  ] : [];
+  ] : [], [dateString]);
   
-  // Combine real appointments with test data
-  const allDayAppointments = [...dayAppointments, ...testAnyoneData];
+  // Memoize appointment calculations
+  const allDayAppointments = useMemo(() => 
+    [...dayAppointments, ...testAnyoneData], 
+    [dayAppointments, testAnyoneData]
+  );
   
-  // Separate appointments with and without specific staff
-  const anyoneAppointments = allDayAppointments.filter(apt => 
-    !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone'
-  );
-  const staffAppointments = allDayAppointments.filter(apt => 
-    apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
-  );
+  const { anyoneAppointments, staffAppointments } = useMemo(() => ({
+    anyoneAppointments: allDayAppointments.filter(apt => 
+      !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone'
+    ),
+    staffAppointments: allDayAppointments.filter(apt => 
+      apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
+    )
+  }), [allDayAppointments]);
   
 
   // Helper function to check if employee is working on this date
@@ -174,11 +181,10 @@ export function AppointmentDayView({
     return employee.role === 'thợ' || employee.role === 'thợ chính' || employee.role === 'phụ tá' || employee.role === 'service';
   };
 
-  // Get working employees for this date (including those without appointments)
-  const getWorkingEmployees = () => {
+  // Memoize working employees calculation
+  const workingEmployees = useMemo(() => {
     // Get all unique staff names from appointments for this day (excluding empty staff)
     const staffNamesInAppointments = [...new Set(staffAppointments.map(apt => apt.staff))];
-    
     
     // Get employees who have appointments today
     const employeesWithAppointments = staffNamesInAppointments.map((staffName, index) => ({
@@ -208,8 +214,6 @@ export function AppointmentDayView({
 
     // Combine both groups: employees with appointments first, then without
     const allWorkingEmployees = [...employeesWithAppointments, ...employeesWithoutAppointments];
-
-    
     
     // Sort employees: those with appointments first, then by name
     const employeesWithData = allWorkingEmployees.map(employee => {
@@ -228,7 +232,6 @@ export function AppointmentDayView({
       };
     });
 
-
     // Sort by: 1) Has appointments (descending), 2) Earliest appointment time (ascending), 3) Name (ascending)
     return employeesWithData
       .sort((a, b) => {
@@ -241,19 +244,22 @@ export function AppointmentDayView({
         return a.employee.name.localeCompare(b.employee.name); // Alphabetical for employees without appointments
       })
       .map(item => item.employee);
-  };
+  }, [employees, staffAppointments, dateString]);
 
-  // Create time slots from 7 AM to 24 PM (midnight) with 15-minute intervals
-  const allTimeSlots = [];
-  for (let hour = 7; hour <= 23; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      if (hour === 23 && minute > 45) break; // Stop at 23:45
-      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      allTimeSlots.push(timeString);
+  // Memoize time slots creation
+  const allTimeSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 7; hour <= 23; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        if (hour === 23 && minute > 45) break; // Stop at 23:45
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        slots.push(timeString);
+      }
     }
-  }
-  // Add 24:00 (midnight)
-  allTimeSlots.push('24:00');
+    // Add 24:00 (midnight)
+    slots.push('24:00');
+    return slots;
+  }, []);
 
   // Helper function to parse duration from string like "60 phút" to minutes
   const parseDuration = (durationStr: string, extraTime?: number): number => {
@@ -343,40 +349,46 @@ export function AppointmentDayView({
     return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 15;
   };
 
-  // Create 15-minute based time slots for Anyone column (7 AM to 24 PM)
-  const hourSlots = [];
-  for (let hour = 7; hour <= 23; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      if (hour === 23 && minute > 45) break; // Stop at 23:45
-      hourSlots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+  // Memoize hour slots and filtered employees
+  const hourSlots = useMemo(() => {
+    const slots = [];
+    for (let hour = 7; hour <= 23; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        if (hour === 23 && minute > 45) break; // Stop at 23:45
+        slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+      }
     }
-  }
-  // Add 24:00 (midnight)
-  hourSlots.push('24:00');
-
-  const workingEmployees = getWorkingEmployees();
+    // Add 24:00 (midnight)
+    slots.push('24:00');
+    return slots;
+  }, []);
 
   // Filter working employees based on search query
-  const filteredWorkingEmployees = searchQuery 
-    ? workingEmployees.filter(emp => 
-        emp.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : workingEmployees;
+  const filteredWorkingEmployees = useMemo(() => 
+    searchQuery 
+      ? workingEmployees.filter(emp => 
+          emp.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : workingEmployees,
+    [workingEmployees, searchQuery]
+  );
 
   // Filter time slots based on showFullView setting
-  const timeSlots = showFullView 
-    ? allTimeSlots 
-    : allTimeSlots.filter(timeSlot => {
-        const hasAppointment = allDayAppointments.some(apt => {
-          const aptStartMinutes = timeToMinutes(apt.time);
-          const slotStartMinutes = timeToMinutes(timeSlot);
-          const slotEndMinutes = slotStartMinutes + 15;
-          return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration, (apt as any).extraTime) > slotStartMinutes;
-        });
-        
-        
-        return hasAppointment;
-      });
+  const timeSlots = useMemo(() => 
+    showFullView 
+      ? allTimeSlots 
+      : allTimeSlots.filter(timeSlot => {
+          const hasAppointment = allDayAppointments.some(apt => {
+            const aptStartMinutes = timeToMinutes(apt.time);
+            const slotStartMinutes = timeToMinutes(timeSlot);
+            const slotEndMinutes = slotStartMinutes + 15;
+            return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration, (apt as any).extraTime) > slotStartMinutes;
+          });
+          
+          return hasAppointment;
+        }),
+    [showFullView, allTimeSlots, allDayAppointments]
+  );
 
   // Optimized drag and drop handlers (minimal DOM operations)
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
@@ -632,12 +644,10 @@ export function AppointmentDayView({
                       appointmentStartsAtSlot(apt, timeSlot)
                     );
 
-                    // Check if employee is available at this time
-                    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
-                    const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
+                     // Check if employee is available at this time
+                     const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
 
-
-                    const handleTimeSlotClick = () => {
+                     const handleTimeSlotClick = () => {
                       if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
                         onTimeSlotClick(dateString, timeSlot, employee.name);
                       }
@@ -676,11 +686,6 @@ export function AppointmentDayView({
                           </div>
                         )}
                         
-                        {startingAppointments.length > 0 && (
-                          <div className="text-xs text-blue-600 absolute top-0 left-0">
-                            {startingAppointments.length} apt
-                          </div>
-                        )}
                         {startingAppointments.map((apt, aptIndex) => {
                            const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
                            const slotsSpanned = Math.ceil(durationMinutes / 15);
