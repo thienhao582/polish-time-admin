@@ -64,8 +64,9 @@ export function AppointmentDayView({
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   
-  // State for drag and drop
+  // State for drag and drop - optimized approach
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<{timeSlot: string, staff: string} | null>(null);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -400,16 +401,37 @@ export function AppointmentDayView({
         return hasAppointment;
       });
 
-  // Drag and drop handlers
+  // Optimized drag and drop handlers
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
     setDraggedAppointment(appointment);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id.toString());
+    
+    // Create a custom drag image for better UX
+    const dragElement = e.currentTarget as HTMLElement;
+    const rect = dragElement.getBoundingClientRect();
+    e.dataTransfer.setDragImage(dragElement, rect.width / 2, rect.height / 2);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, timeSlot: string, staff: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    
+    // Only update if target changed to avoid unnecessary renders
+    if (!dragOverTarget || dragOverTarget.timeSlot !== timeSlot || dragOverTarget.staff !== staff) {
+      setDragOverTarget({ timeSlot, staff });
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the container entirely
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragOverTarget(null);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, targetTime: string, targetStaff?: string) => {
@@ -418,7 +440,16 @@ export function AppointmentDayView({
 
     const newStaff = targetStaff === 'Anyone' ? '' : targetStaff;
     onAppointmentDrop(draggedAppointment.id, targetTime, newStaff);
+    
+    // Clean up state
     setDraggedAppointment(null);
+    setDragOverTarget(null);
+  };
+
+  const handleDragEnd = () => {
+    // Clean up state when drag ends
+    setDraggedAppointment(null);
+    setDragOverTarget(null);
   };
 
   return (
@@ -497,20 +528,27 @@ export function AppointmentDayView({
                  return (
                    <div 
                      key={`anyone-hour-${hourSlot}`} 
-                     className="h-28 border-b border-gray-200 bg-white relative p-1 transition-colors hover:bg-orange-50"
-                     onDragOver={handleDragOver}
+                     className={cn(
+                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200",
+                       dragOverTarget?.timeSlot === hourSlot && dragOverTarget?.staff === 'Anyone'
+                         ? "bg-blue-100 border-blue-300 shadow-inner" 
+                         : "hover:bg-orange-50"
+                     )}
+                     onDragOver={(e) => handleDragOver(e, hourSlot, 'Anyone')}
+                     onDragLeave={handleDragLeave}
                      onDrop={(e) => handleDrop(e, hourSlot, 'Anyone')}
                    >
                     {displayAppointment ? (
                       <div className="space-y-1">
                         {/* First appointment */}
                          <div
-                           className="bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs"
+                           className={cn(
+                             "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs relative",
+                             draggedAppointment?.id === displayAppointment.id && "opacity-60 transform scale-95"
+                           )}
                            draggable={true}
                            onDragStart={(e) => handleDragStart(e, displayAppointment)}
-                           style={{
-                             opacity: draggedAppointment?.id === displayAppointment.id ? 0.5 : 1
-                           }}
+                           onDragEnd={handleDragEnd}
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
@@ -538,12 +576,21 @@ export function AppointmentDayView({
                           </button>
                         )}
                       </div>
-                    ) : (
-                      <div className="text-center text-orange-400 text-xs py-4">
-                        Trống
-                      </div>
-                    )}
-                  </div>
+                     ) : (
+                       <div className="text-center text-orange-400 text-xs py-4">
+                         Trống
+                       </div>
+                     )}
+                     
+                     {/* Drop indicator overlay for Anyone column */}
+                     {dragOverTarget?.timeSlot === hourSlot && dragOverTarget?.staff === 'Anyone' && draggedAppointment && (
+                       <div className="absolute inset-0 bg-blue-200/30 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
+                         <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                           Chuyển về Anyone
+                         </div>
+                       </div>
+                     )}
+                   </div>
                 );
               })}
             </div>
@@ -621,15 +668,19 @@ export function AppointmentDayView({
                        <div 
                          key={`${employee.id}-${timeSlot}`} 
                          className={cn(
-                           "h-14 border-b border-gray-200 relative p-1 transition-colors",
+                           "h-14 border-b border-gray-200 relative p-1 transition-all duration-200",
                            !availability.available 
                              ? "bg-gray-200 cursor-not-allowed opacity-60" 
                              : startingAppointments.length === 0 
                                ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                               : "bg-white hover:bg-gray-50"
+                               : "bg-white hover:bg-gray-50",
+                           dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name
+                             ? "bg-blue-100 border-blue-300 shadow-inner"
+                             : ""
                          )}
                          onClick={handleTimeSlotClick}
-                         onDragOver={handleDragOver}
+                         onDragOver={(e) => handleDragOver(e, timeSlot, employee.name)}
+                         onDragLeave={handleDragLeave}
                          onDrop={(e) => handleDrop(e, timeSlot, employee.name)}
                          title={!availability.available ? availability.reason : ""}
                        >
@@ -668,18 +719,22 @@ export function AppointmentDayView({
                           return (
                              <div
                                key={`${apt.id}-${aptIndex}`}
-                               className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs overflow-hidden`}
+                               className={cn(
+                                 "absolute border rounded-md p-1 cursor-move hover:shadow-lg transition-all text-xs overflow-hidden",
+                                 getAppointmentColor(),
+                                 draggedAppointment?.id === apt.id && "opacity-60 transform scale-95 shadow-xl"
+                               )}
                                style={{
                                  top: '2px',
                                  left: `${aptIndex * 50}%`,
                                  width: startingAppointments.length > 1 ? '48%' : '96%',
                                  height: `${heightInPixels}px`,
                                  minHeight: '50px',
-                                 zIndex: 10,
-                                 opacity: draggedAppointment?.id === apt.id ? 0.5 : 1
+                                 zIndex: draggedAppointment?.id === apt.id ? 50 : 10
                                }}
                                draggable={true}
                                onDragStart={(e) => handleDragStart(e, apt)}
+                               onDragEnd={handleDragEnd}
                                onClick={(e) => {
                                  e.preventDefault();
                                  e.stopPropagation();
@@ -705,7 +760,16 @@ export function AppointmentDayView({
                                  <div className="text-xs opacity-75">
                                    {getDisplayDuration(apt)}
                                  </div>
-                               )}
+                                )}
+                                
+                                {/* Drop indicator overlay */}
+                                {dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name && draggedAppointment && (
+                                  <div className="absolute inset-0 bg-blue-200/30 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
+                                    <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                                      Thả vào đây
+                                    </div>
+                                  </div>
+                                )}
                              </div>
                           );
                         })}
