@@ -75,7 +75,75 @@ export function AppointmentDayView({
   const endDrag = useDragStore(s => s.endDrag);
   const isDragEnabled = useDragStore(s => s.isDragEnabled);
 
-  
+  // Helper functions - defined early to avoid initialization errors
+  const timeToMinutes = (timeStr: string): number => {
+    if (!timeStr) return 0;
+    // Handle formats like "09:08 AM" or "9:08 pm"
+    const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (ampmMatch) {
+      let hours = parseInt(ampmMatch[1], 10);
+      const minutes = parseInt(ampmMatch[2], 10);
+      const period = ampmMatch[3].toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+    // Fallback to 24h format HH:mm
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || '0', 10);
+    const minutes = parseInt((parts[1] || '0').slice(0, 2), 10);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
+    return hours * 60 + minutes;
+  };
+
+  // Helper function to parse duration from string like "60 phút" to minutes
+  const parseDuration = (durationStr: string, extraTime?: number): number => {
+    const match = durationStr.match(/(\d+)/);
+    const baseDuration = match ? parseInt(match[1]) : 30;
+    return baseDuration + (extraTime || 0);
+  };
+
+  // Helper function to get display duration including extra time
+  const getDisplayDuration = (apt: any): string => {
+    const totalMinutes = parseDuration(apt.duration, apt.extraTime);
+    return `${totalMinutes} phút`;
+  };
+
+  // Helper function to calculate end time from start time and duration
+  const timeToEndTime = (startTime: string, durationMinutes: number): string => {
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = startMinutes + durationMinutes;
+    const endHours = Math.floor(endMinutes / 60);
+    const endMins = endMinutes % 60;
+    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  };
+
+  // Helper function to check if employee is working on this date
+  const isEmployeeWorkingOnDate = (employee: any, date: string): boolean => {
+    const dayOfWeek = format(new Date(date), 'EEEE').toLowerCase();
+    
+    // Check time records for this employee on this date
+    const employeeTimeRecords = timeRecords.filter(record => 
+      record.employeeId === employee.id && record.date === date
+    );
+    
+    // If there are time records, employee is working
+    if (employeeTimeRecords.length > 0) {
+      return true;
+    }
+    
+    // Fallback: assume service staff (thợ) are working by default
+    // You can enhance this logic based on your work schedule system
+    return employee.role === 'thợ' || employee.role === 'thợ chính' || employee.role === 'phụ tá' || employee.role === 'service';
+  };
+
+  // Helper function to check if an appointment starts at this time slot
+  const appointmentStartsAtSlot = (apt: Appointment, timeSlot: string): boolean => {
+    const aptStartMinutes = timeToMinutes(apt.time);
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 15;
+  };
+
   // Memoize expensive calculations to prevent re-renders
   const dayAppointments = useMemo(() => 
     filteredAppointments.filter(apt => apt.date === dateString), 
@@ -160,25 +228,44 @@ export function AppointmentDayView({
       apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
     )
   }), [allDayAppointments]);
-  
 
-  // Helper function to check if employee is working on this date
-  const isEmployeeWorkingOnDate = (employee: any, date: string): boolean => {
-    const dayOfWeek = format(new Date(date), 'EEEE').toLowerCase();
+  // Get appointments for a specific employee and time slot
+  const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    const slotEndMinutes = slotStartMinutes + 15;
     
-    // Check time records for this employee on this date
-    const employeeTimeRecords = timeRecords.filter(record => 
-      record.employeeId === employee.id && record.date === date
-    );
+    const appointments = staffAppointments.filter(apt => {
+      // Only show appointments that are EXACTLY assigned to this specific employee
+      // No merged columns - each appointment belongs to only one staff member
+      const isExactStaffMatch = apt.staff === employee.name;
+      
+      if (!isExactStaffMatch) return false;
+      
+      const aptStartMinutes = timeToMinutes(apt.time);
+      const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
+      const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
+      
+      // Check if appointment overlaps with this time slot
+      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
+    });
     
-    // If there are time records, employee is working
-    if (employeeTimeRecords.length > 0) {
-      return true;
-    }
+    return appointments;
+  };
+
+  // Get appointments for "Anyone" column for a specific time slot (15 minute slots)
+  const getAnyoneAppointmentsForHourSlot = (timeSlot: string) => {
+    const slotStartMinutes = timeToMinutes(timeSlot);
+    const slotEndMinutes = slotStartMinutes + 15; // 15 minute slot
     
-    // Fallback: assume service staff (thợ) are working by default
-    // You can enhance this logic based on your work schedule system
-    return employee.role === 'thợ' || employee.role === 'thợ chính' || employee.role === 'phụ tá' || employee.role === 'service';
+    // Show appointments that START within this 15-minute slot only to avoid duplicates
+    const appointments = anyoneAppointments
+      .filter(apt => {
+        const aptStartMinutes = timeToMinutes(apt.time);
+        return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotEndMinutes;
+      })
+      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+    
+    return appointments;
   };
 
   // Memoize working employees calculation
@@ -260,94 +347,6 @@ export function AppointmentDayView({
     slots.push('24:00');
     return slots;
   }, []);
-
-  // Helper function to parse duration from string like "60 phút" to minutes
-  const parseDuration = (durationStr: string, extraTime?: number): number => {
-    const match = durationStr.match(/(\d+)/);
-    const baseDuration = match ? parseInt(match[1]) : 30;
-    return baseDuration + (extraTime || 0);
-  };
-
-  // Helper function to get display duration including extra time
-  const getDisplayDuration = (apt: any): string => {
-    const totalMinutes = parseDuration(apt.duration, apt.extraTime);
-    return `${totalMinutes} phút`;
-  };
-
-  // Helper function to convert time string to minutes since midnight
-  const timeToMinutes = (timeStr: string): number => {
-    if (!timeStr) return 0;
-    // Handle formats like "09:08 AM" or "9:08 pm"
-    const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (ampmMatch) {
-      let hours = parseInt(ampmMatch[1], 10);
-      const minutes = parseInt(ampmMatch[2], 10);
-      const period = ampmMatch[3].toUpperCase();
-      if (period === 'PM' && hours !== 12) hours += 12;
-      if (period === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + minutes;
-    }
-    // Fallback to 24h format HH:mm
-    const parts = timeStr.split(':');
-    const hours = parseInt(parts[0] || '0', 10);
-    const minutes = parseInt((parts[1] || '0').slice(0, 2), 10);
-    if (isNaN(hours) || isNaN(minutes)) return 0;
-    return hours * 60 + minutes;
-  };
-  // Helper function to calculate end time from start time and duration
-  const timeToEndTime = (startTime: string, durationMinutes: number): string => {
-    const startMinutes = timeToMinutes(startTime);
-    const endMinutes = startMinutes + durationMinutes;
-    const endHours = Math.floor(endMinutes / 60);
-    const endMins = endMinutes % 60;
-    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
-  };
-
-  // Get appointments for a specific employee and time slot
-  const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
-    const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 15;
-    
-    const appointments = staffAppointments.filter(apt => {
-      // Only show appointments that are EXACTLY assigned to this specific employee
-      // No merged columns - each appointment belongs to only one staff member
-      const isExactStaffMatch = apt.staff === employee.name;
-      
-      if (!isExactStaffMatch) return false;
-      
-      const aptStartMinutes = timeToMinutes(apt.time);
-      const aptDurationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
-      const aptEndMinutes = aptStartMinutes + aptDurationMinutes;
-      
-      // Check if appointment overlaps with this time slot
-      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
-    });
-    
-    return appointments;
-  };
-
-  // Get appointments for "Anyone" column for a specific time slot (15 minute slots)
-  const getAnyoneAppointmentsForHourSlot = (timeSlot: string) => {
-    const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 15; // 15 minute slot
-    
-    // Show appointments that START within this 15-minute slot only to avoid duplicates
-    const appointments = anyoneAppointments
-      .filter(apt => {
-        const aptStartMinutes = timeToMinutes(apt.time);
-        return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotEndMinutes;
-      })
-      .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
-    
-    return appointments;
-  };
-
-  // Check if an appointment starts at this time slot
-  const appointmentStartsAtSlot = (apt: Appointment, timeSlot: string): boolean => {
-    const aptStartMinutes = timeToMinutes(apt.time);
-    const slotStartMinutes = timeToMinutes(timeSlot);
-    return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 15;
-  };
 
   // Memoize hour slots and filtered employees
   const hourSlots = useMemo(() => {
@@ -644,10 +643,10 @@ export function AppointmentDayView({
                       appointmentStartsAtSlot(apt, timeSlot)
                     );
 
-                     // Check if employee is available at this time
-                     const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+                    // Check if employee is available at this time
+                    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
 
-                     const handleTimeSlotClick = () => {
+                    const handleTimeSlotClick = () => {
                       if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
                         onTimeSlotClick(dateString, timeSlot, employee.name);
                       }
@@ -750,12 +749,12 @@ export function AppointmentDayView({
                                   <div className="text-xs opacity-75">
                                     {getDisplayDuration(apt)}
                                   </div>
-                                 )}
+                                )}
                               </div>
                            );
                         })}
-                      </div>
-                    );
+                       </div>
+                     );
                   })}
                 </div>
               ))
@@ -764,52 +763,8 @@ export function AppointmentDayView({
         </div>
       </div>
 
-      {/* Anyone Appointments Popup */}
-      <Dialog open={isAnyonePopupOpen} onOpenChange={setIsAnyonePopupOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              Lịch hẹn khung giờ {selectedTimeSlot} - {timeToEndTime(selectedTimeSlot, 60)}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-96 overflow-y-auto space-y-2">
-            {selectedSlotAppointments.map((apt, index) => (
-              <div
-                key={`popup-${apt.id}`}
-                className="bg-orange-50 border border-orange-200 rounded-md p-3 cursor-pointer hover:bg-orange-100 transition-colors"
-                onClick={(e) => {
-                  handleAppointmentClick(apt, e);
-                  setIsAnyonePopupOpen(false);
-                }}
-               >
-                 {/* Staff icon in top right if staff is assigned */}
-                 {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
-                   <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
-                     <UserCheck className="w-2.5 h-2.5 text-white" />
-                   </div>
-                 )}
-                 <div className="flex justify-between items-start mb-2">
-                   <div className="font-bold text-gray-800">
-                     {apt.customer}
-                   </div>
-                   <div className="text-xs text-orange-600 font-medium">
-                     {apt.time}
-                   </div>
-                 </div>
-                 <div className="text-sm text-gray-600">
-                   {apt.service}
-                 </div>
-                 <div className="text-xs text-gray-500 mt-1">
-                   {getDisplayDuration(apt)} • {apt.price}
-                 </div>
-               </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Check-in Sidebar */}
-      <CheckInSidebar 
+      {/* CheckIn Sidebar */}
+      <CheckInSidebar
         isOpen={isCheckInSidebarOpen}
         onClose={() => setIsCheckInSidebarOpen(false)}
         selectedDate={selectedDate}
@@ -817,19 +772,45 @@ export function AppointmentDayView({
       />
 
       {/* Employee Schedule Dialog */}
-      <EmployeeScheduleDialog
-        isOpen={isScheduleDialogOpen}
-        onClose={() => {
-          setIsScheduleDialogOpen(false);
-          setSelectedEmployee(null);
-        }}
-        employee={selectedEmployee}
-        selectedDate={selectedDate}
-        onScheduleUpdate={() => {
-          // No need to do anything here, the state will update automatically
-          
-        }}
-      />
+      {selectedEmployee && (
+        <EmployeeScheduleDialog
+          isOpen={isScheduleDialogOpen}
+          onClose={() => {
+            setIsScheduleDialogOpen(false);
+            setSelectedEmployee(null);
+          }}
+          employee={selectedEmployee}
+          selectedDate={selectedDate}
+          onScheduleUpdate={onScheduleUpdate}
+        />
+      )}
+
+      {/* Anyone Appointments Popup */}
+      <Dialog open={isAnyonePopupOpen} onOpenChange={setIsAnyonePopupOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Lịch hẹn tại {selectedTimeSlot}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {selectedSlotAppointments.map((apt) => (
+              <div
+                key={apt.id}
+                className={cn(
+                  "p-3 border rounded-md cursor-pointer hover:shadow-md transition-colors",
+                  appointmentColors.anyone
+                )}
+                onClick={(e) => handleAppointmentClick(apt, e)}
+              >
+                <div className="font-semibold">{apt.time} - {apt.customer}</div>
+                <div className="text-sm text-gray-600">{apt.service}</div>
+                <div className="text-xs text-gray-500">{apt.phone}</div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
