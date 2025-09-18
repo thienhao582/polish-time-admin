@@ -490,7 +490,16 @@ export function AppointmentDayView({
           </div>
           
           {/* Scrollable headers area */}
-          <div className="flex-1 overflow-x-auto">
+          <div 
+            className="flex-1 overflow-x-auto"
+            onScroll={(e) => {
+              // Sync horizontal scroll with content
+              const contentScrollArea = e.currentTarget.parentElement?.parentElement?.nextElementSibling?.querySelector('.overflow-auto') as HTMLElement;
+              if (contentScrollArea) {
+                contentScrollArea.scrollLeft = e.currentTarget.scrollLeft;
+              }
+            }}
+          >
             <div className="flex min-w-max">
               {/* Anyone column header */}
               <div className="w-36 flex-shrink-0 border-r border-gray-200 bg-gradient-to-r from-orange-50 to-red-50 h-12 flex items-center justify-center">
@@ -564,8 +573,18 @@ export function AppointmentDayView({
             </div>
           </div>
 
-          {/* Main scrollable content area */}
-          <div className="flex-1 overflow-auto min-h-0" style={{ height: 'calc(100vh - 200px)' }}>
+          {/* Main scrollable content area - Both horizontal and vertical scroll */}
+          <div 
+            className="flex-1 overflow-auto min-h-0" 
+            style={{ height: 'calc(100vh - 200px)' }}
+            onScroll={(e) => {
+              // Sync horizontal scroll with header
+              const headerScrollArea = e.currentTarget.parentElement?.parentElement?.querySelector('.overflow-x-auto') as HTMLElement;
+              if (headerScrollArea) {
+                headerScrollArea.scrollLeft = e.currentTarget.scrollLeft;
+              }
+            }}
+          >
             <div className="flex min-w-max">
               {/* Anyone column */}
               <div className="flex-shrink-0 border-r border-gray-200 w-36">
