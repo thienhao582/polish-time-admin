@@ -143,6 +143,8 @@ const Appointments = () => {
       ));
 
       if (isDemoMode) {
+        // Prevent the next effect-triggered reload caused by persisted store updates
+        skipNextLoadRef.current = true;
         updateAppointment(appointmentId, updateData);
       } else {
         // TODO: call backend update here
