@@ -44,7 +44,7 @@ export function AppointmentFilters({
   showAvailableStaffSidebar,
   setShowAvailableStaffSidebar,
   isMaximized = false,
-  appointmentStatus = "confirmed",
+  appointmentStatus = "all",
   setAppointmentStatus
 }: AppointmentFiltersProps) {
   const { employees } = useSalonStore();

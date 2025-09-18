@@ -63,7 +63,7 @@ const Appointments = () => {
   const [showAvailableStaffSidebar, setShowAvailableStaffSidebar] = useState(false); // Will be set based on viewMode
   const [appointments, setAppointments] = useState<LegacyAppointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [appointmentStatus, setAppointmentStatus] = useState("confirmed");
+  const [appointmentStatus, setAppointmentStatus] = useState("all");
   const [initialFormData, setInitialFormData] = useState<any>(null);
 
   // Prevent heavy reload after optimistic updates (drag/drop etc.)
