@@ -406,19 +406,13 @@ export function AppointmentDayView({
         return hasAppointment;
       });
 
-  // Optimized drag and drop handlers (DOM-class based to avoid rerenders)
+  // Optimized drag and drop handlers (minimal DOM operations)
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
-    startDrag(appointment.id);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id.toString());
-
-    // Immediate visual feedback on press
-    const el = e.currentTarget as HTMLElement;
-    el.classList.add('drag-press');
-
-    // Custom drag image
-    const rect = el.getBoundingClientRect();
-    e.dataTransfer.setDragImage(el, rect.width / 2, rect.height / 2);
+    
+    // Start drag via zustand (lightweight)
+    startDrag(appointment.id);
   };
 
   const highlightTarget = (el: HTMLElement | null) => {
@@ -477,10 +471,6 @@ export function AppointmentDayView({
   const handleDragEnd = (e?: React.DragEvent) => {
     // Clean up visuals
     clearHighlight();
-    // Remove press class from the element being dragged
-    if (e && e.currentTarget) {
-      (e.currentTarget as HTMLElement).classList.remove('drag-press');
-    }
     endDrag();
   };
 
@@ -753,16 +743,13 @@ export function AppointmentDayView({
                                   minHeight: '50px',
                                   zIndex: draggedAppointmentId === apt.id ? 50 : 10
                                 }}
-                                draggable={true}
-                                onMouseDown={(e) => (e.currentTarget as HTMLElement).classList.add('drag-press')}
-                                onMouseUp={(e) => (e.currentTarget as HTMLElement).classList.remove('drag-press')}
-                                onDragStart={(e) => handleDragStart(e, apt)}
-                                onDragEnd={handleDragEnd}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleAppointmentClick(apt, e);
-                                }}
+                                 draggable={true}
+                                 onDragStart={(e) => handleDragStart(e, apt)}
+                                 onDragEnd={handleDragEnd}
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   handleAppointmentClick(apt, e);
+                                 }}
                                >
                                  {/* Staff icon in top right if staff is assigned */}
                                  {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
