@@ -188,6 +188,79 @@ const serviceNames = [
 const servicePrices = [450000, 380000, 650000, 200000, 280000];
 const serviceDurations = [90, 120, 150, 60, 75];
 
+// Generate single heavy appointment day
+const generateSingleHeavyDay = (year: number, month: number, day: number, startId: number) => {
+  const appointments: Appointment[] = [];
+  let currentId = startId;
+  
+  const appointmentCount = 35 + Math.floor(Math.random() * 10); // 35-44 appointments
+  
+  for (let i = 0; i < appointmentCount; i++) {
+    const serviceIndex = Math.floor(Math.random() * serviceNames.length);
+    const customerIndex = Math.floor(Math.random() * 100) + 1;
+    
+    // Find employees who can do this service
+    const availableEmployees = initialEmployees.filter(emp => 
+      emp.role === "thợ" && emp.assignedServices.includes((serviceIndex + 1).toString())
+    );
+    const employee = availableEmployees.length > 0 
+      ? availableEmployees[Math.floor(Math.random() * availableEmployees.length)]
+      : initialEmployees.filter(emp => emp.role === "thợ")[Math.floor(Math.random() * initialEmployees.filter(emp => emp.role === "thợ").length)];
+    
+    // Spread appointments from 8:00 to 18:00 (600 minutes)
+    const totalMinutes = 480 + Math.floor(Math.random() * 600); // 8:00 AM to 6:00 PM
+    const hour = Math.min(18, Math.floor(totalMinutes / 60));
+    const minute = totalMinutes % 60;
+    
+    const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    
+    const customer = initialCustomers[customerIndex - 1];
+    
+    // Determine assignment type with specified distribution
+    let assignmentType: 'pre-assigned' | 'reassigned-from-anyone' | 'anyone';
+    const assignmentRandom = Math.random();
+    if (assignmentRandom < 0.4) { // 40% pre-assigned (blue)
+      assignmentType = 'pre-assigned';
+    } else if (assignmentRandom < 0.7) { // 30% reassigned from anyone (light blue) 
+      assignmentType = 'reassigned-from-anyone';
+    } else { // 30% anyone (orange-yellow)
+      assignmentType = 'anyone';
+    }
+    
+    const staffSalaryData = [{
+      staffId: employee.id,
+      staffName: employee.name,
+      serviceId: (serviceIndex + 1).toString(),
+      serviceName: serviceNames[serviceIndex],
+      commissionRate: 0.3,
+      fixedAmount: 0,
+      servicePrice: servicePrices[serviceIndex]
+    }];
+
+    appointments.push({
+      id: currentId++,
+      date,
+      time,
+      customer: customer.name,
+      phone: customer.phone,
+      service: serviceNames[serviceIndex],
+      duration: `${serviceDurations[serviceIndex]} phút`,
+      price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
+      status: "confirmed",
+      staff: assignmentType === 'anyone' ? 'Bất kì' : employee.name,
+      customerId: customerIndex.toString(),
+      serviceId: (serviceIndex + 1).toString(),
+      staffId: assignmentType === 'anyone' ? undefined : employee.id,
+      notes: Math.random() < 0.1 ? "Khách hàng VIP" : undefined,
+      staffSalaryData,
+      assignmentType
+    });
+  }
+  
+  return appointments;
+};
+
 // Generate heavy appointment days for September & October 2025
 const generateHeavyAppointmentDays = (year: number, month: number, startId: number) => {
   const appointments: Appointment[] = [];
@@ -394,6 +467,11 @@ const generateAppointmentsForRange = () => {
   const oct2025Appointments = generateHeavyAppointmentDays(2025, 10, appointmentId);
   appointments.push(...oct2025Appointments);
   appointmentId += oct2025Appointments.length;
+  
+  // Add heavy appointment day for August 6, 2025
+  const aug6_2025Appointments = generateSingleHeavyDay(2025, 8, 6, appointmentId);
+  appointments.push(...aug6_2025Appointments);
+  appointmentId += aug6_2025Appointments.length;
   
   return appointments;
 };
