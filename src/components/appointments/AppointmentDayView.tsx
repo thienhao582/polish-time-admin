@@ -34,6 +34,7 @@ interface AppointmentDayViewProps {
   searchQuery?: string;
   onAppointmentCreated?: () => void;
   onScheduleUpdate?: () => void;
+  onAppointmentDrop?: (appointmentId: number, newTime: string, newStaff?: string) => void;
 }
 
 export function AppointmentDayView({
@@ -45,7 +46,8 @@ export function AppointmentDayView({
   onTimeSlotClick,
   searchQuery,
   onAppointmentCreated,
-  onScheduleUpdate
+  onScheduleUpdate,
+  onAppointmentDrop
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -61,6 +63,9 @@ export function AppointmentDayView({
   // State for employee schedule dialog
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  
+  // State for drag and drop
+  const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -395,6 +400,27 @@ export function AppointmentDayView({
         return hasAppointment;
       });
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
+    setDraggedAppointment(appointment);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', appointment.id.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTime: string, targetStaff?: string) => {
+    e.preventDefault();
+    if (!draggedAppointment || !onAppointmentDrop) return;
+
+    const newStaff = targetStaff === 'Anyone' ? '' : targetStaff;
+    onAppointmentDrop(draggedAppointment.id, targetTime, newStaff);
+    setDraggedAppointment(null);
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -468,22 +494,29 @@ export function AppointmentDayView({
                   setIsAnyonePopupOpen(true);
                 };
 
-                return (
-                  <div 
-                    key={`anyone-hour-${hourSlot}`} 
-                    className="h-28 border-b border-gray-200 bg-white relative p-1 transition-colors hover:bg-orange-50"
-                  >
+                 return (
+                   <div 
+                     key={`anyone-hour-${hourSlot}`} 
+                     className="h-28 border-b border-gray-200 bg-white relative p-1 transition-colors hover:bg-orange-50"
+                     onDragOver={handleDragOver}
+                     onDrop={(e) => handleDrop(e, hourSlot, 'Anyone')}
+                   >
                     {displayAppointment ? (
                       <div className="space-y-1">
                         {/* First appointment */}
-                        <div
-                          className="bg-orange-100 border border-orange-300 rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAppointmentClick(displayAppointment, e);
-                          }}
-                        >
+                         <div
+                           className="bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs"
+                           draggable={true}
+                           onDragStart={(e) => handleDragStart(e, displayAppointment)}
+                           style={{
+                             opacity: draggedAppointment?.id === displayAppointment.id ? 0.5 : 1
+                           }}
+                           onClick={(e) => {
+                             e.preventDefault();
+                             e.stopPropagation();
+                             handleAppointmentClick(displayAppointment, e);
+                           }}
+                         >
                           <div className="font-semibold text-orange-800 text-xs">
                             {displayAppointment.time}
                           </div>
@@ -584,20 +617,22 @@ export function AppointmentDayView({
                       }
                     };
                     
-                    return (
-                      <div 
-                        key={`${employee.id}-${timeSlot}`} 
-                        className={cn(
-                          "h-14 border-b border-gray-200 relative p-1 transition-colors",
-                          !availability.available 
-                            ? "bg-gray-200 cursor-not-allowed opacity-60" 
-                            : startingAppointments.length === 0 
-                              ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                              : "bg-white hover:bg-gray-50"
-                        )}
-                        onClick={handleTimeSlotClick}
-                        title={!availability.available ? availability.reason : ""}
-                      >
+                     return (
+                       <div 
+                         key={`${employee.id}-${timeSlot}`} 
+                         className={cn(
+                           "h-14 border-b border-gray-200 relative p-1 transition-colors",
+                           !availability.available 
+                             ? "bg-gray-200 cursor-not-allowed opacity-60" 
+                             : startingAppointments.length === 0 
+                               ? "bg-white hover:bg-blue-50 cursor-pointer" 
+                               : "bg-white hover:bg-gray-50"
+                         )}
+                         onClick={handleTimeSlotClick}
+                         onDragOver={handleDragOver}
+                         onDrop={(e) => handleDrop(e, timeSlot, employee.name)}
+                         title={!availability.available ? availability.reason : ""}
+                       >
                         {/* Show blocked time indicator if not available */}
                         {!availability.available && (
                           <div className="absolute inset-0 flex items-center justify-center bg-gray-300/90 rounded border-2 border-red-200">
@@ -631,23 +666,26 @@ export function AppointmentDayView({
                           };
                           
                           return (
-                            <div
-                              key={`${apt.id}-${aptIndex}`}
-                              className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-pointer hover:shadow-md transition-all text-xs overflow-hidden`}
-                              style={{
-                                top: '2px',
-                                left: `${aptIndex * 50}%`,
-                                width: startingAppointments.length > 1 ? '48%' : '96%',
-                                height: `${heightInPixels}px`,
-                                minHeight: '50px',
-                                zIndex: 10
-                              }}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAppointmentClick(apt, e);
-                              }}
-                             >
+                             <div
+                               key={`${apt.id}-${aptIndex}`}
+                               className={`absolute ${getAppointmentColor()} border rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs overflow-hidden`}
+                               style={{
+                                 top: '2px',
+                                 left: `${aptIndex * 50}%`,
+                                 width: startingAppointments.length > 1 ? '48%' : '96%',
+                                 height: `${heightInPixels}px`,
+                                 minHeight: '50px',
+                                 zIndex: 10,
+                                 opacity: draggedAppointment?.id === apt.id ? 0.5 : 1
+                               }}
+                               draggable={true}
+                               onDragStart={(e) => handleDragStart(e, apt)}
+                               onClick={(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 handleAppointmentClick(apt, e);
+                               }}
+                              >
                                 {/* Staff icon in top right if staff is assigned */}
                                 {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
                                   <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
