@@ -493,7 +493,6 @@ export function AppointmentDayView({
           <div 
             id="header-scroll"
             className="flex-1 overflow-x-auto scrollbar-hide"
-            style={{ maxWidth: 'calc(100vw - 300px)' }}
             onScroll={(e) => {
               // Sync horizontal scroll with content
               const contentScrollArea = document.getElementById('content-scroll');
@@ -590,8 +589,7 @@ export function AppointmentDayView({
             id="content-scroll"
             className="flex-1 overflow-auto"
             style={{ 
-              maxHeight: 'calc(100vh - 250px)',
-              maxWidth: 'calc(100vw - 320px)'
+              maxHeight: 'calc(100vh - 250px)'
             }}
             onScroll={(e) => {
               // Sync horizontal scroll with header
