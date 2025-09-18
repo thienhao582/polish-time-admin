@@ -134,7 +134,7 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments, isCo
   // If isContentOnly is true, return only the content without Sheet wrapper
   if (isContentOnly) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col max-h-[calc(100vh-300px)]">
         <div className="flex-shrink-0 mb-2">
           <div className="text-xs text-muted-foreground">
             Sắp xếp: Rảnh → Sắp xong → Đang bận
@@ -149,7 +149,7 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments, isCo
             </p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-[calc(100vh-350px)]">
             {availableStaff.map((staff, index) => (
               <div 
                 key={staff!.employee.id} 
