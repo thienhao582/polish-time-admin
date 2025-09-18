@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CalendarIcon, ClockIcon, UserRound } from "lucide-react";
+import { CalendarIcon, ClockIcon, UserRound, History } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -63,6 +63,7 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
   const [phoneInput, setPhoneInput] = useState<string>("");
   const [foundCustomer, setFoundCustomer] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -454,9 +455,23 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       {/* Customer Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label htmlFor="customerName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-            Tên khách hàng
-          </Label>
+          <div className="flex items-center gap-2 mb-1">
+            <Label htmlFor="customerName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
+              Tên khách hàng
+            </Label>
+            {foundCustomer && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsHistoryOpen(true)}
+                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+              >
+                <History className="w-3 h-3 mr-1" />
+                Xem lịch sử
+              </Button>
+            )}
+          </div>
           <Input 
             id="customerName" 
             type="text" 
@@ -524,6 +539,16 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
           {isSubmitting ? "Đang xử lý..." : "Xác nhận"}
         </Button>
       </div>
+
+      {/* Customer History Popup */}
+      {foundCustomer && (
+        <CustomerHistoryPopup
+          isOpen={isHistoryOpen}
+          onOpenChange={setIsHistoryOpen}
+          customerName={foundCustomer.name}
+          customerPhone={foundCustomer.phone}
+        />
+      )}
     </form>
   );
 }
