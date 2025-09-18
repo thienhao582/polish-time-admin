@@ -460,17 +460,18 @@ export function AppointmentDayView({
 
   const handleDrop = (e: React.DragEvent, targetTime: string, targetStaff?: string) => {
     e.preventDefault();
-    if (!draggedAppointment || !onAppointmentDrop) return;
+    // Use global store id to avoid heavy state updates during drag
+    if (!draggedAppointmentId || !onAppointmentDrop) {
+      clearHighlight();
+      return;
+    }
 
     const newStaff = targetStaff === 'Anyone' ? '' : targetStaff;
-    onAppointmentDrop(draggedAppointment.id, targetTime, newStaff);
+    onAppointmentDrop(draggedAppointmentId, targetTime, newStaff);
 
     // Clean up state and visuals
-    setDraggedAppointment(null);
+    endDrag();
     clearHighlight();
-
-    // Remove press class from original element if still present
-    const el = e.dataTransfer as any;
   };
 
   const handleDragEnd = (e?: React.DragEvent) => {
@@ -480,7 +481,7 @@ export function AppointmentDayView({
     if (e && e.currentTarget) {
       (e.currentTarget as HTMLElement).classList.remove('drag-press');
     }
-    setDraggedAppointment(null);
+    endDrag();
   };
 
   return (
@@ -573,7 +574,7 @@ export function AppointmentDayView({
                          <div
                            className={cn(
                              "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs relative",
-                             draggedAppointment?.id === displayAppointment.id && "opacity-60 transform scale-95"
+                             draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
                            )}
                            draggable={true}
                            onDragStart={(e) => handleDragStart(e, displayAppointment)}
@@ -739,18 +740,18 @@ export function AppointmentDayView({
                            return (
                               <div
                                 key={`${apt.id}-${aptIndex}`}
-                                className={cn(
-                                  "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
-                                  getAppointmentColor(),
-                                  draggedAppointment?.id === apt.id && "opacity-90 transform scale-105 shadow-2xl"
-                                )}
+                                 className={cn(
+                                   "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
+                                   getAppointmentColor(),
+                                   draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
+                                 )}
                                 style={{
                                   top: '2px',
                                   left: `${aptIndex * 50}%`,
                                   width: startingAppointments.length > 1 ? '48%' : '96%',
                                   height: `${heightInPixels}px`,
                                   minHeight: '50px',
-                                  zIndex: draggedAppointment?.id === apt.id ? 50 : 10
+                                  zIndex: draggedAppointmentId === apt.id ? 50 : 10
                                 }}
                                 draggable={true}
                                 onMouseDown={(e) => (e.currentTarget as HTMLElement).classList.add('drag-press')}
