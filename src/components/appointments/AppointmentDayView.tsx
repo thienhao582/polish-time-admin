@@ -3,7 +3,7 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,8 +66,9 @@ export function AppointmentDayView({
   
   // State for drag and drop - optimized approach
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
-  const [dragOverTarget, setDragOverTarget] = useState<{timeSlot: string, staff: string} | null>(null);
-  const [mouseDownId, setMouseDownId] = useState<number | null>(null);
+  // Use refs for hover/highlight to avoid rerenders on dragover
+  const lastHighlightRef = useRef<HTMLElement | null>(null);
+
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -402,37 +403,55 @@ export function AppointmentDayView({
         return hasAppointment;
       });
 
-  // Optimized drag and drop handlers
+  // Optimized drag and drop handlers (DOM-class based to avoid rerenders)
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
     setDraggedAppointment(appointment);
-    setMouseDownId(null);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id.toString());
-    
-    // Create a custom drag image for better UX
-    const dragElement = e.currentTarget as HTMLElement;
-    const rect = dragElement.getBoundingClientRect();
-    e.dataTransfer.setDragImage(dragElement, rect.width / 2, rect.height / 2);
+
+    // Immediate visual feedback on press
+    const el = e.currentTarget as HTMLElement;
+    el.classList.add('drag-press');
+
+    // Custom drag image
+    const rect = el.getBoundingClientRect();
+    e.dataTransfer.setDragImage(el, rect.width / 2, rect.height / 2);
   };
 
-  const handleDragOver = (e: React.DragEvent, timeSlot: string, staff: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    
-    // Only update if target changed to avoid unnecessary renders
-    if (!dragOverTarget || dragOverTarget.timeSlot !== timeSlot || dragOverTarget.staff !== staff) {
-      setDragOverTarget({ timeSlot, staff });
+  const highlightTarget = (el: HTMLElement | null) => {
+    if (lastHighlightRef.current && lastHighlightRef.current !== el) {
+      lastHighlightRef.current.classList.remove('dnd-target');
+    }
+    if (el) {
+      el.classList.add('dnd-target');
+      lastHighlightRef.current = el;
     }
   };
 
+  const clearHighlight = () => {
+    if (lastHighlightRef.current) {
+      lastHighlightRef.current.classList.remove('dnd-target');
+      lastHighlightRef.current = null;
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    highlightTarget(e.currentTarget as HTMLElement);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
   const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if leaving the container entirely
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    
+    // If leaving the element entirely, clear highlight
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const { clientX: x, clientY: y } = e;
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setDragOverTarget(null);
+      (e.currentTarget as HTMLElement).classList.remove('dnd-target');
+      if (lastHighlightRef.current === e.currentTarget) lastHighlightRef.current = null;
     }
   };
 
@@ -442,16 +461,23 @@ export function AppointmentDayView({
 
     const newStaff = targetStaff === 'Anyone' ? '' : targetStaff;
     onAppointmentDrop(draggedAppointment.id, targetTime, newStaff);
-    
-    // Clean up state
+
+    // Clean up state and visuals
     setDraggedAppointment(null);
-    setDragOverTarget(null);
+    clearHighlight();
+
+    // Remove press class from original element if still present
+    const el = e.dataTransfer as any;
   };
 
-  const handleDragEnd = () => {
-    // Clean up state when drag ends
+  const handleDragEnd = (e?: React.DragEvent) => {
+    // Clean up visuals
+    clearHighlight();
+    // Remove press class from the element being dragged
+    if (e && e.currentTarget) {
+      (e.currentTarget as HTMLElement).classList.remove('drag-press');
+    }
     setDraggedAppointment(null);
-    setDragOverTarget(null);
   };
 
   return (
@@ -531,12 +557,10 @@ export function AppointmentDayView({
                    <div 
                      key={`anyone-hour-${hourSlot}`} 
                      className={cn(
-                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200 select-none",
-                       dragOverTarget?.timeSlot === hourSlot && dragOverTarget?.staff === 'Anyone'
-                         ? "bg-blue-100 border-blue-300 shadow-inner" 
-                         : "hover:bg-orange-50"
+                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200 select-none hover:bg-orange-50"
                      )}
-                     onDragOver={(e) => handleDragOver(e, hourSlot, 'Anyone')}
+                     onDragEnter={handleDragEnter}
+                     onDragOver={handleDragOver}
                      onDragLeave={handleDragLeave}
                      onDrop={(e) => handleDrop(e, hourSlot, 'Anyone')}
                    >
@@ -551,6 +575,8 @@ export function AppointmentDayView({
                            draggable={true}
                            onDragStart={(e) => handleDragStart(e, displayAppointment)}
                            onDragEnd={handleDragEnd}
+                           onMouseDown={(e) => (e.currentTarget as HTMLElement).classList.add('drag-press')}
+                           onMouseUp={(e) => (e.currentTarget as HTMLElement).classList.remove('drag-press')}
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
@@ -581,15 +607,6 @@ export function AppointmentDayView({
                      ) : (
                        <div className="text-center text-orange-400 text-xs py-4">
                          Trống
-                       </div>
-                     )}
-                     
-                     {/* Drop indicator overlay for Anyone column */}
-                     {dragOverTarget?.timeSlot === hourSlot && dragOverTarget?.staff === 'Anyone' && draggedAppointment && (
-                       <div className="absolute inset-0 bg-blue-200/30 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
-                         <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                           Chuyển về Anyone
-                         </div>
                        </div>
                      )}
                    </div>
