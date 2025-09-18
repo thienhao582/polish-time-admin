@@ -207,9 +207,11 @@ const generateSingleHeavyDay = (year: number, month: number, day: number, startI
       ? availableEmployees[Math.floor(Math.random() * availableEmployees.length)]
       : initialEmployees.filter(emp => emp.role === "thợ")[Math.floor(Math.random() * initialEmployees.filter(emp => emp.role === "thợ").length)];
     
-    // Spread appointments from 8:00 to 18:00 (600 minutes)
-    const totalMinutes = 480 + Math.floor(Math.random() * 600); // 8:00 AM to 6:00 PM
-    const hour = Math.min(18, Math.floor(totalMinutes / 60));
+    // Spread appointments from 7:00 to 23:59 (17 hours)
+    const startMinute = 7 * 60; // 7:00 AM = 420 minutes
+    const endMinute = 24 * 60 - 1; // 23:59 = 1439 minutes
+    const totalMinutes = startMinute + Math.floor(Math.random() * (endMinute - startMinute));
+    const hour = Math.floor(totalMinutes / 60);
     const minute = totalMinutes % 60;
     
     const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
