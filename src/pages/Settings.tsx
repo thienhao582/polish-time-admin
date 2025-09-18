@@ -1,15 +1,15 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useToast } from "@/hooks/use-toast";
 import { Settings as SettingsIcon, Save, RotateCcw } from "lucide-react";
 
 const Settings = () => {
-  const { pointsSettings, updatePointsSettings, resetToDefaults } = useSettingsStore();
+  const { pointsSettings, appointmentColors, updatePointsSettings, updateAppointmentColors, resetToDefaults } = useSettingsStore();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -17,11 +17,14 @@ const Settings = () => {
     minimumAmount: pointsSettings.minimumAmount,
   });
 
+  const [colorData, setColorData] = useState(appointmentColors);
+
   const handleSave = () => {
     updatePointsSettings(formData);
+    updateAppointmentColors(colorData);
     toast({
       title: "Đã lưu cài đặt",
-      description: "Cài đặt tỷ lệ quy đổi điểm đã được cập nhật thành công.",
+      description: "Cài đặt tỷ lệ quy đổi điểm và màu sắc đã được cập nhật thành công.",
     });
   };
 
@@ -31,11 +34,27 @@ const Settings = () => {
       pointsPerAmount: 1,
       minimumAmount: 50000,
     });
+    setColorData({
+      anyone: 'bg-orange-100 border-orange-300 text-orange-800',
+      preAssigned: 'bg-blue-100 border-blue-300 text-blue-800',
+      reassigned: 'bg-sky-100 border-sky-300 text-sky-800',
+    });
     toast({
       title: "Đã khôi phục mặc định",
       description: "Cài đặt đã được khôi phục về giá trị mặc định.",
     });
   };
+
+  const colorOptions = [
+    { value: 'bg-orange-100 border-orange-300 text-orange-800', label: 'Cam', preview: 'bg-orange-100 border-orange-300' },
+    { value: 'bg-blue-100 border-blue-300 text-blue-800', label: 'Xanh dương', preview: 'bg-blue-100 border-blue-300' },
+    { value: 'bg-sky-100 border-sky-300 text-sky-800', label: 'Xanh da trời', preview: 'bg-sky-100 border-sky-300' },
+    { value: 'bg-green-100 border-green-300 text-green-800', label: 'Xanh lá', preview: 'bg-green-100 border-green-300' },
+    { value: 'bg-purple-100 border-purple-300 text-purple-800', label: 'Tím', preview: 'bg-purple-100 border-purple-300' },
+    { value: 'bg-pink-100 border-pink-300 text-pink-800', label: 'Hồng', preview: 'bg-pink-100 border-pink-300' },
+    { value: 'bg-yellow-100 border-yellow-300 text-yellow-800', label: 'Vàng', preview: 'bg-yellow-100 border-yellow-300' },
+    { value: 'bg-indigo-100 border-indigo-300 text-indigo-800', label: 'Chàm', preview: 'bg-indigo-100 border-indigo-300' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -44,6 +63,7 @@ const Settings = () => {
         <h1 className="text-2xl font-bold text-gray-800">Cài đặt hệ thống</h1>
       </div>
 
+      {/* Points Settings Card */}
       <Card className="border-gray-200">
         <CardHeader className="pb-4 border-b border-gray-100">
           <CardTitle className="text-lg text-gray-800 flex items-center space-x-2">
@@ -99,28 +119,126 @@ const Settings = () => {
                 Hóa đơn 1.200.000 VND sẽ được tích: {Math.floor((1200000 / 1000) * formData.pointsPerAmount)} điểm
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="flex space-x-3 pt-4 border-t border-gray-100">
-              <Button 
-                onClick={handleSave}
-                className="flex items-center space-x-2 bg-black hover:bg-gray-800 text-white"
-              >
-                <Save className="w-4 h-4" />
-                <span>Lưu cài đặt</span>
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={handleReset}
-                className="flex items-center space-x-2 border-gray-300 hover:bg-gray-50"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Khôi phục mặc định</span>
-              </Button>
+      {/* Appointment Colors Settings Card */}
+      <Card className="border-gray-200">
+        <CardHeader className="pb-4 border-b border-gray-100">
+          <CardTitle className="text-lg text-gray-800">Cài đặt màu sắc lịch hẹn</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="anyone-color" className="text-sm font-medium text-gray-700">Màu cho lịch hẹn "Anyone"</Label>
+              <Select value={colorData.anyone} onValueChange={(value) => setColorData(prev => ({ ...prev, anyone: value }))}>
+                <SelectTrigger>
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded border ${colorOptions.find(opt => opt.value === colorData.anyone)?.preview}`}></div>
+                      {colorOptions.find(opt => opt.value === colorData.anyone)?.label}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {colorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded border ${option.preview}`}></div>
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pre-assigned-color" className="text-sm font-medium text-gray-700">Màu cho lịch hẹn đã sắp xếp sẵn nhân viên</Label>
+              <Select value={colorData.preAssigned} onValueChange={(value) => setColorData(prev => ({ ...prev, preAssigned: value }))}>
+                <SelectTrigger>
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded border ${colorOptions.find(opt => opt.value === colorData.preAssigned)?.preview}`}></div>
+                      {colorOptions.find(opt => opt.value === colorData.preAssigned)?.label}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {colorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded border ${option.preview}`}></div>
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reassigned-color" className="text-sm font-medium text-gray-700">Màu cho lịch hẹn được assign sau khi từ anyone</Label>
+              <Select value={colorData.reassigned} onValueChange={(value) => setColorData(prev => ({ ...prev, reassigned: value }))}>
+                <SelectTrigger>
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded border ${colorOptions.find(opt => opt.value === colorData.reassigned)?.preview}`}></div>
+                      {colorOptions.find(opt => opt.value === colorData.reassigned)?.label}
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {colorOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-4 h-4 rounded border ${option.preview}`}></div>
+                        {option.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-gray-800 mb-2">Xem trước:</h4>
+              <div className="space-y-2">
+                <div className={`p-2 rounded-md border text-xs ${colorData.anyone}`}>
+                  Lịch hẹn ở trạng thái "Anyone"
+                </div>
+                <div className={`p-2 rounded-md border text-xs ${colorData.preAssigned}`}>
+                  Lịch hẹn đã sắp xếp sẵn nhân viên
+                </div>
+                <div className={`p-2 rounded-md border text-xs ${colorData.reassigned}`}>
+                  Lịch hẹn được assign sau khi từ anyone
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-3">
+        <Button 
+          onClick={handleSave}
+          className="flex items-center space-x-2 bg-black hover:bg-gray-800 text-white"
+        >
+          <Save className="w-4 h-4" />
+          <span>Lưu cài đặt</span>
+        </Button>
+        
+        <Button 
+          variant="outline"
+          onClick={handleReset}
+          className="flex items-center space-x-2 border-gray-300 hover:bg-gray-50"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Khôi phục mặc định</span>
+        </Button>
+      </div>
     </div>
   );
 };

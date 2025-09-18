@@ -251,6 +251,17 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         servicePrice: servicePrices[serviceIndex]
       }];
       
+      // Determine assignment type - 70% pre-assigned, 20% reassigned, 10% anyone
+      let assignmentType: 'pre-assigned' | 'reassigned-from-anyone' | 'anyone';
+      const assignmentRandom = Math.random();
+      if (assignmentRandom < 0.7) {
+        assignmentType = 'pre-assigned';
+      } else if (assignmentRandom < 0.9) {
+        assignmentType = 'reassigned-from-anyone';
+      } else {
+        assignmentType = 'anyone';
+      }
+
       appointments.push({
         id: currentId++,
         date,
@@ -261,12 +272,13 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         duration: `${serviceDurations[serviceIndex]} phút`,
         price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
         status,
-        staff: employee.name,
+        staff: assignmentType === 'anyone' ? 'Bất kì' : employee.name,
         customerId: customerIndex.toString(),
         serviceId: (serviceIndex + 1).toString(),
-        staffId: employee.id,
+        staffId: assignmentType === 'anyone' ? undefined : employee.id,
         notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
-        staffSalaryData
+        staffSalaryData,
+        assignmentType
       });
       
       appointmentsCreated++;
@@ -380,6 +392,17 @@ const generateAug6TestData = () => {
     const customerIndex = Math.floor(Math.random() * 100);
     const customer = initialCustomers[customerIndex];
     
+    // Determine assignment type for Aug 6 data  
+    const assignmentRandom = Math.random();
+    let assignmentType: 'pre-assigned' | 'reassigned-from-anyone' | 'anyone';
+    if (assignmentRandom < 0.7) {
+      assignmentType = 'pre-assigned';
+    } else if (assignmentRandom < 0.9) {
+      assignmentType = 'reassigned-from-anyone';
+    } else {
+      assignmentType = 'anyone';
+    }
+
     appointments.push({
       id: appointmentId + index,
       date: "2025-08-06",
@@ -390,11 +413,12 @@ const generateAug6TestData = () => {
       duration: `${aptData.duration} phút`,
       price: `${aptData.price.toLocaleString()}đ`,
       status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
-      staff: aptData.staff,
+      staff: assignmentType === 'anyone' ? 'Bất kì' : aptData.staff,
       customerId: customerIndex.toString(),
       serviceId: "1",
-      staffId: `emp${index + 1}`,
+      staffId: assignmentType === 'anyone' ? undefined : `emp${index + 1}`,
       notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
+      assignmentType,
       staffSalaryData: [{
         staffId: `emp${index + 1}`,
         staffName: aptData.staff,

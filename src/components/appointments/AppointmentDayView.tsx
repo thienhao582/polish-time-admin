@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { useSalonStore } from "@/stores/useSalonStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function AppointmentDayView({
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
+  const { appointmentColors } = useSettingsStore();
   
   // State for anyone appointments popup
   const [isAnyonePopupOpen, setIsAnyonePopupOpen] = useState(false);
@@ -531,11 +533,12 @@ export function AppointmentDayView({
                     {displayAppointment ? (
                       <div className="space-y-1">
                         {/* First appointment */}
-                         <div
-                           className={cn(
-                             "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative",
-                             draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
-                           )}
+                          <div
+                            className={cn(
+                              "rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative border",
+                              appointmentColors.anyone,
+                              draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
+                            )}
                             draggable={isDragEnabled}
                            onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
                             onDragEnd={isDragEnabled ? handleDragEnd : undefined}
@@ -683,12 +686,21 @@ export function AppointmentDayView({
                            const slotsSpanned = Math.ceil(durationMinutes / 15);
                            const heightInPixels = slotsSpanned * 56 - 4; // 56px per 15-min slot (h-14) minus border
                           
-                          // Use consistent color for all appointments
-                          const getAppointmentColor = () => {
-                            if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
-                            if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
-                            return 'bg-blue-100 border-blue-300 text-blue-800'; // Default blue for all confirmed appointments
-                          };
+                           // Use dynamic color based on assignment type from settings
+                           const getAppointmentColor = () => {
+                             if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
+                             if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
+                             
+                             // For confirmed appointments, use color based on assignment type from settings
+                             const assignmentType = (apt as any).assignmentType;
+                             if (assignmentType === 'anyone' || apt.staff === 'Bất kì') {
+                               return appointmentColors.anyone;
+                             } else if (assignmentType === 'reassigned-from-anyone') {
+                               return appointmentColors.reassigned;
+                             } else {
+                               return appointmentColors.preAssigned;
+                             }
+                           };
                           
                            return (
                               <div
