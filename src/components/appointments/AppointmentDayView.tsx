@@ -480,8 +480,8 @@ export function AppointmentDayView({
         </div>
       </div>
 
-      {/* Grid Container with Fixed Headers and Internal Scroll */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Calendar Container with constrained height for internal scrolling */}
+      <div className="flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] overflow-hidden">
         {/* Headers Row - Fixed Top */}
         <div className="flex border-b border-gray-200 bg-white z-40 flex-shrink-0">
           {/* Time column header - Fixed left-top corner */}
@@ -491,10 +491,12 @@ export function AppointmentDayView({
           
           {/* Scrollable headers area */}
           <div 
-            className="flex-1 overflow-x-auto"
+            id="header-scroll"
+            className="flex-1 overflow-x-auto scrollbar-hide"
+            style={{ maxWidth: 'calc(100vw - 300px)' }}
             onScroll={(e) => {
               // Sync horizontal scroll with content
-              const contentScrollArea = e.currentTarget.parentElement?.parentElement?.nextElementSibling?.querySelector('.overflow-auto') as HTMLElement;
+              const contentScrollArea = document.getElementById('content-scroll');
               if (contentScrollArea) {
                 contentScrollArea.scrollLeft = e.currentTarget.scrollLeft;
               }
@@ -558,10 +560,20 @@ export function AppointmentDayView({
 
         {/* Content Area with Synchronized Scroll */}
         <div className="flex-1 flex min-h-0 overflow-hidden">
-          {/* Time column - Fixed left with independent scroll */}
+          {/* Time column - Fixed left with vertical scroll */}
           <div className="w-20 bg-gray-50 border-r border-gray-200 flex-shrink-0 z-30 shadow-sm">
-            <div className="h-full overflow-y-auto scrollbar-thin" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <style>{`.scrollbar-thin::-webkit-scrollbar { display: none; }`}</style>
+            <div 
+              id="time-scroll"
+              className="h-full overflow-y-auto scrollbar-hide" 
+              style={{ maxHeight: 'calc(100vh - 250px)' }}
+              onScroll={(e) => {
+                // Sync vertical scroll with content
+                const contentScrollArea = document.getElementById('content-scroll');
+                if (contentScrollArea) {
+                  contentScrollArea.scrollTop = e.currentTarget.scrollTop;
+                }
+              }}
+            >
               {timeSlots.map((timeSlot) => (
                 <div 
                   key={timeSlot} 
@@ -575,13 +587,23 @@ export function AppointmentDayView({
 
           {/* Main scrollable content area - Both horizontal and vertical scroll */}
           <div 
-            className="flex-1 overflow-auto min-h-0" 
-            style={{ height: 'calc(100vh - 200px)' }}
+            id="content-scroll"
+            className="flex-1 overflow-auto"
+            style={{ 
+              maxHeight: 'calc(100vh - 250px)',
+              maxWidth: 'calc(100vw - 320px)'
+            }}
             onScroll={(e) => {
               // Sync horizontal scroll with header
-              const headerScrollArea = e.currentTarget.parentElement?.parentElement?.querySelector('.overflow-x-auto') as HTMLElement;
+              const headerScrollArea = document.getElementById('header-scroll');
               if (headerScrollArea) {
                 headerScrollArea.scrollLeft = e.currentTarget.scrollLeft;
+              }
+              
+              // Sync vertical scroll with time column
+              const timeScrollArea = document.getElementById('time-scroll');
+              if (timeScrollArea) {
+                timeScrollArea.scrollTop = e.currentTarget.scrollTop;
               }
             }}
           >
