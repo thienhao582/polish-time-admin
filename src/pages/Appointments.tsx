@@ -594,6 +594,14 @@ const Appointments = () => {
             }
           }, 100);
         }}
+        onCheckout={async (appointmentId) => {
+          if (!isDemoMode) {
+            // Handle database checkout if needed
+            await loadAppointments();
+          }
+          setIsAppointmentDetailOpen(false);
+          toast.success("Đã hoàn thành lịch hẹn");
+        }}
       />
 
       {/* Edit Appointment Dialog */}

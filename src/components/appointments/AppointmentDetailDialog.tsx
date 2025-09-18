@@ -1,4 +1,4 @@
-import { CalendarIcon, Edit, Trash2, Clock, History } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Clock, History, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState } from "react";
@@ -55,6 +55,7 @@ interface AppointmentDetailDialogProps {
   onEdit: () => void;
   onDelete: (id: number) => void;
   onDurationUpdate?: (appointmentId: number, newDuration?: number) => void;
+  onCheckout?: (id: number) => void;
 }
 
 export function AppointmentDetailDialog({
@@ -63,7 +64,8 @@ export function AppointmentDetailDialog({
   appointment,
   onEdit,
   onDelete,
-  onDurationUpdate
+  onDurationUpdate,
+  onCheckout
 }: AppointmentDetailDialogProps) {
   const { services, employees, updateAppointment } = useSalonStore();
   const { isDemoMode } = useDemoMode();
@@ -122,6 +124,24 @@ export function AppointmentDetailDialog({
     setIsEditingDuration(false);
     setCustomDuration("");
   };
+
+  const handleCheckout = () => {
+    if (!appointment) return;
+    
+    if (isDemoMode) {
+      updateAppointment(appointment.id, {
+        ...appointment,
+        status: "completed"
+      });
+      toast.success("Đã hoàn thành lịch hẹn");
+    }
+    
+    if (onCheckout) {
+      onCheckout(appointment.id);
+    }
+  };
+
+  const canCheckout = appointment?.status === "confirmed" || appointment?.status === "pending";
 
   if (!appointment) return null;
 
@@ -315,6 +335,16 @@ export function AppointmentDetailDialog({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            {canCheckout && (
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleCheckout}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Checkout
+              </Button>
+            )}
             
             <Button 
               className="bg-pink-600 hover:bg-pink-700"
