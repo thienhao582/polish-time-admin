@@ -454,7 +454,7 @@ export function AppointmentDayView({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-blue-200 flex-shrink-0">
         <div className="flex items-start justify-between">
@@ -480,18 +480,18 @@ export function AppointmentDayView({
         </div>
       </div>
 
-      {/* Grid Container with Fixed Headers and Scroll */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* Grid Container with Fixed Headers and Internal Scroll */}
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Headers Row - Fixed Top */}
-        <div className="flex border-b border-gray-200 bg-white z-40 sticky top-0">
+        <div className="flex border-b border-gray-200 bg-white z-40 flex-shrink-0">
           {/* Time column header - Fixed left-top corner */}
-          <div className="w-20 bg-gray-100 border-r border-gray-200 flex items-center justify-center h-12 sticky left-0 z-50">
+          <div className="w-20 bg-gray-100 border-r border-gray-200 flex items-center justify-center h-12 flex-shrink-0 z-50">
             <span className="text-xs font-semibold text-gray-700">Giờ</span>
           </div>
           
           {/* Scrollable headers area */}
           <div className="flex-1 overflow-x-auto">
-            <div className="flex">
+            <div className="flex min-w-max">
               {/* Anyone column header */}
               <div className="w-36 flex-shrink-0 border-r border-gray-200 bg-gradient-to-r from-orange-50 to-red-50 h-12 flex items-center justify-center">
                 <div className="text-center w-full">
@@ -547,26 +547,29 @@ export function AppointmentDayView({
           </div>
         </div>
 
-        {/* Content Area with Scroll */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Time column - Fixed left */}
-          <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm flex-shrink-0 overflow-y-auto">
-            {timeSlots.map((timeSlot) => (
-              <div 
-                key={timeSlot} 
-                className="h-14 p-2 border-b border-gray-200 text-xs text-gray-700 font-semibold flex items-center justify-center bg-gray-50"
-              >
-                {timeSlot}
-              </div>
-            ))}
+        {/* Content Area with Synchronized Scroll */}
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {/* Time column - Fixed left with independent scroll */}
+          <div className="w-20 bg-gray-50 border-r border-gray-200 flex-shrink-0 z-30 shadow-sm">
+            <div className="h-full overflow-y-auto scrollbar-thin" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <style>{`.scrollbar-thin::-webkit-scrollbar { display: none; }`}</style>
+              {timeSlots.map((timeSlot) => (
+                <div 
+                  key={timeSlot} 
+                  className="h-14 p-2 border-b border-gray-200 text-xs text-gray-700 font-semibold flex items-center justify-center bg-gray-50"
+                >
+                  {timeSlot}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-auto">
-            <div className="flex">
+          {/* Main scrollable content area */}
+          <div className="flex-1 overflow-auto min-h-0" style={{ height: 'calc(100vh - 200px)' }}>
+            <div className="flex min-w-max">
               {/* Anyone column */}
               <div className="flex-shrink-0 border-r border-gray-200 w-36">
-                {/* Time slots for Anyone column - Hour-based slots */}
+                {/* Time slots for Anyone column */}
                 {hourSlots.map((hourSlot) => {
                   const slotAppointments = getAnyoneAppointmentsForHourSlot(hourSlot);
                   const displayAppointment = slotAppointments[0];
