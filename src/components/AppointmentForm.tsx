@@ -34,7 +34,12 @@ const appointmentFormSchema = z.object({
   customerPhone: z.string().min(10, {
     message: "Số điện thoại phải có ít nhất 10 ký tự",
   }),
-  customerEmail: z.string().email().optional(),
+  customerEmail: z.string().optional().refine((email) => {
+    if (!email || email.trim() === '') return true; // Allow empty email
+    return z.string().email().safeParse(email).success; // Validate only if not empty
+  }, {
+    message: "Invalid email"
+  }),
   notes: z.string().optional(),
   extraTime: z.number().min(0).optional(),
 });
