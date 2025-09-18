@@ -333,7 +333,7 @@ export function AppointmentDayView({
       .map(item => item.employee);
   }, [employees, staffAppointments, dateString]);
 
-  // Memoize time slots creation
+  // Memoize time slots creation (7:00 to 23:45)
   const allTimeSlots = useMemo(() => {
     const slots = [];
     for (let hour = 7; hour <= 23; hour++) {
@@ -343,12 +343,10 @@ export function AppointmentDayView({
         slots.push(timeString);
       }
     }
-    // Add 24:00 (midnight)
-    slots.push('24:00');
     return slots;
   }, []);
 
-  // Memoize hour slots and filtered employees
+  // Memoize hour slots (7:00 to 23:45)
   const hourSlots = useMemo(() => {
     const slots = [];
     for (let hour = 7; hour <= 23; hour++) {
@@ -357,8 +355,6 @@ export function AppointmentDayView({
         slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
       }
     }
-    // Add 24:00 (midnight)
-    slots.push('24:00');
     return slots;
   }, []);
 
@@ -484,30 +480,20 @@ export function AppointmentDayView({
         </div>
       </div>
 
-      {/* Grid Container with Full Width and Internal Scrolling */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-auto">
-          <div className="flex max-w-lg">
-            {/* Calculate actual needed width based on employees */}
-            {/* Time column - sticky left */}
-            <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm flex-shrink-0">
-              <div className="h-12 border-b border-gray-200 bg-gray-100 flex items-center justify-center">
-                <span className="text-xs font-semibold text-gray-700">Giờ</span>
-              </div>
-              {timeSlots.map((timeSlot) => (
-                <div 
-                  key={timeSlot} 
-                  className="h-14 p-2 border-b border-gray-200 text-xs text-gray-700 font-semibold flex items-center justify-center bg-gray-50"
-                >
-                  {timeSlot}
-                </div>
-              ))}
-            </div>
-
-            {/* Anyone column */}
-            <div className="flex-shrink-0 border-r border-gray-200 w-36">
-              {/* Anyone header */}
-              <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50 p-2 flex items-center justify-center sticky top-0 z-20">
+      {/* Grid Container with Fixed Headers and Scroll */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Headers Row - Fixed Top */}
+        <div className="flex border-b border-gray-200 bg-white z-40 sticky top-0">
+          {/* Time column header - Fixed left-top corner */}
+          <div className="w-20 bg-gray-100 border-r border-gray-200 flex items-center justify-center h-12 sticky left-0 z-50">
+            <span className="text-xs font-semibold text-gray-700">Giờ</span>
+          </div>
+          
+          {/* Scrollable headers area */}
+          <div className="flex-1 overflow-x-auto">
+            <div className="flex">
+              {/* Anyone column header */}
+              <div className="w-36 flex-shrink-0 border-r border-gray-200 bg-gradient-to-r from-orange-50 to-red-50 h-12 flex items-center justify-center">
                 <div className="text-center w-full">
                   <div className="text-sm font-bold text-gray-800 truncate leading-tight">
                     Anyone
@@ -518,247 +504,272 @@ export function AppointmentDayView({
                 </div>
               </div>
 
-              {/* Time slots for Anyone column - Hour-based slots */}
-              {hourSlots.map((hourSlot) => {
-                const slotAppointments = getAnyoneAppointmentsForHourSlot(hourSlot);
-                const displayAppointment = slotAppointments[0];
-                const remainingCount = slotAppointments.length - 1;
-
-                const handleMoreClick = () => {
-                  setSelectedTimeSlot(hourSlot);
-                  setSelectedSlotAppointments(slotAppointments);
-                  setIsAnyonePopupOpen(true);
-                };
-
-                 return (
-                   <div 
-                     key={`anyone-hour-${hourSlot}`} 
-                     className={cn(
-                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-colors duration-75 select-none hover:bg-orange-50"
-                     )}
-                      onDragEnter={isDragEnabled ? handleDragEnter : undefined}
-                      onDragOver={isDragEnabled ? handleDragOver : undefined}
-                      onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                     onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, 'Anyone') : undefined}
-                   >
-                    {displayAppointment ? (
-                      <div className="space-y-1">
-                        {/* First appointment */}
-                          <div
-                            className={cn(
-                              "rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative border",
-                              appointmentColors.anyone,
-                              draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
-                            )}
-                            draggable={isDragEnabled}
-                           onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
-                            onDragEnd={isDragEnabled ? handleDragEnd : undefined}
-                           onClick={(e) => {
-                             e.preventDefault();
-                             e.stopPropagation();
-                             handleAppointmentClick(displayAppointment, e);
-                           }}
-                         >
-                          <div className="font-semibold text-orange-800 text-xs">
-                            {displayAppointment.time}
-                          </div>
-                          <div className="font-bold text-gray-800 truncate">
-                            {displayAppointment.customer}
-                          </div>
-                          <div className="text-orange-700 truncate text-xs">
-                            {displayAppointment.service}
-                          </div>
-                        </div>
-
-                        {/* Show more button if there are additional appointments */}
-                        {remainingCount > 0 && (
-                          <button
-                            onClick={handleMoreClick}
-                            className="w-full bg-orange-50 border border-orange-200 rounded-md p-1 text-xs text-orange-600 hover:bg-orange-100 transition-colors"
-                          >
-                            +{remainingCount} lịch hẹn khác
-                          </button>
-                        )}
+              {/* Employee headers */}
+              {filteredWorkingEmployees.map((employee) => (
+                <div key={employee.id} className="min-w-[144px] max-w-[144px] flex-shrink-0 border-r border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 h-12 flex items-center justify-center">
+                  <div className="text-center w-full min-w-0">
+                    <div className="flex items-center justify-center gap-1">
+                      <div className="text-sm font-bold text-gray-800 truncate leading-tight" title={employee.name}>
+                        {employee.name}
                       </div>
-                     ) : (
-                       <div className="text-center text-orange-400 text-xs py-4">
-                         Trống
-                       </div>
-                     )}
-                   </div>
-                );
-              })}
-            </div>
-
-            {/* Employee columns */}
-            {filteredWorkingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
-                {searchQuery ? "Không tìm thấy nhân viên nào" : "Không có nhân viên nào làm việc hôm nay"}
-              </div>
-            ) : (
-              filteredWorkingEmployees.map((employee) => (
-                <div key={employee.id} className="min-w-[144px] max-w-[144px] flex-shrink-0 border-r border-gray-200">
-                  {/* Employee header - Fixed width and truncated */}
-                  <div className="h-12 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 flex items-center justify-center sticky top-0 z-20">
-                    <div className="text-center w-full min-w-0">
-                      <div className="flex items-center justify-center gap-1">
-                        <div className="text-sm font-bold text-gray-800 truncate leading-tight" title={employee.name}>
-                          {employee.name}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 hover:bg-blue-100"
-                          onClick={() => {
-                            setSelectedEmployee(employee);
-                            setIsScheduleDialogOpen(true);
-                          }}
-                          title="Thiết lập lịch làm việc"
-                        >
-                          <Settings className="w-3 h-3 text-gray-600 hover:text-blue-600" />
-                        </Button>
-                      </div>
-                      <div className={cn(
-                        "text-xs truncate font-medium flex items-center justify-center gap-1",
-                        employee.hasAppointments ? "text-blue-600" : "text-gray-500"
-                      )} title={`${employee.role} ${!employee.hasAppointments ? "(trống)" : ""}`}>
-                        {employee.role} {!employee.hasAppointments && "(trống)"}
-                        {(() => {
-                          const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
-                          if (scheduleStatus.status === 'off') {
-                            return <span title="Nghỉ"><Ban className="w-3 h-3 text-red-500" /></span>;
-                          } else if (scheduleStatus.status === 'partial') {
-                            return <span title={scheduleStatus.details}><Clock className="w-3 h-3 text-orange-500" /></span>;
-                          }
-                          return null;
-                        })()}
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-blue-100"
+                        onClick={() => {
+                          setSelectedEmployee(employee);
+                          setIsScheduleDialogOpen(true);
+                        }}
+                        title="Thiết lập lịch làm việc"
+                      >
+                        <Settings className="w-3 h-3 text-gray-600 hover:text-blue-600" />
+                      </Button>
+                    </div>
+                    <div className={cn(
+                      "text-xs truncate font-medium flex items-center justify-center gap-1",
+                      employee.hasAppointments ? "text-blue-600" : "text-gray-500"
+                    )} title={`${employee.role} ${!employee.hasAppointments ? "(trống)" : ""}`}>
+                      {employee.role} {!employee.hasAppointments && "(trống)"}
+                      {(() => {
+                        const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
+                        if (scheduleStatus.status === 'off') {
+                          return <span title="Nghỉ"><Ban className="w-3 h-3 text-red-500" /></span>;
+                        } else if (scheduleStatus.status === 'partial') {
+                          return <span title={scheduleStatus.details}><Clock className="w-3 h-3 text-orange-500" /></span>;
+                        }
+                        return null;
+                      })()}
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                   {/* Time slots for this employee */}
-                  {timeSlots.map((timeSlot) => {
-                    const employeeAppointments = getEmployeeAppointmentsForTimeSlot(employee, timeSlot);
-                    const startingAppointments = employeeAppointments.filter(apt => 
-                      appointmentStartsAtSlot(apt, timeSlot)
-                    );
+        {/* Content Area with Scroll */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Time column - Fixed left */}
+          <div className="w-20 bg-gray-50 border-r border-gray-200 sticky left-0 z-30 shadow-sm flex-shrink-0 overflow-y-auto">
+            {timeSlots.map((timeSlot) => (
+              <div 
+                key={timeSlot} 
+                className="h-14 p-2 border-b border-gray-200 text-xs text-gray-700 font-semibold flex items-center justify-center bg-gray-50"
+              >
+                {timeSlot}
+              </div>
+            ))}
+          </div>
 
-                    // Check if employee is available at this time
-                    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-auto">
+            <div className="flex">
+              {/* Anyone column */}
+              <div className="flex-shrink-0 border-r border-gray-200 w-36">
+                {/* Time slots for Anyone column - Hour-based slots */}
+                {hourSlots.map((hourSlot) => {
+                  const slotAppointments = getAnyoneAppointmentsForHourSlot(hourSlot);
+                  const displayAppointment = slotAppointments[0];
+                  const remainingCount = slotAppointments.length - 1;
 
-                    const handleTimeSlotClick = () => {
-                      if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
-                        onTimeSlotClick(dateString, timeSlot, employee.name);
-                      }
-                    };
-                    
-                     return (
-                       <div 
-                         key={`${employee.id}-${timeSlot}`} 
-                          className={cn(
-                            "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
-                            !availability.available 
-                              ? "bg-gray-200 cursor-not-allowed opacity-60" 
-                              : startingAppointments.length === 0 
-                                ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                                : "bg-white hover:bg-gray-50"
-                          )}
-                         onClick={handleTimeSlotClick}
-                         onDragEnter={isDragEnabled ? handleDragEnter : undefined}
-                         onDragOver={isDragEnabled ? handleDragOver : undefined}
-                         onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                         onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
-                         title={!availability.available ? availability.reason : ""}
-                       >
-                        {/* Show blocked time indicator if not available */}
-                        {!availability.available && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-300/90 rounded border-2 border-red-200">
-                            <div className="flex flex-col items-center gap-1">
-                              <Ban className="w-5 h-5 text-red-600" />
-                              <span className="text-xs text-red-700 font-semibold text-center px-1">
-                                BLOCK
-                              </span>
-                              <span className="text-xs text-red-600 text-center px-1">
-                                {availability.reason}
-                              </span>
+                  const handleMoreClick = () => {
+                    setSelectedTimeSlot(hourSlot);
+                    setSelectedSlotAppointments(slotAppointments);
+                    setIsAnyonePopupOpen(true);
+                  };
+
+                   return (
+                     <div 
+                       key={`anyone-hour-${hourSlot}`} 
+                       className={cn(
+                         "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors duration-75 select-none hover:bg-orange-50"
+                       )}
+                        onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                        onDragOver={isDragEnabled ? handleDragOver : undefined}
+                        onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                       onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, 'Anyone') : undefined}
+                     >
+                      {displayAppointment ? (
+                        <div className="space-y-1">
+                          {/* First appointment */}
+                            <div
+                              className={cn(
+                                "rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative border",
+                                appointmentColors.anyone,
+                                draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
+                              )}
+                              draggable={isDragEnabled}
+                             onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
+                              onDragEnd={isDragEnabled ? handleDragEnd : undefined}
+                             onClick={(e) => {
+                               e.preventDefault();
+                               e.stopPropagation();
+                               handleAppointmentClick(displayAppointment, e);
+                             }}
+                           >
+                            <div className="font-semibold text-orange-800 text-xs">
+                              {displayAppointment.time}
+                            </div>
+                            <div className="font-bold text-gray-800 truncate">
+                              {displayAppointment.customer}
+                            </div>
+                            <div className="text-orange-700 truncate text-xs">
+                              {displayAppointment.service}
                             </div>
                           </div>
-                        )}
-                        
-                        {startingAppointments.map((apt, aptIndex) => {
-                           const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
-                           const slotsSpanned = Math.ceil(durationMinutes / 15);
-                           const heightInPixels = slotsSpanned * 56 - 4; // 56px per 15-min slot (h-14) minus border
-                          
-                           // Use dynamic color based on assignment type from settings
-                           const getAppointmentColor = () => {
-                             if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
-                             if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
-                             
-                             // For confirmed appointments, use color based on assignment type from settings
-                             const assignmentType = (apt as any).assignmentType;
-                             if (assignmentType === 'anyone' || apt.staff === 'Bất kì') {
-                               return appointmentColors.anyone;
-                             } else if (assignmentType === 'reassigned-from-anyone') {
-                               return appointmentColors.reassigned;
-                             } else {
-                               return appointmentColors.preAssigned;
-                             }
-                           };
-                          
-                           return (
-                              <div
-                                key={`${apt.id}-${aptIndex}`}
-                                 className={cn(
-                                   "absolute border rounded-md p-1 cursor-move transition-colors text-xs overflow-hidden select-none",
-                                   getAppointmentColor(),
-                                   draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
-                                 )}
-                                style={{
-                                  top: '2px',
-                                  left: `${aptIndex * 50}%`,
-                                  width: startingAppointments.length > 1 ? '48%' : '96%',
-                                  height: `${heightInPixels}px`,
-                                  minHeight: '50px',
-                                  zIndex: draggedAppointmentId === apt.id ? 50 : 10
-                                }}
-                                 draggable={isDragEnabled}
-                                 onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}
-                                 onDragEnd={isDragEnabled ? handleDragEnd : undefined}
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   handleAppointmentClick(apt, e);
-                                 }}
-                               >
-                                 {/* Staff icon in top right if staff is assigned */}
-                                 {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
-                                   <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
-                                     <UserCheck className="w-2.5 h-2.5 text-white" />
-                                   </div>
-                                 )}
-                                <div className="font-bold truncate">
-                                  {apt.customer}
-                                </div>
-                                <div className="truncate text-xs opacity-90">
-                                  {apt.service}
-                                </div>
-                                <div className="text-xs opacity-80">
-                                  {apt.time}
-                                </div>
-                                {durationMinutes >= 60 && (
-                                  <div className="text-xs opacity-75">
-                                    {getDisplayDuration(apt)}
-                                  </div>
-                                )}
-                              </div>
-                           );
-                        })}
-                       </div>
-                     );
-                  })}
+
+                          {/* Show more button if there are additional appointments */}
+                          {remainingCount > 0 && (
+                            <button
+                              onClick={handleMoreClick}
+                              className="w-full bg-orange-50 border border-orange-200 rounded-md p-1 text-xs text-orange-600 hover:bg-orange-100 transition-colors"
+                            >
+                              +{remainingCount} lịch hẹn khác
+                            </button>
+                          )}
+                        </div>
+                       ) : (
+                         <div className="text-center text-orange-400 text-xs py-4">
+                           Trống
+                         </div>
+                       )}
+                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Employee columns */}
+              {filteredWorkingEmployees.length === 0 && anyoneAppointments.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center py-8 text-gray-500">
+                  {searchQuery ? "Không tìm thấy nhân viên nào" : "Không có nhân viên nào làm việc hôm nay"}
                 </div>
-              ))
-            )}
+              ) : (
+                filteredWorkingEmployees.map((employee) => (
+                  <div key={employee.id} className="min-w-[144px] max-w-[144px] flex-shrink-0 border-r border-gray-200">
+                     {/* Time slots for this employee */}
+                    {timeSlots.map((timeSlot) => {
+                      const employeeAppointments = getEmployeeAppointmentsForTimeSlot(employee, timeSlot);
+                      const startingAppointments = employeeAppointments.filter(apt => 
+                        appointmentStartsAtSlot(apt, timeSlot)
+                      );
+
+                      // Check if employee is available at this time
+                      const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+
+                      const handleTimeSlotClick = () => {
+                        if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
+                          onTimeSlotClick(dateString, timeSlot, employee.name);
+                        }
+                      };
+                      
+                       return (
+                         <div 
+                           key={`${employee.id}-${timeSlot}`} 
+                            className={cn(
+                              "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
+                              !availability.available 
+                                ? "bg-gray-200 cursor-not-allowed opacity-60" 
+                                : startingAppointments.length === 0 
+                                  ? "bg-white hover:bg-blue-50 cursor-pointer" 
+                                  : "bg-white hover:bg-gray-50"
+                            )}
+                           onClick={handleTimeSlotClick}
+                           onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                           onDragOver={isDragEnabled ? handleDragOver : undefined}
+                           onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                           onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
+                           title={!availability.available ? availability.reason : ""}
+                         >
+                          {/* Show blocked time indicator if not available */}
+                          {!availability.available && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-300/90 rounded border-2 border-red-200">
+                              <div className="flex flex-col items-center gap-1">
+                                <Ban className="w-5 h-5 text-red-600" />
+                                <span className="text-xs text-red-700 font-semibold text-center px-1">
+                                  BLOCK
+                                </span>
+                                <span className="text-xs text-red-600 text-center px-1">
+                                  {availability.reason}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {startingAppointments.map((apt, aptIndex) => {
+                             const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
+                             const slotsSpanned = Math.ceil(durationMinutes / 15);
+                             const heightInPixels = slotsSpanned * 56 - 4; // 56px per 15-min slot (h-14) minus border
+                            
+                             // Use dynamic color based on assignment type from settings
+                             const getAppointmentColor = () => {
+                               if (apt.status === 'cancelled') return 'bg-red-100 border-red-300 text-red-800';
+                               if (apt.status === 'completed') return 'bg-green-100 border-green-300 text-green-800';
+                               
+                               // For confirmed appointments, use color based on assignment type from settings
+                               const assignmentType = (apt as any).assignmentType;
+                               if (assignmentType === 'anyone' || apt.staff === 'Bất kì') {
+                                 return appointmentColors.anyone;
+                               } else if (assignmentType === 'reassigned-from-anyone') {
+                                 return appointmentColors.reassigned;
+                               } else {
+                                 return appointmentColors.preAssigned;
+                               }
+                             };
+                            
+                             return (
+                                <div
+                                  key={`${apt.id}-${aptIndex}`}
+                                   className={cn(
+                                     "absolute border rounded-md p-1 cursor-move transition-colors text-xs overflow-hidden select-none",
+                                     getAppointmentColor(),
+                                     draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
+                                   )}
+                                  style={{
+                                    top: '2px',
+                                    left: `${aptIndex * 50}%`,
+                                    width: startingAppointments.length > 1 ? '48%' : '96%',
+                                    height: `${heightInPixels}px`,
+                                    minHeight: '50px',
+                                    zIndex: draggedAppointmentId === apt.id ? 50 : 10
+                                  }}
+                                   draggable={isDragEnabled}
+                                   onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}
+                                   onDragEnd={isDragEnabled ? handleDragEnd : undefined}
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleAppointmentClick(apt, e);
+                                   }}
+                                 >
+                                   {/* Staff icon in top right if staff is assigned */}
+                                   {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
+                                     <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
+                                       <UserCheck className="w-2.5 h-2.5 text-white" />
+                                     </div>
+                                   )}
+                                  <div className="font-bold truncate">
+                                    {apt.customer}
+                                  </div>
+                                  <div className="truncate text-xs opacity-90">
+                                    {apt.service}
+                                  </div>
+                                  <div className="text-xs opacity-80">
+                                    {apt.time}
+                                  </div>
+                                  {durationMinutes >= 60 && (
+                                    <div className="text-xs opacity-75">
+                                      {getDisplayDuration(apt)}
+                                    </div>
+                                  )}
+                                </div>
+                             );
+                          })}
+                         </div>
+                       );
+                    })}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
