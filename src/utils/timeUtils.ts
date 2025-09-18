@@ -33,14 +33,17 @@ export function formatTimeRange(startTime: string, duration: string, extraTime?:
 export function generateTimeOptions(): string[] {
   const times: string[] = [];
   
-  // From 8:00 to 22:45 (8 AM to 10:45 PM)
-  for (let hour = 8; hour <= 22; hour++) {
+  // From 7:00 to 24:00 (7 AM to midnight)
+  for (let hour = 7; hour <= 23; hour++) {
     for (let minute = 0; minute < 60; minute += 15) {
-      if (hour === 22 && minute > 45) break; // Stop at 22:45
+      if (hour === 23 && minute > 45) break; // Stop at 23:45
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       times.push(timeString);
     }
   }
+  
+  // Add 24:00 (midnight)
+  times.push('24:00');
   
   return times;
 }

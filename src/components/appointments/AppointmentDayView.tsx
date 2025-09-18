@@ -254,14 +254,17 @@ export function AppointmentDayView({
       .map(item => item.employee);
   };
 
-  // Create time slots from 8 AM to 9 PM
+  // Create time slots from 7 AM to 24 PM (midnight) with 15-minute intervals
   const allTimeSlots = [];
-  for (let hour = 8; hour <= 21; hour++) {
-    allTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 21) {
-      allTimeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+  for (let hour = 7; hour <= 23; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      if (hour === 23 && minute > 45) break; // Stop at 23:45
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      allTimeSlots.push(timeString);
     }
   }
+  // Add 24:00 (midnight)
+  allTimeSlots.push('24:00');
 
   // Helper function to parse duration from string like "60 phút" to minutes
   const parseDuration = (durationStr: string, extraTime?: number): number => {
@@ -308,7 +311,7 @@ export function AppointmentDayView({
   // Get appointments for a specific employee and time slot
   const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
     const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 30;
+    const slotEndMinutes = slotStartMinutes + 15;
     
     const appointments = staffAppointments.filter(apt => {
       // Only show appointments that are EXACTLY assigned to this specific employee
@@ -328,12 +331,12 @@ export function AppointmentDayView({
     return appointments;
   };
 
-  // Get appointments for "Anyone" column for a specific time slot (1 hour slots)
+  // Get appointments for "Anyone" column for a specific time slot (15 minute slots)
   const getAnyoneAppointmentsForHourSlot = (timeSlot: string) => {
     const slotStartMinutes = timeToMinutes(timeSlot);
-    const slotEndMinutes = slotStartMinutes + 60; // 1 hour slot
+    const slotEndMinutes = slotStartMinutes + 15; // 15 minute slot
     
-    // Show appointments that START within this hour only to avoid duplicates across hours
+    // Show appointments that START within this 15-minute slot only to avoid duplicates
     const appointments = anyoneAppointments
       .filter(apt => {
         const aptStartMinutes = timeToMinutes(apt.time);
@@ -348,14 +351,19 @@ export function AppointmentDayView({
   const appointmentStartsAtSlot = (apt: Appointment, timeSlot: string): boolean => {
     const aptStartMinutes = timeToMinutes(apt.time);
     const slotStartMinutes = timeToMinutes(timeSlot);
-    return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 30;
+    return aptStartMinutes >= slotStartMinutes && aptStartMinutes < slotStartMinutes + 15;
   };
 
-  // Create hour-based time slots for Anyone column (8 AM to 9 PM)
+  // Create 15-minute based time slots for Anyone column (7 AM to 24 PM)
   const hourSlots = [];
-  for (let hour = 8; hour <= 20; hour++) {
-    hourSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  for (let hour = 7; hour <= 23; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      if (hour === 23 && minute > 45) break; // Stop at 23:45
+      hourSlots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+    }
   }
+  // Add 24:00 (midnight)
+  hourSlots.push('24:00');
 
   const workingEmployees = getWorkingEmployees();
 
@@ -373,14 +381,14 @@ export function AppointmentDayView({
         const hasAppointment = allDayAppointments.some(apt => {
           const aptStartMinutes = timeToMinutes(apt.time);
           const slotStartMinutes = timeToMinutes(timeSlot);
-          const slotEndMinutes = slotStartMinutes + 30;
+          const slotEndMinutes = slotStartMinutes + 15;
           return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration, (apt as any).extraTime) > slotStartMinutes;
         });
         
-        if (hasAppointment && timeSlot === "08:00") {
-          console.log("Time slot 08:00 has appointments:", allDayAppointments.filter(apt => 
+        if (hasAppointment && timeSlot === "07:00") {
+          console.log("Time slot 07:00 has appointments:", allDayAppointments.filter(apt => 
             timeToMinutes(apt.time) >= timeToMinutes(timeSlot) && 
-            timeToMinutes(apt.time) < timeToMinutes(timeSlot) + 30
+            timeToMinutes(apt.time) < timeToMinutes(timeSlot) + 15
           ).map(apt => ({ customer: apt.customer, staff: `"${apt.staff}"`, time: apt.time })));
         }
         
