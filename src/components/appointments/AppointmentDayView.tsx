@@ -71,6 +71,7 @@ export function AppointmentDayView({
   const draggedAppointmentId = useDragStore(s => s.draggedAppointmentId);
   const startDrag = useDragStore(s => s.startDrag);
   const endDrag = useDragStore(s => s.endDrag);
+  const isDragEnabled = useDragStore(s => s.isDragEnabled);
 
   
   // Filter appointments for the selected day
@@ -553,10 +554,10 @@ export function AppointmentDayView({
                      className={cn(
                        "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200 select-none hover:bg-orange-50"
                      )}
-                     onDragEnter={handleDragEnter}
-                     onDragOver={handleDragOver}
-                     onDragLeave={handleDragLeave}
-                     onDrop={(e) => handleDrop(e, hourSlot, 'Anyone')}
+                      onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                      onDragOver={isDragEnabled ? handleDragOver : undefined}
+                      onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                     onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, 'Anyone') : undefined}
                    >
                     {displayAppointment ? (
                       <div className="space-y-1">
@@ -566,11 +567,11 @@ export function AppointmentDayView({
                              "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs relative",
                              draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
                            )}
-                           draggable={true}
-                           onDragStart={(e) => handleDragStart(e, displayAppointment)}
-                           onDragEnd={handleDragEnd}
-                           onMouseDown={(e) => (e.currentTarget as HTMLElement).classList.add('drag-press')}
-                           onMouseUp={(e) => (e.currentTarget as HTMLElement).classList.remove('drag-press')}
+                            draggable={isDragEnabled}
+                           onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
+                            onDragEnd={isDragEnabled ? handleDragEnd : undefined}
+                           }
+                           }
                            onClick={(e) => {
                              e.preventDefault();
                              e.stopPropagation();
@@ -689,10 +690,10 @@ export function AppointmentDayView({
                                 : "bg-white hover:bg-gray-50"
                           )}
                          onClick={handleTimeSlotClick}
-                         onDragEnter={handleDragEnter}
-                         onDragOver={handleDragOver}
-                         onDragLeave={handleDragLeave}
-                         onDrop={(e) => handleDrop(e, timeSlot, employee.name)}
+                         onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                         onDragOver={isDragEnabled ? handleDragOver : undefined}
+                         onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                         onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}}
                          title={!availability.available ? availability.reason : ""}
                        >
                         {/* Show blocked time indicator if not available */}
@@ -743,9 +744,9 @@ export function AppointmentDayView({
                                   minHeight: '50px',
                                   zIndex: draggedAppointmentId === apt.id ? 50 : 10
                                 }}
-                                 draggable={true}
-                                 onDragStart={(e) => handleDragStart(e, apt)}
-                                 onDragEnd={handleDragEnd}
+                                 draggable={isDragEnabled}
+                                 onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}}
+                                 onDragEnd={isDragEnabled ? handleDragEnd : undefined}
                                  onClick={(e) => {
                                    e.stopPropagation();
                                    handleAppointmentClick(apt, e);
