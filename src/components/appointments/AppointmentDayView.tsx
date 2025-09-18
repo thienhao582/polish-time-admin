@@ -152,18 +152,6 @@ export function AppointmentDayView({
     apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
   );
   
-  console.log("AppointmentDayView Debug:", {
-    dateString,
-    totalFiltered: filteredAppointments.length,
-    dayAppointments: dayAppointments.length,
-    testAnyoneData: testAnyoneData.length,
-    allDayAppointments: allDayAppointments.length,
-    anyoneAppointments: anyoneAppointments.length,
-    staffAppointments: staffAppointments.length,
-    sampleAnyoneAppt: anyoneAppointments[0],
-    allStaffNames: allDayAppointments.map(apt => `"${apt.staff}"`),
-    uniqueStaffNames: [...new Set(allDayAppointments.map(apt => apt.staff))]
-  });
 
   // Helper function to check if employee is working on this date
   const isEmployeeWorkingOnDate = (employee: any, date: string): boolean => {
@@ -189,9 +177,6 @@ export function AppointmentDayView({
     // Get all unique staff names from appointments for this day (excluding empty staff)
     const staffNamesInAppointments = [...new Set(staffAppointments.map(apt => apt.staff))];
     
-    console.log("Staff names in appointments:", staffNamesInAppointments);
-    console.log("Available employees:", employees.slice(0, 10).map(e => ({ id: e.id, name: e.name, role: e.role, workSchedule: e.workSchedule ? 'HAS_SCHEDULE' : 'NO_SCHEDULE' })));
-    console.log("Anyone appointments count:", anyoneAppointments.length);
     
     // Get employees who have appointments today
     const employeesWithAppointments = staffNamesInAppointments.map((staffName, index) => ({
@@ -222,7 +207,7 @@ export function AppointmentDayView({
     // Combine both groups: employees with appointments first, then without
     const allWorkingEmployees = [...employeesWithAppointments, ...employeesWithoutAppointments];
 
-    console.log("Final employees for day view:", allWorkingEmployees.map(e => ({ name: e.name, hasAppointments: e.hasAppointments })));
+    
     
     // Sort employees: those with appointments first, then by name
     const employeesWithData = allWorkingEmployees.map(employee => {
@@ -241,16 +226,6 @@ export function AppointmentDayView({
       };
     });
 
-    console.log("Working employees debug:", {
-      totalEmployees: employees.length,
-      allServiceEmployees: allServiceEmployees.length,
-      dayAppointments: dayAppointments.length,
-      staffNamesInAppointments: staffNamesInAppointments.length,
-      employeesWithAppointments: employeesWithAppointments.length,
-      employeesWithoutAppointments: employeesWithoutAppointments.length,
-      totalWorkingEmployees: allWorkingEmployees.length,
-      employeeNames: allWorkingEmployees.map(e => e.name)
-    });
 
     // Sort by: 1) Has appointments (descending), 2) Earliest appointment time (ascending), 3) Name (ascending)
     return employeesWithData
@@ -397,12 +372,6 @@ export function AppointmentDayView({
           return aptStartMinutes < slotEndMinutes && aptStartMinutes + parseDuration(apt.duration, (apt as any).extraTime) > slotStartMinutes;
         });
         
-        if (hasAppointment && timeSlot === "07:00") {
-          console.log("Time slot 07:00 has appointments:", allDayAppointments.filter(apt => 
-            timeToMinutes(apt.time) >= timeToMinutes(timeSlot) && 
-            timeToMinutes(apt.time) < timeToMinutes(timeSlot) + 15
-          ).map(apt => ({ customer: apt.customer, staff: `"${apt.staff}"`, time: apt.time })));
-        }
         
         return hasAppointment;
       });
@@ -552,7 +521,7 @@ export function AppointmentDayView({
                    <div 
                      key={`anyone-hour-${hourSlot}`} 
                      className={cn(
-                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200 select-none hover:bg-orange-50"
+                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-colors duration-75 select-none hover:bg-orange-50"
                      )}
                       onDragEnter={isDragEnabled ? handleDragEnter : undefined}
                       onDragOver={isDragEnabled ? handleDragOver : undefined}
@@ -564,7 +533,7 @@ export function AppointmentDayView({
                         {/* First appointment */}
                          <div
                            className={cn(
-                             "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-all text-xs relative",
+                             "bg-orange-100 border border-orange-300 rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative",
                              draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
                            )}
                             draggable={isDragEnabled}
@@ -664,11 +633,6 @@ export function AppointmentDayView({
                     const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
                     const scheduleStatus = getEmployeeScheduleStatus(employee, selectedDate);
 
-                    console.log(`Time slot ${timeSlot} for ${employee.name}:`, {
-                      available: availability.available,
-                      reason: availability.reason,
-                      hasAppointments: startingAppointments.length > 0
-                    });
 
                     const handleTimeSlotClick = () => {
                       if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
@@ -680,7 +644,7 @@ export function AppointmentDayView({
                        <div 
                          key={`${employee.id}-${timeSlot}`} 
                           className={cn(
-                            "h-14 border-b border-gray-200 relative p-1 transition-all duration-200 select-none",
+                            "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
                             !availability.available 
                               ? "bg-gray-200 cursor-not-allowed opacity-60" 
                               : startingAppointments.length === 0 
@@ -730,7 +694,7 @@ export function AppointmentDayView({
                               <div
                                 key={`${apt.id}-${aptIndex}`}
                                  className={cn(
-                                   "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
+                                   "absolute border rounded-md p-1 cursor-move transition-colors text-xs overflow-hidden select-none",
                                    getAppointmentColor(),
                                    draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
                                  )}
@@ -846,7 +810,7 @@ export function AppointmentDayView({
         selectedDate={selectedDate}
         onScheduleUpdate={() => {
           // No need to do anything here, the state will update automatically
-          console.log('Schedule updated, UI should re-render automatically');
+          
         }}
       />
     </div>
