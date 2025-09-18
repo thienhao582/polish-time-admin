@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Maximize2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,9 @@ const Appointments = () => {
   const [appointmentStatus, setAppointmentStatus] = useState("confirmed");
   const [initialFormData, setInitialFormData] = useState<any>(null);
 
+  // Prevent heavy reload after optimistic updates (drag/drop etc.)
+  const skipNextLoadRef = useRef(false);
+
   // Get employees from Zustand store and fetch appointments from Supabase
   const { employees, initializeData, appointments: demoAppointments, updateAppointment } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
@@ -83,6 +86,13 @@ const Appointments = () => {
     console.log("isDemoMode:", isDemoMode);
     console.log("demoAppointments.length:", demoAppointments.length);
     console.log("All demo appointments with extraTime:", demoAppointments.filter(apt => apt.extraTime));
+
+    if (skipNextLoadRef.current) {
+      // Skip heavy reload once after an optimistic update
+      skipNextLoadRef.current = false;
+      return;
+    }
+    
     console.log("Calling loadAppointments...");
     loadAppointments();
   }, [isDemoMode, demoAppointments]); // Use the full demoAppointments array as dependency
@@ -99,17 +109,19 @@ const Appointments = () => {
         staff: newStaff || '',
       };
 
+      // Avoid triggering heavy reload once
+      skipNextLoadRef.current = true;
+
       if (isDemoMode) {
         updateAppointment(appointmentId, updateData);
-        toast.success("Đã di chuyển lịch hẹn thành công!");
       } else {
-        // Handle database update if needed
-        // You would call your database update function here
-        toast.success("Đã di chuyển lịch hẹn thành công!");
+        // Optimistic update local state for SPA smoothness
+        setAppointments(prev => prev.map(apt => apt.id === appointmentId ? { ...apt, ...updateData } : apt));
+        // TODO: call backend update here; keep UI responsive regardless
       }
 
-      // Reload appointments to reflect changes
-      await loadAppointments();
+      toast.success("Đã di chuyển lịch hẹn thành công!");
+      // No hard reload; UI already reflects new state
     } catch (error) {
       console.error("Error updating appointment:", error);
       toast.error("Có lỗi xảy ra khi di chuyển lịch hẹn");

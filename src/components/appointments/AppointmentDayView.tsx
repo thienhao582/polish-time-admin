@@ -67,6 +67,7 @@ export function AppointmentDayView({
   // State for drag and drop - optimized approach
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<{timeSlot: string, staff: string} | null>(null);
+  const [mouseDownId, setMouseDownId] = useState<number | null>(null);
   
   // Filter appointments for the selected day
   const dayAppointments = filteredAppointments.filter(apt => apt.date === dateString);
@@ -404,6 +405,7 @@ export function AppointmentDayView({
   // Optimized drag and drop handlers
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
     setDraggedAppointment(appointment);
+    setMouseDownId(null);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id.toString());
     
@@ -529,7 +531,7 @@ export function AppointmentDayView({
                    <div 
                      key={`anyone-hour-${hourSlot}`} 
                      className={cn(
-                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200",
+                       "h-28 border-b border-gray-200 bg-white relative p-1 transition-all duration-200 select-none",
                        dragOverTarget?.timeSlot === hourSlot && dragOverTarget?.staff === 'Anyone'
                          ? "bg-blue-100 border-blue-300 shadow-inner" 
                          : "hover:bg-orange-50"
@@ -667,17 +669,17 @@ export function AppointmentDayView({
                      return (
                        <div 
                          key={`${employee.id}-${timeSlot}`} 
-                         className={cn(
-                           "h-14 border-b border-gray-200 relative p-1 transition-all duration-200",
-                           !availability.available 
-                             ? "bg-gray-200 cursor-not-allowed opacity-60" 
-                             : startingAppointments.length === 0 
-                               ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                               : "bg-white hover:bg-gray-50",
-                           dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name
-                             ? "bg-blue-100 border-blue-300 shadow-inner"
-                             : ""
-                         )}
+                          className={cn(
+                            "h-14 border-b border-gray-200 relative p-1 transition-all duration-200 select-none",
+                            !availability.available 
+                              ? "bg-gray-200 cursor-not-allowed opacity-60" 
+                              : startingAppointments.length === 0 
+                                ? "bg-white hover:bg-blue-50 cursor-pointer" 
+                                : "bg-white hover:bg-gray-50",
+                            dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name
+                              ? "bg-blue-100 border-blue-300 shadow-inner"
+                              : ""
+                          )}
                          onClick={handleTimeSlotClick}
                          onDragOver={(e) => handleDragOver(e, timeSlot, employee.name)}
                          onDragLeave={handleDragLeave}
@@ -705,9 +707,9 @@ export function AppointmentDayView({
                           </div>
                         )}
                         {startingAppointments.map((apt, aptIndex) => {
-                          const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
-                          const slotsSpanned = Math.ceil(durationMinutes / 30);
-                          const heightInPixels = slotsSpanned * 56 - 4; // 56px per slot (h-14) minus border
+                           const durationMinutes = parseDuration(apt.duration, (apt as any).extraTime);
+                           const slotsSpanned = Math.ceil(durationMinutes / 15);
+                           const heightInPixels = slotsSpanned * 56 - 4; // 56px per 15-min slot (h-14) minus border
                           
                           // Use consistent color for all appointments
                           const getAppointmentColor = () => {
@@ -720,9 +722,9 @@ export function AppointmentDayView({
                              <div
                                key={`${apt.id}-${aptIndex}`}
                                className={cn(
-                                 "absolute border rounded-md p-1 cursor-move hover:shadow-lg transition-all text-xs overflow-hidden",
+                                 "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
                                  getAppointmentColor(),
-                                 draggedAppointment?.id === apt.id && "opacity-60 transform scale-95 shadow-xl"
+                                 (draggedAppointment?.id === apt.id || mouseDownId === apt.id) && "opacity-90 transform scale-105 shadow-2xl"
                                )}
                                style={{
                                  top: '2px',
@@ -733,6 +735,8 @@ export function AppointmentDayView({
                                  zIndex: draggedAppointment?.id === apt.id ? 50 : 10
                                }}
                                draggable={true}
+                               onMouseDown={() => setMouseDownId(apt.id)}
+                               onMouseUp={handleDragEnd}
                                onDragStart={(e) => handleDragStart(e, apt)}
                                onDragEnd={handleDragEnd}
                                onClick={(e) => {
