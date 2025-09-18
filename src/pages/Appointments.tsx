@@ -74,28 +74,16 @@ const Appointments = () => {
   const { fetchAppointments } = useSupabaseData();
   const { fetchDemoAppointments } = useDemoData();
   const { isDemoMode, setDemoMode } = useDemoMode();
-  
-  console.log("=== APPOINTMENTS PAGE RENDER ===");
-  console.log("isDemoMode:", isDemoMode);
-  console.log("demoAppointments from store:", demoAppointments.length);
-  console.log("Sample appointments:", demoAppointments.slice(0, 3));
 
-  // Load appointments on component mount and when demo mode changes or when store data changes
+  // Load appointments only on mount and demo mode change
   useEffect(() => {
-    console.log("=== APPOINTMENTS PAGE useEffect TRIGGERED ===");
-    console.log("isDemoMode:", isDemoMode);
-    console.log("demoAppointments.length:", demoAppointments.length);
-    console.log("All demo appointments with extraTime:", demoAppointments.filter(apt => apt.extraTime));
-
     if (skipNextLoadRef.current) {
-      // Skip heavy reload once after an optimistic update
       skipNextLoadRef.current = false;
       return;
     }
     
-    console.log("Calling loadAppointments...");
     loadAppointments();
-  }, [isDemoMode, demoAppointments]); // Use the full demoAppointments array as dependency
+  }, [isDemoMode]); // Only depend on isDemoMode to prevent excessive reloads
 
   // Handle appointment drag and drop with proper time calculation
   const handleAppointmentDrop = async (appointmentId: number, newTime: string, newStaff?: string) => {
@@ -165,21 +153,9 @@ const Appointments = () => {
 
   const loadAppointments = async () => {
     try {
-      console.log("=== LOAD APPOINTMENTS CALLED ===");
       setLoading(true);
       
       if (isDemoMode) {
-        console.log("Loading demo mode appointments from Zustand store...");
-        console.log("Raw demoAppointments from store:", demoAppointments.slice(0, 3));
-        
-        // Also fetch from IndexedDB to include newly created appointments
-        try {
-          const demoAppointmentsFromDB = await fetchDemoAppointments();
-          console.log("Demo appointments from IndexedDB:", demoAppointmentsFromDB?.length || 0);
-        } catch (error) {
-          console.log("Could not fetch from IndexedDB, using store data:", error);
-        }
-        
         // Use demo data from Zustand store only
         const transformedAppointments: LegacyAppointment[] = demoAppointments.map((apt) => ({
           id: apt.id,
@@ -192,13 +168,11 @@ const Appointments = () => {
           price: apt.price,
           status: apt.status,
           staff: apt.staff,
-          extraTime: apt.extraTime, // Include extraTime field
+          extraTime: apt.extraTime,
           services: apt.services,
           notes: apt.notes
         }));
         
-        console.log("Transformed appointments:", transformedAppointments.slice(0, 3));
-        console.log("Total transformed appointments:", transformedAppointments.length);
         setAppointments(transformedAppointments);
       } else {
         // Use Supabase data
@@ -206,7 +180,7 @@ const Appointments = () => {
         
         // Transform Supabase appointments to legacy format for components
         const transformedAppointments: LegacyAppointment[] = supabaseAppointments.map((apt, index) => ({
-          id: parseInt(apt.id) || index + 1, // Convert string id to number
+          id: parseInt(apt.id) || index + 1,
           date: apt.appointment_date,
           time: apt.appointment_time,
           customer: apt.customer_name,
@@ -228,8 +202,6 @@ const Appointments = () => {
     }
   };
   
-  console.log("Appointments page - Total appointments:", appointments.length);
-  console.log("Appointments page - All appointments:", appointments);
 
   // Check if any filters are actually applied
   const hasActiveFilters = searchQuery.trim() !== "" || selectedStaffIds.length > 0;
@@ -293,8 +265,10 @@ const Appointments = () => {
   const handleAppointmentCreate = async (appointmentData: any) => {
     setIsFormOpen(false);
     setInitialFormData(null);
-    // Refresh appointments after creating
-    await loadAppointments();
+    // Only reload if not in demo mode to avoid unnecessary loading screens
+    if (!isDemoMode) {
+      await loadAppointments();
+    }
     toast.success("Lịch hẹn đã được tạo thành công!");
   };
 
@@ -308,14 +282,12 @@ const Appointments = () => {
   };
 
   const handleAppointmentEdit = async (appointmentData: any) => {
-    console.log("=== HANDLE APPOINTMENT EDIT ===");
-    console.log("Appointment data received:", appointmentData);
-    console.log("Selected appointment before edit:", selectedAppointment);
-    
     setIsEditMode(false);
     setIsAppointmentDetailOpen(false);
-    // Refresh appointments after editing
-    await loadAppointments();
+    // Only reload if not in demo mode to avoid unnecessary loading screens
+    if (!isDemoMode) {
+      await loadAppointments();
+    }
     toast.success("Lịch hẹn đã được cập nhật!");
   };
 
