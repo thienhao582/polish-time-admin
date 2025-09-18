@@ -4,6 +4,7 @@ import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
 import { useState, useRef } from "react";
+import { useDragStore } from "@/stores/useDragStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,10 +65,12 @@ export function AppointmentDayView({
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   
-  // State for drag and drop - optimized approach
-  const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
-  // Use refs for hover/highlight to avoid rerenders on dragover
+  // Drag highlight ref to avoid rerenders during dragover
   const lastHighlightRef = useRef<HTMLElement | null>(null);
+  // Global drag state via zustand (no prop drilling, minimal re-renders)
+  const draggedAppointmentId = useDragStore(s => s.draggedAppointmentId);
+  const startDrag = useDragStore(s => s.startDrag);
+  const endDrag = useDragStore(s => s.endDrag);
 
   
   // Filter appointments for the selected day
@@ -405,7 +408,7 @@ export function AppointmentDayView({
 
   // Optimized drag and drop handlers (DOM-class based to avoid rerenders)
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
-    setDraggedAppointment(appointment);
+    startDrag(appointment.id);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', appointment.id.toString());
 
