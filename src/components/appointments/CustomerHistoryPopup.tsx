@@ -1,215 +1,262 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useSalonStore } from "@/stores/useSalonStore";
+import { Calendar, Clock, User, Star, Scissors } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { formatTimeRange } from "@/utils/timeUtils";
-import { History, Calendar, User, Scissors, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSalonStore } from "@/stores/useSalonStore";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 interface CustomerHistoryPopupProps {
-  customerId: string;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   customerName: string;
+  customerPhone?: string;
 }
 
-export const CustomerHistoryPopup = ({ customerId, customerName }: CustomerHistoryPopupProps) => {
-  const { appointments, customers } = useSalonStore();
-  const [isOpen, setIsOpen] = useState(false);
-  const [serviceFilter, setServiceFilter] = useState("");
-  const [employeeFilter, setEmployeeFilter] = useState("");
+interface HistoryAppointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  service_name: string;
+  employee_name: string;
+  status: string;
+  duration_minutes: number;
+  price: number;
+  notes?: string;
+}
 
-  // Get all customer appointments with filters
-  const customerAppointments = appointments
-    .filter(apt => 
-      apt.customerId === customerId || 
-      apt.customer === customers.find(c => c.id === customerId)?.name
-    )
-    .filter(apt => {
-      // Filter by service name
-      if (serviceFilter && !apt.service?.toLowerCase().includes(serviceFilter.toLowerCase())) {
-        return false;
-      }
-      // Filter by employee name
-      if (employeeFilter && !apt.staff?.toLowerCase().includes(employeeFilter.toLowerCase())) {
-        return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.time}`);
-      const dateB = new Date(`${b.date} ${b.time}`);
-      return dateB.getTime() - dateA.getTime();
-    }); // Show all appointments, not limited
+export function CustomerHistoryPopup({
+  isOpen,
+  onOpenChange,
+  customerName,
+  customerPhone
+}: CustomerHistoryPopupProps) {
+  const [historyAppointments, setHistoryAppointments] = useState<HistoryAppointment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { appointments: demoAppointments } = useSalonStore();
+  const { isDemoMode } = useDemoMode();
 
-  // Calculate stats
-  const totalVisits = customerAppointments.length;
-  const totalSpent = customerAppointments.reduce((sum, apt) => {
-    const price = typeof apt.price === 'string' ? parseFloat(apt.price) : apt.price;
-    return sum + ((price || 0) / 24000); // Convert to USD
-  }, 0);
-  const lastVisit = customerAppointments.length > 0 ? customerAppointments[0].date : null;
-
-  // Get most used services and staff
-  const serviceCount = customerAppointments.reduce((acc, apt) => {
-    acc[apt.service] = (acc[apt.service] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const staffCount = customerAppointments.reduce((acc, apt) => {
-    if (apt.staff) {
-      acc[apt.staff] = (acc[apt.staff] || 0) + 1;
+  useEffect(() => {
+    if (isOpen && customerName) {
+      loadCustomerHistory();
     }
-    return acc;
-  }, {} as Record<string, number>);
+  }, [isOpen, customerName, customerPhone, isDemoMode]);
 
-  const favoriteService = Object.entries(serviceCount).sort(([,a], [,b]) => b - a)[0]?.[0];
-  const favoriteStaff = Object.entries(staffCount).sort(([,a], [,b]) => b - a)[0]?.[0];
+  const loadCustomerHistory = async () => {
+    setLoading(true);
+    try {
+      if (isDemoMode) {
+        // Filter demo appointments for this customer
+        const customerHistory = demoAppointments
+          .filter(apt => 
+            apt.customer.toLowerCase() === customerName.toLowerCase() ||
+            (customerPhone && apt.phone === customerPhone)
+          )
+          .map(apt => ({
+            id: apt.id.toString(),
+            appointment_date: apt.date,
+            appointment_time: apt.time,
+            service_name: apt.service,
+            employee_name: apt.staff || "Chưa phân công",
+            status: apt.status,
+            duration_minutes: parseInt(apt.duration.match(/(\d+)/)?.[1] || "60"),
+            price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
+            notes: apt.notes
+          }))
+          .sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
+        
+        setHistoryAppointments(customerHistory);
+      } else {
+        // Load from Supabase
+        let query = supabase
+          .from('appointments')
+          .select('*')
+          .order('appointment_date', { ascending: false })
+          .order('appointment_time', { ascending: false });
+
+        if (customerPhone) {
+          query = query.or(`customer_name.ilike.%${customerName}%,customer_phone.eq.${customerPhone}`);
+        } else {
+          query = query.ilike('customer_name', `%${customerName}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error loading customer history:', error);
+          return;
+        }
+
+        setHistoryAppointments(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading customer history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      confirmed: { label: "Xác nhận", className: "bg-green-100 text-green-700" },
+      pending: { label: "Chờ xác nhận", className: "bg-yellow-100 text-yellow-700" },
+      completed: { label: "Hoàn thành", className: "bg-blue-100 text-blue-700" },
+      cancelled: { label: "Đã hủy", className: "bg-red-100 text-red-700" },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || 
+                   { label: status, className: "bg-gray-100 text-gray-700" };
+    
+    return (
+      <Badge className={config.className}>
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const calculateTotalVisits = () => historyAppointments.length;
+  const calculateTotalSpent = () => {
+    return historyAppointments
+      .filter(apt => apt.status === 'completed')
+      .reduce((total, apt) => total + (apt.price || 0), 0);
+  };
+
+  const getFrequentServices = () => {
+    const serviceCount = historyAppointments.reduce((acc, apt) => {
+      acc[apt.service_name] = (acc[apt.service_name] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(serviceCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          type="button"
-          variant="outline" 
-          size="sm"
-          className="ml-2 flex-shrink-0"
-        >
-          <History className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+            <User className="w-5 h-5" />
             Lịch sử làm nail - {customerName}
+            {customerPhone && <span className="text-sm text-gray-500">({customerPhone})</span>}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{totalVisits}</div>
-              <div className="text-sm text-blue-700">Lượt đến</div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">${totalSpent.toFixed(2)}</div>
-              <div className="text-sm text-green-700">Tổng chi tiêu</div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-sm font-medium text-purple-600 truncate">
-                {favoriteService || "N/A"}
-              </div>
-              <div className="text-sm text-purple-700">Dịch vụ ưa thích</div>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg">
-              <div className="text-sm font-medium text-orange-600 truncate">
-                {favoriteStaff || "N/A"}
-              </div>
-              <div className="text-sm text-orange-700">Nhân viên quen</div>
-            </div>
+        
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-gray-500">Đang tải lịch sử...</div>
           </div>
-
-          {/* Filters */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Tìm kiếm
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Input
-                  placeholder="Tìm theo tên dịch vụ..."
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  className="h-9"
-                />
+        ) : (
+          <div className="space-y-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{calculateTotalVisits()}</div>
+                <div className="text-sm text-gray-600">Tổng lượt đến</div>
               </div>
-              <div>
-                <Input
-                  placeholder="Tìm theo tên nhân viên..."
-                  value={employeeFilter}
-                  onChange={(e) => setEmployeeFilter(e.target.value)}
-                  className="h-9"
-                />
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {calculateTotalSpent().toLocaleString('vi-VN')}đ
+                </div>
+                <div className="text-sm text-gray-600">Tổng chi tiêu</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {historyAppointments.filter(apt => apt.status === 'completed').length}
+                </div>
+                <div className="text-sm text-gray-600">Lần hoàn thành</div>
               </div>
             </div>
-          </div>
 
-          {/* Recent History */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Lịch sử đầy đủ
-              </div>
-              <Badge variant="secondary" className="text-sm">
-                {customerAppointments.length} kết quả
-              </Badge>
-            </h3>
-            
-            {customerAppointments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Không tìm thấy lịch sử phù hợp
-              </div>
-            ) : (
-              <div className="border rounded-lg overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="w-[100px] min-w-[100px]">Ngày</TableHead>
-                      <TableHead className="w-[120px] min-w-[120px]">Giờ</TableHead>
-                      <TableHead className="min-w-[200px]">Dịch vụ</TableHead>
-                      <TableHead className="min-w-[150px]">Nhân viên</TableHead>
-                      <TableHead className="w-[80px] min-w-[80px]">Giá</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {customerAppointments.map((appointment, index) => (
-                      <TableRow key={appointment.id} className={index === 0 ? "bg-blue-50" : ""}>
-                        <TableCell className="text-sm">
-                          {format(new Date(appointment.date), 'dd/MM', { locale: vi })}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatTimeRange(appointment.time, appointment.duration)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Scissors className="h-4 w-4 text-pink-500 flex-shrink-0" />
-                            <span className="text-sm font-medium whitespace-nowrap">
-                              {appointment.service}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6 flex-shrink-0">
-                              <AvatarFallback className="text-xs">
-                                {appointment.staff?.charAt(0).toUpperCase() || "N"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm whitespace-nowrap">
-                              {appointment.staff || "N/A"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm font-medium">
-                          ${((typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price) / 24000).toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {/* Frequent Services */}
+            {getFrequentServices().length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  Dịch vụ thường sử dụng
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {getFrequentServices().map(([service, count]) => (
+                    <Badge key={service} variant="outline" className="bg-blue-50">
+                      {service} ({count} lần)
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
 
+            {/* History List */}
+            <div>
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Lịch sử chi tiết ({historyAppointments.length} lịch hẹn)
+              </h3>
+              
+              {historyAppointments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Scissors className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>Chưa có lịch sử làm nail</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {historyAppointments.map((appointment) => (
+                    <div 
+                      key={appointment.id} 
+                      className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{appointment.service_name}</span>
+                          {getStatusBadge(appointment.status)}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium text-green-600">
+                            {appointment.price > 0 ? `${appointment.price.toLocaleString('vi-VN')}đ` : 'Chưa có giá'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {format(new Date(appointment.appointment_date), "dd/MM/yyyy", { locale: vi })}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {appointment.appointment_time} ({appointment.duration_minutes} phút)
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Thợ: {appointment.employee_name}
+                        </div>
+                      </div>
+                      
+                      {appointment.notes && (
+                        <div className="text-sm text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+                          {appointment.notes}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        <div className="flex justify-end pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Đóng
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

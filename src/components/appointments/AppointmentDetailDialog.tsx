@@ -1,4 +1,4 @@
-import { CalendarIcon, Edit, Trash2, Clock } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Clock, History } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { toast } from "sonner";
+import { CustomerHistoryPopup } from "./CustomerHistoryPopup";
 
 interface Appointment {
   id: number;
@@ -68,6 +69,7 @@ export function AppointmentDetailDialog({
   const { isDemoMode } = useDemoMode();
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [customDuration, setCustomDuration] = useState("");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -150,7 +152,18 @@ export function AppointmentDetailDialog({
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">Khách hàng</label>
+              <div className="flex items-center gap-2 mb-1">
+                <label className="text-sm font-medium text-gray-600">Khách hàng</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                >
+                  <History className="w-3 h-3 mr-1" />
+                  Xem lịch sử
+                </Button>
+              </div>
               <p className="text-sm font-medium">{appointment.customer}</p>
             </div>
             <div>
@@ -312,6 +325,14 @@ export function AppointmentDetailDialog({
             </Button>
           </div>
         </div>
+
+        {/* Customer History Popup */}
+        <CustomerHistoryPopup
+          isOpen={isHistoryOpen}
+          onOpenChange={setIsHistoryOpen}
+          customerName={appointment.customer}
+          customerPhone={appointment.phone}
+        />
       </DialogContent>
     </Dialog>
   );
