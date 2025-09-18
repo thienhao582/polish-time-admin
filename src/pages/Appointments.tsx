@@ -97,34 +97,67 @@ const Appointments = () => {
     loadAppointments();
   }, [isDemoMode, demoAppointments]); // Use the full demoAppointments array as dependency
 
-  // Handle appointment drag and drop
+  // Handle appointment drag and drop with proper time calculation
   const handleAppointmentDrop = async (appointmentId: number, newTime: string, newStaff?: string) => {
     try {
       const appointment = appointments.find(apt => apt.id === appointmentId);
       if (!appointment) return;
 
-      // Update appointment in store or database
-      const updateData = {
-        time: newTime,
-        staff: newStaff || '',
+      // Parse duration including extra time
+      const durationMatch = appointment.duration.match(/(\d+)/);
+      const baseDuration = durationMatch ? parseInt(durationMatch[1]) : 60;
+      const totalDuration = baseDuration + (appointment.extraTime || 0);
+
+      // Snap new time to 15-minute grid
+      const timeToMinutes = (timeStr: string): number => {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
       };
 
-      // Avoid triggering heavy reload once
-      skipNextLoadRef.current = true;
+      const minutesToTime = (minutes: number): string => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+      };
+
+      // Snap to nearest 15-minute interval
+      const newTimeMinutes = timeToMinutes(newTime);
+      const snappedMinutes = Math.round(newTimeMinutes / 15) * 15;
+      const snappedTime = minutesToTime(snappedMinutes);
+
+      // Calculate end time
+      const endTimeMinutes = snappedMinutes + totalDuration;
+      const endTime = minutesToTime(endTimeMinutes);
+
+      // Update appointment data
+      const updateData = {
+        time: snappedTime,
+        staff: newStaff || '',
+        // Add calculated end time if your appointment model supports it
+        endTime: endTime
+      };
+
+      // Optimistic update (no reload) for smooth UX
+      setAppointments(prev => prev.map(apt => 
+        apt.id === appointmentId ? { ...apt, ...updateData } : apt
+      ));
 
       if (isDemoMode) {
         updateAppointment(appointmentId, updateData);
       } else {
-        // Optimistic update local state for SPA smoothness
-        setAppointments(prev => prev.map(apt => apt.id === appointmentId ? { ...apt, ...updateData } : apt));
-        // TODO: call backend update here; keep UI responsive regardless
+        // TODO: call backend update here
       }
 
-      toast.success("Đã di chuyển lịch hẹn thành công!");
-      // No hard reload; UI already reflects new state
+      // Show success toast only after UI update is complete
+      setTimeout(() => {
+        toast.success("Đã di chuyển lịch hẹn thành công!");
+      }, 100);
+
     } catch (error) {
       console.error("Error updating appointment:", error);
       toast.error("Có lỗi xảy ra khi di chuyển lịch hẹn");
+      // Reload to get fresh data on error
+      loadAppointments();
     }
   };
 

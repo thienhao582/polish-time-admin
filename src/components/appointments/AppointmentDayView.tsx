@@ -692,13 +692,11 @@ export function AppointmentDayView({
                               ? "bg-gray-200 cursor-not-allowed opacity-60" 
                               : startingAppointments.length === 0 
                                 ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                                : "bg-white hover:bg-gray-50",
-                            dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name
-                              ? "bg-blue-100 border-blue-300 shadow-inner"
-                              : ""
+                                : "bg-white hover:bg-gray-50"
                           )}
                          onClick={handleTimeSlotClick}
-                         onDragOver={(e) => handleDragOver(e, timeSlot, employee.name)}
+                         onDragEnter={handleDragEnter}
+                         onDragOver={handleDragOver}
                          onDragLeave={handleDragLeave}
                          onDrop={(e) => handleDrop(e, timeSlot, employee.name)}
                          title={!availability.available ? availability.reason : ""}
@@ -735,64 +733,55 @@ export function AppointmentDayView({
                             return 'bg-blue-100 border-blue-300 text-blue-800'; // Default blue for all confirmed appointments
                           };
                           
-                          return (
-                             <div
-                               key={`${apt.id}-${aptIndex}`}
-                               className={cn(
-                                 "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
-                                 getAppointmentColor(),
-                                 (draggedAppointment?.id === apt.id || mouseDownId === apt.id) && "opacity-90 transform scale-105 shadow-2xl"
-                               )}
-                               style={{
-                                 top: '2px',
-                                 left: `${aptIndex * 50}%`,
-                                 width: startingAppointments.length > 1 ? '48%' : '96%',
-                                 height: `${heightInPixels}px`,
-                                 minHeight: '50px',
-                                 zIndex: draggedAppointment?.id === apt.id ? 50 : 10
-                               }}
-                               draggable={true}
-                               onMouseDown={() => setMouseDownId(apt.id)}
-                               onMouseUp={handleDragEnd}
-                               onDragStart={(e) => handleDragStart(e, apt)}
-                               onDragEnd={handleDragEnd}
-                               onClick={(e) => {
-                                 e.preventDefault();
-                                 e.stopPropagation();
-                                 handleAppointmentClick(apt, e);
-                               }}
-                              >
-                                {/* Staff icon in top right if staff is assigned */}
-                                {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
-                                  <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
-                                    <UserCheck className="w-2.5 h-2.5 text-white" />
+                           return (
+                              <div
+                                key={`${apt.id}-${aptIndex}`}
+                                className={cn(
+                                  "absolute border rounded-md p-1 cursor-move transition-all text-xs overflow-hidden select-none",
+                                  getAppointmentColor(),
+                                  draggedAppointment?.id === apt.id && "opacity-90 transform scale-105 shadow-2xl"
+                                )}
+                                style={{
+                                  top: '2px',
+                                  left: `${aptIndex * 50}%`,
+                                  width: startingAppointments.length > 1 ? '48%' : '96%',
+                                  height: `${heightInPixels}px`,
+                                  minHeight: '50px',
+                                  zIndex: draggedAppointment?.id === apt.id ? 50 : 10
+                                }}
+                                draggable={true}
+                                onMouseDown={(e) => (e.currentTarget as HTMLElement).classList.add('drag-press')}
+                                onMouseUp={(e) => (e.currentTarget as HTMLElement).classList.remove('drag-press')}
+                                onDragStart={(e) => handleDragStart(e, apt)}
+                                onDragEnd={handleDragEnd}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAppointmentClick(apt, e);
+                                }}
+                               >
+                                 {/* Staff icon in top right if staff is assigned */}
+                                 {apt.staff && apt.staff !== "Bất kì" && apt.staff !== "" && apt.staff !== "undefined" && (
+                                   <div className="absolute top-0.5 right-0.5 bg-blue-600 rounded-full p-1 shadow-sm z-10">
+                                     <UserCheck className="w-2.5 h-2.5 text-white" />
+                                   </div>
+                                 )}
+                                <div className="font-bold truncate">
+                                  {apt.customer}
+                                </div>
+                                <div className="truncate text-xs opacity-90">
+                                  {apt.service}
+                                </div>
+                                <div className="text-xs opacity-80">
+                                  {apt.time}
+                                </div>
+                                {durationMinutes >= 60 && (
+                                  <div className="text-xs opacity-75">
+                                    {getDisplayDuration(apt)}
                                   </div>
-                                )}
-                               <div className="font-bold truncate">
-                                 {apt.customer}
-                               </div>
-                               <div className="truncate text-xs opacity-90">
-                                 {apt.service}
-                               </div>
-                               <div className="text-xs opacity-80">
-                                 {apt.time}
-                               </div>
-                               {durationMinutes >= 60 && (
-                                 <div className="text-xs opacity-75">
-                                   {getDisplayDuration(apt)}
-                                 </div>
-                                )}
-                                
-                                {/* Drop indicator overlay */}
-                                {dragOverTarget?.timeSlot === timeSlot && dragOverTarget?.staff === employee.name && draggedAppointment && (
-                                  <div className="absolute inset-0 bg-blue-200/30 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
-                                    <div className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                                      Thả vào đây
-                                    </div>
-                                  </div>
-                                )}
-                             </div>
-                          );
+                                 )}
+                              </div>
+                           );
                         })}
                       </div>
                     );
