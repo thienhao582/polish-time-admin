@@ -62,8 +62,8 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             <title>Hóa đơn - ${checkInItem.customerName}</title>
             <style>
               @page {
-                margin: 0;
-                size: auto;
+                margin: 5mm;
+                size: A7;
               }
               @media print {
                 body {
