@@ -26,6 +26,19 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
+  
+  // Calculate pricing details for popup display
+  const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+  const discount = Math.floor(serviceTotal * 0.1); // 10% discount
+  const tip = Math.floor(serviceTotal * 0.05); // 5% tip
+  const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
+  const subtotal = serviceTotal;
+  const totalDue = subtotal - discount + tip + tax;
+  
+  // Additional details
+  const receiptNumber = `RC${Date.now().toString().slice(-6)}`;
+  const employeeName = "Nhân viên phục vụ";
+  const totalServiceTime = checkInItem.services?.length ? checkInItem.services.length * 30 : 0;
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -236,6 +249,12 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
 
           {/* Receipt Content */}
           <div className="p-6 space-y-4">
+            {/* Receipt Header */}
+            <div className="text-center space-y-1">
+              <p className="text-xs text-gray-500">Hóa đơn #{receiptNumber}</p>
+              <p className="text-xs text-gray-500">{currentDate} {currentTime}</p>
+            </div>
+
             {/* Customer Info */}
             <div className="text-center space-y-2">
               <h3 className="text-xl font-bold text-primary">
@@ -249,6 +268,20 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
 
             <Separator />
 
+            {/* Staff and Service Info */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Nhân viên:</span>
+                <span className="font-medium">{employeeName}</span>
+              </div>
+              {totalServiceTime > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Thời gian phục vụ:</span>
+                  <span className="font-medium">{totalServiceTime} phút</span>
+                </div>
+              )}
+            </div>
+
             {/* Tags */}
             {checkInItem.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 justify-center">
@@ -259,6 +292,8 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                 ))}
               </div>
             )}
+
+            <Separator />
 
             {/* Time Details */}
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -284,12 +319,12 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             {/* Services */}
             <div>
               <p className="text-gray-500 text-sm mb-2">Dịch vụ đã sử dụng:</p>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {checkInItem.services && checkInItem.services.length > 0 ? (
                   checkInItem.services.map((service, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm">{service}</span>
-                      <span className="text-sm text-gray-500">✓</span>
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="text-sm font-medium">{service}</span>
+                      <span className="text-sm font-semibold">50,000₫</span>
                     </div>
                   ))
                 ) : (
@@ -298,23 +333,63 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
               </div>
             </div>
 
+            {/* Pricing Summary */}
+            {checkInItem.services && checkInItem.services.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Tổng kết thanh toán:</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount (10%):</span>
+                      <span>-{discount.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>VAT (8%):</span>
+                      <span>{tax.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tip (5%):</span>
+                      <span>{tip.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Tổng cộng:</span>
+                      <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Notes */}
             {checkInItem.notes && (
               <>
                 <Separator />
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Ghi chú:</p>
-                  <p className="text-sm">{checkInItem.notes}</p>
+                  <p className="text-sm bg-gray-50 p-2 rounded">{checkInItem.notes}</p>
                 </div>
               </>
             )}
 
             <Separator />
 
-            {/* Footer Info */}
-            <div className="text-center text-xs text-gray-500">
-              <p>Ngày: {currentDate}</p>
-              <p className="mt-1">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+            {/* Payment & Footer Info */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Phương thức thanh toán:</span>
+                <span className="font-medium">Tiền mặt</span>
+              </div>
+              <div className="text-center text-xs text-gray-500">
+                <p className="mt-2">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+                <p>Hẹn gặp lại!</p>
+                <p className="mt-1">Hotline: 0123.456.789</p>
+              </div>
             </div>
           </div>
 
