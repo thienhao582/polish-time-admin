@@ -13,6 +13,7 @@ import { useDemoMode } from "@/contexts/DemoModeContext";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { toast } from "sonner";
 import { CustomerHistoryPopup } from "./CustomerHistoryPopup";
+import { ReceiptPopup } from "../ReceiptPopup";
 
 interface Appointment {
   id: number;
@@ -72,6 +73,7 @@ export function AppointmentDetailDialog({
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [customDuration, setCustomDuration] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -126,6 +128,11 @@ export function AppointmentDetailDialog({
   };
 
   const handleCheckout = () => {
+    if (!appointment) return;
+    setIsReceiptOpen(true);
+  };
+
+  const handleConfirmCheckout = () => {
     if (!appointment) return;
     
     if (isDemoMode) {
@@ -362,6 +369,25 @@ export function AppointmentDetailDialog({
           onOpenChange={setIsHistoryOpen}
           customerName={appointment.customer}
           customerPhone={appointment.phone}
+        />
+
+        {/* Receipt Popup */}
+        <ReceiptPopup
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+          checkInItem={{
+            id: appointment.id.toString(),
+            customerNumber: appointment.id.toString(),
+            customerName: appointment.customer,
+            checkInTime: appointment.time,
+            services: isMultiServiceAppointment 
+              ? appointment.services?.map(s => s.serviceName) 
+              : [appointment.service],
+            tags: [appointment.status],
+            phone: appointment.phone,
+            notes: appointment.notes
+          }}
+          onConfirmCheckOut={handleConfirmCheckout}
         />
       </DialogContent>
     </Dialog>
