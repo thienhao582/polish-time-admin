@@ -30,12 +30,18 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      // Calculate pricing (sample data - you may want to get real pricing)
-      const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
-      const discount = Math.floor(serviceTotal * 0.1); // 10% discount
-      const tip = Math.floor(serviceTotal * 0.05); // 5% tip
-      const subtotal = serviceTotal;
-      const totalDue = subtotal - discount + tip;
+          // Calculate pricing (enhanced with more details)
+          const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+          const discount = Math.floor(serviceTotal * 0.1); // 10% discount
+          const tip = Math.floor(serviceTotal * 0.05); // 5% tip
+          const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
+          const subtotal = serviceTotal;
+          const totalDue = subtotal - discount + tip + tax;
+          
+          // Additional receipt details
+          const receiptNumber = `RC${Date.now().toString().slice(-6)}`;
+          const employeeName = "Nhân viên phục vụ";
+          const totalServiceTime = checkInItem.services?.length ? checkInItem.services.length * 30 : 0;
 
       printWindow.document.write(`
         <html>
@@ -120,8 +126,8 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
           <body>
             <div class="header">
               <h2>SALON RECEIPT</h2>
-              <p style="margin: 3px 0;">${currentDate}</p>
-              <p style="margin: 3px 0;">${currentTime}</p>
+              <p style="margin: 3px 0;">Receipt #: ${receiptNumber}</p>
+              <p style="margin: 3px 0;">${currentDate} ${currentTime}</p>
             </div>
             
             <div class="customer-info">
@@ -131,9 +137,11 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             </div>
 
             <div style="margin: 8px 0;">
+              <p style="margin: 3px 0;"><strong>Nhân viên:</strong> ${employeeName}</p>
               <p style="margin: 3px 0;"><strong>Check-in:</strong> ${checkInItem.checkInTime}</p>
               <p style="margin: 3px 0;"><strong>Check-out:</strong> ${currentTime}</p>
               ${checkInItem.waitTime ? `<p style="margin: 3px 0;"><strong>Thời gian chờ:</strong> ${checkInItem.waitTime} phút</p>` : ''}
+              ${totalServiceTime > 0 ? `<p style="margin: 3px 0;"><strong>Thời gian phục vụ:</strong> ${totalServiceTime} phút</p>` : ''}
             </div>
 
             <div>
@@ -149,18 +157,22 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
               }
             </div>
 
-            ${checkInItem.services && checkInItem.services.length > 0 ? `
+              ${checkInItem.services && checkInItem.services.length > 0 ? `
               <div class="totals">
                 <div class="total-line">
                   <span>Subtotal:</span>
                   <span>${subtotal.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div class="total-line">
-                  <span>Discount:</span>
+                  <span>Discount (10%):</span>
                   <span>-${discount.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div class="total-line">
-                  <span>Tip:</span>
+                  <span>VAT (8%):</span>
+                  <span>${tax.toLocaleString('vi-VN')}₫</span>
+                </div>
+                <div class="total-line">
+                  <span>Tip (5%):</span>
                   <span>${tip.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div class="total-line total-due">
@@ -178,8 +190,10 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             ` : ''}
 
             <div class="footer">
+              <p style="margin: 3px 0;"><strong>Phương thức thanh toán:</strong> Tiền mặt</p>
               <p style="margin: 3px 0;">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
               <p style="margin: 3px 0;">Hẹn gặp lại!</p>
+              <p style="margin: 2px 0; font-size: 10px;">Hotline: 0123.456.789</p>
             </div>
           </body>
         </html>
