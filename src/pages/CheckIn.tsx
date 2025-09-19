@@ -329,7 +329,7 @@ const CheckIn = () => {
           itemId={selectedQRItem.id}
           customerName={selectedQRItem.customerName}
           customerNumber={selectedQRItem.customerNumber}
-          customerPhone={selectedQRItem.customerPhone || "N/A"}
+          customerPhone={selectedQRItem.phone || "N/A"}
         />
       )}
 
