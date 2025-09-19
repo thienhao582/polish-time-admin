@@ -97,7 +97,7 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber, cu
               <div class="customer-info">
                 <h2>${customerName}</h2>
                 <p>Số khách hàng: #${customerNumber}</p>
-                <p>Số điện thoại: ${customerPhone}</p>
+                <p>SĐT: ${customerPhone}</p>
               </div>
               <div class="qr-code">
                 <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 256px; height: 256px;" />
