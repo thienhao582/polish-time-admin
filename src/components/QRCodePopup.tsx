@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Download } from "lucide-react";
+import { Copy, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 
@@ -11,9 +11,10 @@ interface QRCodePopupProps {
   itemId: string;
   customerName: string;
   customerNumber: string;
+  customerPhone: string;
 }
 
-const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: QRCodePopupProps) => {
+const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber, customerPhone }: QRCodePopupProps) => {
   const { toast } = useToast();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -70,16 +71,47 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
     }
   };
 
-  const handleDownloadQR = () => {
+  const handlePrintQR = () => {
     if (qrCodeDataUrl) {
-      const link = document.createElement('a');
-      link.download = `qr-code-${customerNumber}-${customerName}.png`;
-      link.href = qrCodeDataUrl;
-      link.click();
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>QR Code - ${customerName}</title>
+              <style>
+                body { 
+                  font-family: Arial, sans-serif; 
+                  text-align: center; 
+                  padding: 20px; 
+                }
+                .customer-info { 
+                  margin-bottom: 20px; 
+                }
+                .qr-code { 
+                  margin: 20px 0; 
+                }
+              </style>
+            </head>
+            <body>
+              <div class="customer-info">
+                <h2>${customerName}</h2>
+                <p>Số khách hàng: #${customerNumber}</p>
+                <p>Số điện thoại: ${customerPhone}</p>
+              </div>
+              <div class="qr-code">
+                <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 256px; height: 256px;" />
+              </div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
       
       toast({
-        title: "Downloaded!",
-        description: "QR code saved to downloads"
+        title: "In thành công!",
+        description: "QR code đã được gửi đến máy in"
       });
     }
   };
@@ -99,6 +131,7 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
           <div className="text-center">
             <p className="text-lg font-semibold">#{customerNumber}</p>
             <p className="text-sm text-muted-foreground">{customerName}</p>
+            <p className="text-sm text-muted-foreground">{customerPhone}</p>
           </div>
 
           {/* QR Code */}
@@ -125,12 +158,12 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber }: 
           <div className="flex gap-2 w-full">
             <Button
               variant="outline"
-              onClick={handleDownloadQR}
+              onClick={handlePrintQR}
               className="flex-1 gap-2"
               disabled={!qrCodeDataUrl}
             >
-              <Download className="h-4 w-4" />
-              Download QR
+              <Printer className="h-4 w-4" />
+              In QR
             </Button>
             <Button
               onClick={onClose}
