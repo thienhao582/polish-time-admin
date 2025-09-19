@@ -131,7 +131,7 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber, cu
           <div className="text-center">
             <p className="text-lg font-semibold">#{customerNumber}</p>
             <p className="text-sm text-muted-foreground">{customerName}</p>
-            <p className="text-sm text-muted-foreground">{customerPhone}</p>
+            <p className="text-sm text-muted-foreground">SĐT: {customerPhone}</p>
           </div>
 
           {/* QR Code */}
