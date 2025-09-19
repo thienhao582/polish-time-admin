@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Printer } from "lucide-react";
+import { Copy, Printer, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 
@@ -131,7 +131,10 @@ const QRCodePopup = ({ isOpen, onClose, itemId, customerName, customerNumber, cu
           <div className="text-center">
             <p className="text-lg font-semibold">#{customerNumber}</p>
             <p className="text-sm text-muted-foreground">{customerName}</p>
-            <p className="text-sm text-muted-foreground">SĐT: {customerPhone}</p>
+            <p className="text-sm text-muted-foreground flex items-center justify-center">
+              <Phone className="h-3 w-3 mr-1" />
+              {customerPhone}
+            </p>
           </div>
 
           {/* QR Code */}
