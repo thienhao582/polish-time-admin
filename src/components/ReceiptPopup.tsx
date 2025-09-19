@@ -28,8 +28,157 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
   const currentDate = format(new Date(), "dd/MM/yyyy");
 
   const handlePrint = () => {
-    // Print functionality placeholder - doesn't do anything as requested
-    console.log("Print functionality placeholder");
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      // Calculate pricing (sample data - you may want to get real pricing)
+      const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+      const discount = Math.floor(serviceTotal * 0.1); // 10% discount
+      const tip = Math.floor(serviceTotal * 0.05); // 5% tip
+      const subtotal = serviceTotal;
+      const totalDue = subtotal - discount + tip;
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Hóa đơn - ${checkInItem.customerName}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                max-width: 300px;
+                margin: 0 auto;
+                line-height: 1.4;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 20px;
+                border-bottom: 1px dashed #333;
+                padding-bottom: 15px;
+              }
+              .customer-info { 
+                margin-bottom: 15px; 
+                text-align: center;
+              }
+              .service-line {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px 0;
+                padding: 2px 0;
+              }
+              .service-name {
+                flex: 1;
+                text-align: left;
+              }
+              .service-price {
+                text-align: right;
+                font-weight: bold;
+              }
+              .totals {
+                border-top: 1px dashed #333;
+                margin-top: 15px;
+                padding-top: 10px;
+              }
+              .total-line {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px 0;
+              }
+              .total-due {
+                font-weight: bold;
+                font-size: 1.1em;
+                border-top: 1px solid #333;
+                padding-top: 5px;
+                margin-top: 10px;
+              }
+              .footer {
+                text-align: center;
+                margin-top: 20px;
+                border-top: 1px dashed #333;
+                padding-top: 15px;
+                font-size: 0.9em;
+              }
+              .qr-section {
+                text-align: center;
+                margin: 15px 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2 style="margin: 0;">SALON RECEIPT</h2>
+              <p style="margin: 5px 0;">${currentDate}</p>
+              <p style="margin: 5px 0;">${currentTime}</p>
+            </div>
+            
+            <div class="customer-info">
+              <p style="margin: 5px 0;"><strong>#${checkInItem.customerNumber}</strong></p>
+              <p style="margin: 5px 0;">${checkInItem.customerName}</p>
+              ${checkInItem.phone ? `<p style="margin: 5px 0;">${checkInItem.phone}</p>` : ''}
+            </div>
+
+            <div style="margin: 15px 0;">
+              <p style="margin: 5px 0;"><strong>Check-in:</strong> ${checkInItem.checkInTime}</p>
+              <p style="margin: 5px 0;"><strong>Check-out:</strong> ${currentTime}</p>
+              ${checkInItem.waitTime ? `<p style="margin: 5px 0;"><strong>Thời gian chờ:</strong> ${checkInItem.waitTime} phút</p>` : ''}
+            </div>
+
+            <div>
+              <h3 style="margin: 15px 0 10px 0; font-size: 1em;">Dịch vụ đã sử dụng:</h3>
+              ${checkInItem.services && checkInItem.services.length > 0 ? 
+                checkInItem.services.map(service => `
+                  <div class="service-line">
+                    <span class="service-name">${service}</span>
+                    <span class="service-price">50,000₫</span>
+                  </div>
+                `).join('') : 
+                '<p style="margin: 10px 0;">Không có dịch vụ</p>'
+              }
+            </div>
+
+            ${checkInItem.services && checkInItem.services.length > 0 ? `
+              <div class="totals">
+                <div class="total-line">
+                  <span>Subtotal:</span>
+                  <span>${subtotal.toLocaleString('vi-VN')}₫</span>
+                </div>
+                <div class="total-line">
+                  <span>Discount:</span>
+                  <span>-${discount.toLocaleString('vi-VN')}₫</span>
+                </div>
+                <div class="total-line">
+                  <span>Tip:</span>
+                  <span>${tip.toLocaleString('vi-VN')}₫</span>
+                </div>
+                <div class="total-line total-due">
+                  <span>Total Due:</span>
+                  <span>${totalDue.toLocaleString('vi-VN')}₫</span>
+                </div>
+              </div>
+            ` : ''}
+
+            ${checkInItem.notes ? `
+              <div style="margin: 15px 0;">
+                <p style="margin: 5px 0;"><strong>Ghi chú:</strong></p>
+                <p style="margin: 5px 0;">${checkInItem.notes}</p>
+              </div>
+            ` : ''}
+
+            <div class="qr-section">
+              <div style="width: 80px; height: 80px; border: 1px dashed #333; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.8em;">
+                QR CODE
+              </div>
+            </div>
+
+            <div class="footer">
+              <p style="margin: 5px 0;">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+              <p style="margin: 5px 0;">Hẹn gặp lại!</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   const handleConfirm = () => {
