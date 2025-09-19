@@ -42,7 +42,16 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
           <head>
             <title>Hóa đơn - ${checkInItem.customerName}</title>
             <style>
-              body { 
+              @page {
+                margin: 0;
+                size: auto;
+              }
+              @media print {
+                body {
+                  -webkit-print-color-adjust: exact;
+                }
+              }
+              body {
                 font-family: Arial, sans-serif; 
                 padding: 10px; 
                 max-width: 250px;
