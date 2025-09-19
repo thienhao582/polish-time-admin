@@ -44,26 +44,27 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             <style>
               body { 
                 font-family: Arial, sans-serif; 
-                padding: 20px; 
-                max-width: 300px;
+                padding: 10px; 
+                max-width: 250px;
                 margin: 0 auto;
-                line-height: 1.4;
+                line-height: 1.3;
+                font-size: 12px;
               }
               .header { 
                 text-align: center; 
-                margin-bottom: 20px;
+                margin-bottom: 10px;
                 border-bottom: 1px dashed #333;
-                padding-bottom: 15px;
+                padding-bottom: 8px;
               }
               .customer-info { 
-                margin-bottom: 15px; 
+                margin-bottom: 8px; 
                 text-align: center;
               }
               .service-line {
                 display: flex;
                 justify-content: space-between;
-                margin: 5px 0;
-                padding: 2px 0;
+                margin: 3px 0;
+                padding: 1px 0;
               }
               .service-name {
                 flex: 1;
@@ -75,55 +76,59 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
               }
               .totals {
                 border-top: 1px dashed #333;
-                margin-top: 15px;
-                padding-top: 10px;
+                margin-top: 8px;
+                padding-top: 5px;
               }
               .total-line {
                 display: flex;
                 justify-content: space-between;
-                margin: 5px 0;
+                margin: 3px 0;
               }
               .total-due {
                 font-weight: bold;
                 font-size: 1.1em;
                 border-top: 1px solid #333;
-                padding-top: 5px;
-                margin-top: 10px;
+                padding-top: 3px;
+                margin-top: 5px;
               }
               .footer {
                 text-align: center;
-                margin-top: 20px;
+                margin-top: 10px;
                 border-top: 1px dashed #333;
-                padding-top: 15px;
-                font-size: 0.9em;
+                padding-top: 8px;
+                font-size: 11px;
               }
-              .qr-section {
-                text-align: center;
-                margin: 15px 0;
+              h2 {
+                font-size: 16px;
+                margin: 0;
+              }
+              h3 {
+                font-size: 13px;
+                margin: 8px 0 5px 0;
               }
             </style>
           </head>
           <body>
             <div class="header">
-              <h2 style="margin: 0;">SALON RECEIPT</h2>
-              <p style="margin: 5px 0;">${currentDate}</p>
-              <p style="margin: 5px 0;">${currentTime}</p>
+              <h2>SALON RECEIPT</h2>
+              <p style="margin: 3px 0;">${currentDate}</p>
+              <p style="margin: 3px 0;">${currentTime}</p>
             </div>
             
             <div class="customer-info">
-              <p style="margin: 5px 0;"><strong>#${checkInItem.customerNumber}</strong></p>
-              <p style="margin: 5px 0;">${checkInItem.customerName}</p>
-              ${checkInItem.phone ? `<p style="margin: 5px 0;">${checkInItem.phone}</p>` : ''}
+              <p style="margin: 3px 0;"><strong>#${checkInItem.customerNumber}</strong></p>
+              <p style="margin: 3px 0;">${checkInItem.customerName}</p>
+              ${checkInItem.phone ? `<p style="margin: 3px 0;">${checkInItem.phone}</p>` : ''}
             </div>
 
-            <div style="margin: 15px 0;">
-              <p style="margin: 5px 0;"><strong>Check-in:</strong> ${checkInItem.checkInTime}</p>
-              <p style="margin: 5px 0;"><strong>Check-out:</strong> ${currentTime}</p>
-              ${checkInItem.waitTime ? `<p style="margin: 5px 0;"><strong>Thời gian chờ:</strong> ${checkInItem.waitTime} phút</p>` : ''}
+            <div style="margin: 8px 0;">
+              <p style="margin: 3px 0;"><strong>Check-in:</strong> ${checkInItem.checkInTime}</p>
+              <p style="margin: 3px 0;"><strong>Check-out:</strong> ${currentTime}</p>
+              ${checkInItem.waitTime ? `<p style="margin: 3px 0;"><strong>Thời gian chờ:</strong> ${checkInItem.waitTime} phút</p>` : ''}
             </div>
 
             <div>
-              <h3 style="margin: 15px 0 10px 0; font-size: 1em;">Dịch vụ đã sử dụng:</h3>
+              <h3>Dịch vụ đã sử dụng:</h3>
               ${checkInItem.services && checkInItem.services.length > 0 ? 
                 checkInItem.services.map(service => `
                   <div class="service-line">
@@ -131,7 +136,7 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                     <span class="service-price">50,000₫</span>
                   </div>
                 `).join('') : 
-                '<p style="margin: 10px 0;">Không có dịch vụ</p>'
+                '<p style="margin: 5px 0;">Không có dịch vụ</p>'
               }
             </div>
 
@@ -157,21 +162,15 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
             ` : ''}
 
             ${checkInItem.notes ? `
-              <div style="margin: 15px 0;">
-                <p style="margin: 5px 0;"><strong>Ghi chú:</strong></p>
-                <p style="margin: 5px 0;">${checkInItem.notes}</p>
+              <div style="margin: 8px 0;">
+                <p style="margin: 3px 0;"><strong>Ghi chú:</strong></p>
+                <p style="margin: 3px 0;">${checkInItem.notes}</p>
               </div>
             ` : ''}
 
-            <div class="qr-section">
-              <div style="width: 80px; height: 80px; border: 1px dashed #333; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.8em;">
-                QR CODE
-              </div>
-            </div>
-
             <div class="footer">
-              <p style="margin: 5px 0;">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
-              <p style="margin: 5px 0;">Hẹn gặp lại!</p>
+              <p style="margin: 3px 0;">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+              <p style="margin: 3px 0;">Hẹn gặp lại!</p>
             </div>
           </body>
         </html>
