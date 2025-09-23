@@ -296,53 +296,43 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
                   <CardContent className="p-4">
                     <div className="space-y-4">
                       {/* Invoice Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <h4 className="font-semibold text-lg">
-                              {invoice.invoiceNumber}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
-                            </p>
-                          </div>
-                          <Badge 
-                            variant={
-                              invoice.status === 'paid' ? 'default' : 
-                              invoice.status === 'unpaid' ? 'destructive' : 'secondary'
-                            }
-                          >
-                            {invoice.status === 'paid' ? 'Đã thanh toán' : 
-                             invoice.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã hủy'}
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">
-                            {formatCurrency(invoice.total)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Services and Employees - Collapsible */}
                       <Collapsible 
                         open={collapsedInvoices[invoice.id] || false}
                         onOpenChange={() => toggleInvoiceCollapse(invoice.id)}
                       >
                         <CollapsibleTrigger asChild>
-                          <div className="flex items-center justify-between cursor-pointer border-t pt-4 hover:bg-gray-50 -mx-4 px-4 -mt-4">
-                            <h5 className="font-medium text-gray-800 flex items-center space-x-2">
-                              <span>Chi tiết dịch vụ:</span>
+                          <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -mx-2">
+                            <div className="flex items-center space-x-4">
+                              <div>
+                                <h4 className="font-semibold text-lg">
+                                  {invoice.invoiceNumber}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
+                                </p>
+                              </div>
+                              <Badge 
+                                variant={
+                                  invoice.status === 'paid' ? 'default' : 
+                                  invoice.status === 'unpaid' ? 'destructive' : 'secondary'
+                                }
+                              >
+                                {invoice.status === 'paid' ? 'Đã thanh toán' : 
+                                 invoice.status === 'unpaid' ? 'Chưa thanh toán' : 'Đã hủy'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <p className="text-2xl font-bold text-green-600">
+                                {formatCurrency(invoice.total)}
+                              </p>
                               {collapsedInvoices[invoice.id] ? 
-                                <ChevronDown className="w-4 h-4" /> : 
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronDown className="w-5 h-5 text-gray-400" /> : 
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
                               }
-                            </h5>
-                            <span className="text-sm text-gray-600">
-                              {invoice.items.length} dịch vụ • {Array.from(new Set(invoice.items.map(item => item.employeeName))).length} nhân viên
-                            </span>
+                            </div>
                           </div>
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-3">
+                        <CollapsibleContent className="border-t mt-4 pt-4">
                           <div className="space-y-3">
                             {invoice.items.map((item, index) => (
                               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -363,17 +353,18 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
                               </div>
                             ))}
                           </div>
+                          
+                          {/* Summary inside collapsible */}
+                          <div className="border-t pt-4 mt-4">
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm text-gray-600">
+                                <span>{invoice.items.length} dịch vụ • </span>
+                                <span>{Array.from(new Set(invoice.items.map(item => item.employeeName))).length} nhân viên</span>
+                              </div>
+                            </div>
+                          </div>
                         </CollapsibleContent>
                       </Collapsible>
-
-                      {/* Summary */}
-                      <div className="border-t pt-4 mt-4">
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm text-gray-600">
-                            Tổng cộng: <span className="font-bold text-green-600">{formatCurrency(invoice.total)}</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
