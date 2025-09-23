@@ -5,6 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { BasicInfoSection } from "./employee/BasicInfoSection";
 import { ServiceAssignmentSection } from "./employee/ServiceAssignmentSection";
 import { SpecialtiesSection } from "./employee/SpecialtiesSection";
+import { TipsSection } from "./employee/TipsSection";
 import { EmployeeFormActions } from "./employee/EmployeeFormActions";
 
 interface EmployeeFormProps {
@@ -23,6 +24,7 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
     specialties: [] as string[],
     startDate: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
     start_date: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
+    tips_percentage: 0,
   });
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         specialties: employee.specialties,
         startDate: employee.startDate,
         start_date: employee.start_date || employee.startDate,
+        tips_percentage: employee.tips_percentage || 0,
       });
     }
   }, [employee]);
@@ -115,6 +118,11 @@ export function EmployeeForm({ employee, onClose }: EmployeeFormProps) {
         specialties={formData.specialties}
         onSpecialtyToggle={handleSpecialtyToggle}
         onAddCustomSpecialty={handleAddCustomSpecialty}
+      />
+
+      <TipsSection
+        tipsPercentage={formData.tips_percentage}
+        onTipsPercentageChange={(percentage) => handleFormDataChange({ tips_percentage: percentage })}
       />
 
       <EmployeeFormActions

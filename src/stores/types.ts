@@ -27,6 +27,7 @@ export interface Employee {
   startDate: string;
   start_date?: string; // For Supabase compatibility
   commission_rate?: number; // Commission rate as decimal (0.10 = 10%)
+  tips_percentage?: number; // Tips percentage (10 = 10%)
   workSchedule?: {
     employeeId: string;
     employeeName: string;
