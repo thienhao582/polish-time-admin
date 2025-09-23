@@ -172,6 +172,8 @@ export function WorkScheduleManagement() {
         return { startTime: '08:00', endTime: '13:00' };
       case 'quarter':
         return { startTime: '08:00', endTime: '10:30' };
+      case 'custom':
+        return { startTime: '08:00', endTime: '18:00' };
       default:
         return {};
     }
@@ -568,6 +570,8 @@ function ScheduleEditForm({
         return { startTime: '08:00', endTime: '13:00' };
       case 'quarter':
         return { startTime: '08:00', endTime: '10:30' };
+      case 'custom':
+        return { startTime: '08:00', endTime: '18:00' };
       default:
         return {};
     }
@@ -708,7 +712,7 @@ function ScheduleEditForm({
     <div className="space-y-6">
       {/* Date-Based Schedule Editor */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Chỉnh sửa lịch làm việc theo ngày</h3>
+        <h3 className="text-lg font-semibold mb-4">Lịch mặc định</h3>
         
         {/* Date Picker */}
         <div className="mb-6">
@@ -887,6 +891,8 @@ function ScheduleOverrideDialog({
         return { startTime: '08:00', endTime: '13:00' };
       case 'quarter':
         return { startTime: '08:00', endTime: '10:30' };
+      case 'custom':
+        return { startTime: '08:00', endTime: '18:00' };
       default:
         return {};
     }
