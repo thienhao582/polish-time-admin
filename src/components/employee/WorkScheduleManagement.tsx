@@ -557,6 +557,8 @@ function ScheduleEditForm({
   text: any;
 }) {
   const [editedSchedule, setEditedSchedule] = useState<WorkSchedule>(schedule);
+  const [selectedEditDate, setSelectedEditDate] = useState<Date>(new Date());
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(new Date().getDay());
 
   const getDefaultHours = (workType: WorkType): { startTime?: string; endTime?: string } => {
     switch (workType) {
@@ -615,6 +617,11 @@ function ScheduleEditForm({
     }));
   };
 
+  const handleDayIndexChange = (date: Date) => {
+    setSelectedEditDate(date);
+    setSelectedDayIndex(date.getDay());
+  };
+
   const formatScheduleDisplay = (daySchedule: DaySchedule): string => {
     const workType = text.workTypes[daySchedule.workType];
     if (daySchedule.workType === 'custom' || (daySchedule.workType !== 'off' && daySchedule.startTime && daySchedule.endTime)) {
@@ -628,25 +635,53 @@ function ScheduleEditForm({
       {/* Default Schedule */}
       <div>
         <h3 className="text-lg font-semibold mb-4">Lịch mặc định</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => {
-            const daySchedule = editedSchedule.defaultSchedule[dayIndex] || { workType: 'off' };
+        
+        {/* Date Picker for Day Selection */}
+        <div className="mb-6">
+          <Label className="text-sm font-medium mb-2 block">Chọn ngày trong tuần để chỉnh sửa</Label>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { day: 1, label: "Thứ 2" },
+              { day: 2, label: "Thứ 3" },
+              { day: 3, label: "Thứ 4" },
+              { day: 4, label: "Thứ 5" },
+              { day: 5, label: "Thứ 6" },
+              { day: 6, label: "Thứ 7" },
+              { day: 0, label: "Chủ nhật" }
+            ].map(({ day, label }) => (
+              <Button
+                key={day}
+                variant={selectedDayIndex === day ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedDayIndex(day)}
+                className="min-w-20"
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Single Day Schedule Editor */}
+        <div className="border rounded-lg p-6 space-y-4 bg-gray-50">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-medium text-lg">
+              {text.dayOfWeekFull[selectedDayIndex as keyof typeof text.dayOfWeekFull]}
+            </h4>
+          </div>
+          
+          {(() => {
+            const daySchedule = editedSchedule.defaultSchedule[selectedDayIndex] || { workType: 'off' };
             
             return (
-              <div key={dayIndex} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="font-medium">
-                    {text.dayOfWeekFull[dayIndex as keyof typeof text.dayOfWeekFull]}
-                  </Label>
-                </div>
-                
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-xs text-gray-500 mb-1 block">{text.workType}</Label>
+                  <Label className="text-sm font-medium mb-2 block">{text.workType}</Label>
                   <Select
                     value={daySchedule.workType}
-                    onValueChange={(value: WorkType) => handleDayScheduleChange(dayIndex, value)}
+                    onValueChange={(value: WorkType) => handleDayScheduleChange(selectedDayIndex, value)}
                   >
-                    <SelectTrigger className="h-8">
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -660,30 +695,30 @@ function ScheduleEditForm({
                 </div>
 
                 {daySchedule.workType !== 'off' && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-xs text-gray-500 mb-1 block">{text.startTime}</Label>
+                      <Label className="text-sm font-medium mb-2 block">{text.startTime}</Label>
                       <Input
                         type="time"
                         value={daySchedule.startTime || ''}
-                        onChange={(e) => handleTimeChange(dayIndex, 'startTime', e.target.value)}
-                        className="h-8"
+                        onChange={(e) => handleTimeChange(selectedDayIndex, 'startTime', e.target.value)}
+                        className="w-full"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-500 mb-1 block">{text.endTime}</Label>
+                      <Label className="text-sm font-medium mb-2 block">{text.endTime}</Label>
                       <Input
                         type="time"
                         value={daySchedule.endTime || ''}
-                        onChange={(e) => handleTimeChange(dayIndex, 'endTime', e.target.value)}
-                        className="h-8"
+                        onChange={(e) => handleTimeChange(selectedDayIndex, 'endTime', e.target.value)}
+                        className="w-full"
                       />
                     </div>
                   </div>
                 )}
               </div>
             );
-          })}
+          })()}
         </div>
       </div>
 
