@@ -453,11 +453,11 @@ export function WorkScheduleManagement() {
                                  </div>
                                  
                                  {/* Override reason */}
-                                 {override && (
+                                 {/* {override && (
                                   <div className="text-xs text-orange-600 bg-orange-50 px-1 rounded max-w-20 truncate">
                                     {override.reason}
                                   </div>
-                                )}
+                                )} */}
                               </div>
                             </TableCell>
                           );
