@@ -304,11 +304,11 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
                           <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -mx-2">
                             <div className="flex items-center space-x-4">
                               <div>
-                                <h4 className="font-semibold text-lg">
+                                <h4 className="font-medium text-base">
                                   {invoice.invoiceNumber}
                                 </h4>
-                                <p className="text-sm text-gray-600">
-                                  {new Date(invoice.createdAt).toLocaleDateString('vi-VN')}
+                                <p className="text-lg text-gray-700 font-medium">
+                                  {new Date(invoice.createdAt).toLocaleDateString('vi-VN')} - {new Date(invoice.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </div>
                               <Badge 
