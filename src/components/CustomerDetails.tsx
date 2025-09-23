@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { ArrowLeft, Star, Calendar, Phone, Mail, Gift, TrendingUp, FileText, Users, DollarSign } from "lucide-react";
+import { ArrowLeft, Star, Calendar, Phone, Mail, Gift, TrendingUp, FileText, Users, DollarSign, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -33,6 +34,9 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
     selectedServiceId: "all",
     selectedPeriod: "all"
   });
+  
+  // Collapsible state for each invoice
+  const [collapsedInvoices, setCollapsedInvoices] = useState<Record<string, boolean>>({});
   
   // Get customer's invoices
   const allCustomerInvoices = getInvoicesByCustomer(customer.id);
@@ -120,6 +124,13 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
 
   const nextLevelPoints = getNextLevelPoints(customer.memberLevel);
   const pointsToNext = nextLevelPoints ? nextLevelPoints - customer.points : 0;
+
+  const toggleInvoiceCollapse = (invoiceId: string) => {
+    setCollapsedInvoices(prev => ({
+      ...prev,
+      [invoiceId]: !prev[invoiceId]
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -312,38 +323,52 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
                         </div>
                       </div>
 
-                      {/* Services and Employees */}
-                      <div className="border-t pt-4">
-                        <h5 className="font-medium mb-3 text-gray-800">Chi tiết dịch vụ:</h5>
-                        <div className="space-y-3">
-                          {invoice.items.map((item, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center space-x-4">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <div>
-                                  <p className="font-medium">{item.serviceName}</p>
-                                  <p className="text-sm text-gray-600">
-                                    Nhân viên: <span className="font-medium">{item.employeeName}</span>
+                      {/* Services and Employees - Collapsible */}
+                      <Collapsible 
+                        open={collapsedInvoices[invoice.id] || false}
+                        onOpenChange={() => toggleInvoiceCollapse(invoice.id)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center justify-between cursor-pointer border-t pt-4 hover:bg-gray-50 -mx-4 px-4 -mt-4">
+                            <h5 className="font-medium text-gray-800 flex items-center space-x-2">
+                              <span>Chi tiết dịch vụ:</span>
+                              {collapsedInvoices[invoice.id] ? 
+                                <ChevronDown className="w-4 h-4" /> : 
+                                <ChevronRight className="w-4 h-4" />
+                              }
+                            </h5>
+                            <span className="text-sm text-gray-600">
+                              {invoice.items.length} dịch vụ • {Array.from(new Set(invoice.items.map(item => item.employeeName))).length} nhân viên
+                            </span>
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-3">
+                          <div className="space-y-3">
+                            {invoice.items.map((item, index) => (
+                              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <div>
+                                    <p className="font-medium">{item.serviceName}</p>
+                                    <p className="text-sm text-gray-600">
+                                      Nhân viên: <span className="font-medium">{item.employeeName}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-green-600">
+                                    {formatCurrency(item.price)}
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-green-600">
-                                  {formatCurrency(item.price)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
                       {/* Summary */}
-                      <div className="border-t pt-4">
+                      <div className="border-t pt-4 mt-4">
                         <div className="flex justify-between items-center">
-                          <div className="text-sm text-gray-600">
-                            <span>{invoice.items.length} dịch vụ • </span>
-                            <span>{Array.from(new Set(invoice.items.map(item => item.employeeName))).length} nhân viên</span>
-                          </div>
                           <div className="text-sm text-gray-600">
                             Tổng cộng: <span className="font-bold text-green-600">{formatCurrency(invoice.total)}</span>
                           </div>
