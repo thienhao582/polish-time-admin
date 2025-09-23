@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { ArrowLeft, Star, Calendar, Phone, Mail, Gift, TrendingUp, FileText, Users, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
 import { CustomerEnhanced } from "@/stores/useSalonStore";
 import { useInvoiceStore } from "@/stores/useInvoiceStore";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { InvoiceFilters, InvoiceFiltersState } from "@/components/customer/InvoiceFilters";
 
 interface CustomerDetailsProps {
   customer: CustomerEnhanced;
@@ -25,8 +27,44 @@ interface CustomerDetailsProps {
 export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
   const { getInvoicesByCustomer } = useInvoiceStore();
   
+  // Filter state
+  const [filters, setFilters] = useState<InvoiceFiltersState>({
+    searchTerm: "",
+    selectedServiceId: "all",
+    selectedEmployeeId: "all",
+    selectedPeriod: "all"
+  });
+  
   // Get customer's invoices
-  const customerInvoices = getInvoicesByCustomer(customer.id);
+  const allCustomerInvoices = getInvoicesByCustomer(customer.id);
+  
+  // Apply filters
+  const customerInvoices = allCustomerInvoices.filter(invoice => {
+    // Search filter
+    const matchesSearch = filters.searchTerm === "" || 
+      invoice.invoiceNumber.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      invoice.items.some(item => 
+        item.serviceName.toLowerCase().includes(filters.searchTerm.toLowerCase())
+      );
+    
+    // Service filter
+    const matchesService = filters.selectedServiceId === "all" ||
+      invoice.items.some(item => item.serviceId === filters.selectedServiceId);
+    
+    // Employee filter  
+    const matchesEmployee = filters.selectedEmployeeId === "all" ||
+      invoice.items.some(item => item.employeeId === filters.selectedEmployeeId);
+    
+    // Time period filter
+    const matchesPeriod = filters.selectedPeriod === "all" || (() => {
+      const invoiceDate = new Date(invoice.createdAt);
+      const now = new Date();
+      const daysDiff = Math.floor((now.getTime() - invoiceDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysDiff <= parseInt(filters.selectedPeriod);
+    })();
+    
+    return matchesSearch && matchesService && matchesEmployee && matchesPeriod;
+  });
   
   // Get unique employees who served this customer
   const getUniqueEmployees = () => {
@@ -222,14 +260,25 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
         </Card>
       </div>
 
+      {/* Invoice Filters */}
+      <InvoiceFilters 
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+
       {/* Invoice List */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl">Danh sách hóa đơn</CardTitle>
-            <Badge variant="secondary">
-              Tổng: {customerInvoices.length} hóa đơn
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <Badge variant="secondary">
+                Hiển thị: {customerInvoices.length} hóa đơn
+              </Badge>
+              <Badge variant="outline">
+                Tổng: {allCustomerInvoices.length} hóa đơn
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
