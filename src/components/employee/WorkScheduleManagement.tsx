@@ -810,13 +810,8 @@ function ScheduleEditForm({
 
       {/* Schedule Overrides */}
       <div>
-        <div className="flex justify-between items-center mb-3">
+        <div className="mb-3">
           <h3 className="text-lg font-semibold">Điều chỉnh lịch</h3>
-          <ScheduleOverrideDialog
-            schedule={editedSchedule}
-            onAddOverride={addOverride}
-            text={text}
-          />
         </div>
         
         {editedSchedule.scheduleOverrides.length > 0 ? (
