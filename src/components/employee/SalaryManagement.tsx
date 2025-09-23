@@ -6,12 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { formatCurrency } from "@/lib/currencyUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CalendarIcon, DollarSign, TrendingUp } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface SalaryCalculation {
   employeeId: string;
@@ -30,6 +33,8 @@ export function SalaryManagement() {
   const [salaryData, setSalaryData] = useState<SalaryCalculation[]>([]);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [tempCommissionRate, setTempCommissionRate] = useState<string>("");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
 
   const translations = {
     vi: {
@@ -40,6 +45,9 @@ export function SalaryManagement() {
       lastMonth: "Tháng trước",
       last7Days: "7 ngày qua",
       last30Days: "30 ngày qua",
+      customRange: "Tùy chọn ngày",
+      fromDate: "Từ ngày",
+      toDate: "Đến ngày",
       employee: "Nhân viên",
       commissionRate: "Tỷ lệ hoa hồng",
       appointments: "Lịch hẹn",
@@ -64,6 +72,9 @@ export function SalaryManagement() {
       lastMonth: "Last Month",
       last7Days: "Last 7 Days",
       last30Days: "Last 30 Days",
+      customRange: "Custom Range",
+      fromDate: "From Date",
+      toDate: "To Date",
       employee: "Employee",
       commissionRate: "Commission Rate",
       appointments: "Appointments",
@@ -107,6 +118,15 @@ export function SalaryManagement() {
           break;
         case "last-30-days":
           startDate = subDays(new Date(), 30);
+          break;
+        case "custom-range":
+          if (customStartDate && customEndDate) {
+            startDate = customStartDate;
+            endDate = customEndDate;
+          } else {
+            startDate = startOfMonth(new Date());
+            endDate = endOfMonth(new Date());
+          }
           break;
         default:
           startDate = startOfMonth(new Date());
@@ -170,6 +190,13 @@ export function SalaryManagement() {
     setTempCommissionRate("");
   };
 
+  const getSelectDisplayValue = () => {
+    if (selectedPeriod === "custom-range" && customStartDate && customEndDate) {
+      return `${format(customStartDate, "dd/MM/yyyy")} - ${format(customEndDate, "dd/MM/yyyy")}`;
+    }
+    return undefined; // Let Select component handle default display
+  };
+
   const summaryStats = useMemo(() => {
     const totalEarnings = salaryData.reduce((sum, item) => sum + item.totalEarnings, 0);
     const totalAppointments = salaryData.reduce((sum, item) => sum + item.appointmentCount, 0);
@@ -202,13 +229,23 @@ export function SalaryManagement() {
               <Label htmlFor="period">{text.period}</Label>
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {getSelectDisplayValue() || (
+                      selectedPeriod === "this-month" ? text.thisMonth :
+                      selectedPeriod === "last-month" ? text.lastMonth :
+                      selectedPeriod === "last-7-days" ? text.last7Days :
+                      selectedPeriod === "last-30-days" ? text.last30Days :
+                      selectedPeriod === "custom-range" ? text.customRange :
+                      text.thisMonth
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="this-month">{text.thisMonth}</SelectItem>
                   <SelectItem value="last-month">{text.lastMonth}</SelectItem>
                   <SelectItem value="last-7-days">{text.last7Days}</SelectItem>
                   <SelectItem value="last-30-days">{text.last30Days}</SelectItem>
+                  <SelectItem value="custom-range">{text.customRange}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -217,6 +254,65 @@ export function SalaryManagement() {
               {text.calculate}
             </Button>
           </div>
+
+          {/* Custom Date Range Pickers */}
+          {selectedPeriod === "custom-range" && (
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+              <div className="flex-1">
+                <Label>{text.fromDate}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !customStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customStartDate ? format(customStartDate, "PPP") : <span>{text.fromDate}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customStartDate}
+                      onSelect={setCustomStartDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex-1">
+                <Label>{text.toDate}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !customEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {customEndDate ? format(customEndDate, "PPP") : <span>{text.toDate}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={customEndDate}
+                      onSelect={setCustomEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
