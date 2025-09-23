@@ -31,7 +31,6 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
   const [filters, setFilters] = useState<InvoiceFiltersState>({
     searchTerm: "",
     selectedServiceId: "all",
-    selectedEmployeeId: "all",
     selectedPeriod: "all"
   });
   
@@ -44,16 +43,13 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
     const matchesSearch = filters.searchTerm === "" || 
       invoice.invoiceNumber.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
       invoice.items.some(item => 
-        item.serviceName.toLowerCase().includes(filters.searchTerm.toLowerCase())
+        item.serviceName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+        item.employeeName.toLowerCase().includes(filters.searchTerm.toLowerCase())
       );
     
     // Service filter
     const matchesService = filters.selectedServiceId === "all" ||
       invoice.items.some(item => item.serviceId === filters.selectedServiceId);
-    
-    // Employee filter  
-    const matchesEmployee = filters.selectedEmployeeId === "all" ||
-      invoice.items.some(item => item.employeeId === filters.selectedEmployeeId);
     
     // Time period filter
     const matchesPeriod = filters.selectedPeriod === "all" || (() => {
@@ -63,7 +59,7 @@ export const CustomerDetails = ({ customer, onBack }: CustomerDetailsProps) => {
       return daysDiff <= parseInt(filters.selectedPeriod);
     })();
     
-    return matchesSearch && matchesService && matchesEmployee && matchesPeriod;
+    return matchesSearch && matchesService && matchesPeriod;
   });
   
   // Get unique employees who served this customer

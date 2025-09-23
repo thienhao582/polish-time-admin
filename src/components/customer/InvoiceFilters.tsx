@@ -9,7 +9,6 @@ import { useSalonStore } from "@/stores/useSalonStore";
 export interface InvoiceFiltersState {
   searchTerm: string;
   selectedServiceId: string;
-  selectedEmployeeId: string;
   selectedPeriod: string;
 }
 
@@ -24,9 +23,8 @@ export const InvoiceFilters = ({ filters, onFiltersChange }: InvoiceFiltersProps
   
   const translations = {
     vi: {
-      search_placeholder: "Tìm kiếm theo số hóa đơn, dịch vụ...",
+      search_placeholder: "Tìm kiếm theo số hóa đơn, dịch vụ, nhân viên...",
       all_services: "Tất cả dịch vụ",
-      all_employees: "Tất cả nhân viên",
       all_periods: "Tất cả thời gian",
       last_week: "7 ngày qua",
       last_month: "30 ngày qua",
@@ -35,9 +33,8 @@ export const InvoiceFilters = ({ filters, onFiltersChange }: InvoiceFiltersProps
       last_year: "1 năm qua"
     },
     en: {
-      search_placeholder: "Search by invoice number, service...",
+      search_placeholder: "Search by invoice number, service, employee...",
       all_services: "All services",
-      all_employees: "All employees", 
       all_periods: "All time",
       last_week: "Last 7 days",
       last_month: "Last 30 days",
@@ -59,7 +56,7 @@ export const InvoiceFilters = ({ filters, onFiltersChange }: InvoiceFiltersProps
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -87,27 +84,6 @@ export const InvoiceFilters = ({ filters, onFiltersChange }: InvoiceFiltersProps
               {services.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
                   {service.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Employee Filter */}
-          <Select 
-            value={filters.selectedEmployeeId} 
-            onValueChange={(value) => handleFilterChange('selectedEmployeeId', value)}
-          >
-            <SelectTrigger>
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-400" />
-                <SelectValue placeholder={text.all_employees} />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{text.all_employees}</SelectItem>
-              {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name}
                 </SelectItem>
               ))}
             </SelectContent>
