@@ -15,6 +15,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { CalendarIcon, Save, Edit, Plus, X, Clock, Settings, Search } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { vi } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 type WorkType = 'off' | 'full' | 'half' | 'quarter' | 'custom';
 
@@ -557,8 +558,7 @@ function ScheduleEditForm({
   text: any;
 }) {
   const [editedSchedule, setEditedSchedule] = useState<WorkSchedule>(schedule);
-  const [selectedEditDate, setSelectedEditDate] = useState<Date>(new Date());
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(new Date().getDay());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const getDefaultHours = (workType: WorkType): { startTime?: string; endTime?: string } => {
     switch (workType) {
@@ -571,6 +571,23 @@ function ScheduleEditForm({
       default:
         return {};
     }
+  };
+
+  const addOverride = (date: string, scheduleData: DaySchedule, reason: string) => {
+    setEditedSchedule(prev => ({
+      ...prev,
+      scheduleOverrides: [
+        ...prev.scheduleOverrides.filter(o => o.date !== date),
+        { date, schedule: scheduleData, reason }
+      ]
+    }));
+  };
+
+  const removeOverride = (date: string) => {
+    setEditedSchedule(prev => ({
+      ...prev,
+      scheduleOverrides: prev.scheduleOverrides.filter(o => o.date !== date)
+    }));
   };
 
   const handleDayScheduleChange = (dayIndex: number, workType: WorkType) => {
@@ -600,26 +617,83 @@ function ScheduleEditForm({
     }));
   };
 
-  const addOverride = (date: string, scheduleData: DaySchedule, reason: string) => {
+  const handleDateScheduleChange = (date: Date, workType: WorkType) => {
+    const defaultHours = getDefaultHours(workType);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    
+    // Remove existing override for this date first
+    const filteredOverrides = editedSchedule.scheduleOverrides.filter(o => o.date !== dateStr);
+    
+    // Add new override
     setEditedSchedule(prev => ({
       ...prev,
       scheduleOverrides: [
-        ...prev.scheduleOverrides.filter(o => o.date !== date),
-        { date, schedule: scheduleData, reason }
+        ...filteredOverrides,
+        {
+          date: dateStr,
+          schedule: {
+            workType,
+            ...defaultHours
+          },
+          reason: 'Điều chỉnh lịch'
+        }
       ]
     }));
   };
 
-  const removeOverride = (date: string) => {
-    setEditedSchedule(prev => ({
-      ...prev,
-      scheduleOverrides: prev.scheduleOverrides.filter(o => o.date !== date)
-    }));
+  const handleDateTimeChange = (date: Date, field: 'startTime' | 'endTime', value: string) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const existingOverride = editedSchedule.scheduleOverrides.find(o => o.date === dateStr);
+    
+    if (existingOverride) {
+      // Update existing override
+      setEditedSchedule(prev => ({
+        ...prev,
+        scheduleOverrides: prev.scheduleOverrides.map(override =>
+          override.date === dateStr
+            ? {
+                ...override,
+                schedule: {
+                  ...override.schedule,
+                  [field]: value
+                }
+              }
+            : override
+        )
+      }));
+    } else {
+      // Create new override
+      const dayIndex = date.getDay();
+      const currentDaySchedule = editedSchedule.defaultSchedule[dayIndex] || { workType: 'off' };
+      
+      setEditedSchedule(prev => ({
+        ...prev,
+        scheduleOverrides: [
+          ...prev.scheduleOverrides,
+          {
+            date: dateStr,
+            schedule: {
+              ...currentDaySchedule,
+              [field]: value
+            },
+            reason: 'Điều chỉnh giờ làm'
+          }
+        ]
+      }));
+    }
   };
 
-  const handleDayIndexChange = (date: Date) => {
-    setSelectedEditDate(date);
-    setSelectedDayIndex(date.getDay());
+  const getScheduleForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const override = editedSchedule.scheduleOverrides.find(o => o.date === dateStr);
+    
+    if (override) {
+      return override.schedule;
+    }
+    
+    // Return default schedule for this day of week
+    const dayIndex = date.getDay();
+    return editedSchedule.defaultSchedule[dayIndex] || { workType: 'off' };
   };
 
   const formatScheduleDisplay = (daySchedule: DaySchedule): string => {
@@ -632,54 +706,57 @@ function ScheduleEditForm({
 
   return (
     <div className="space-y-6">
-      {/* Default Schedule */}
+      {/* Date-Based Schedule Editor */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Lịch mặc định</h3>
+        <h3 className="text-lg font-semibold mb-4">Chỉnh sửa lịch làm việc theo ngày</h3>
         
-        {/* Date Picker for Day Selection */}
+        {/* Date Picker */}
         <div className="mb-6">
-          <Label className="text-sm font-medium mb-2 block">Chọn ngày trong tuần để chỉnh sửa</Label>
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { day: 1, label: "Thứ 2" },
-              { day: 2, label: "Thứ 3" },
-              { day: 3, label: "Thứ 4" },
-              { day: 4, label: "Thứ 5" },
-              { day: 5, label: "Thứ 6" },
-              { day: 6, label: "Thứ 7" },
-              { day: 0, label: "Chủ nhật" }
-            ].map(({ day, label }) => (
+          <Label className="text-sm font-medium mb-2 block">Chọn ngày cần chỉnh sửa</Label>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
-                key={day}
-                variant={selectedDayIndex === day ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedDayIndex(day)}
-                className="min-w-20"
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
               >
-                {label}
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP", { locale: vi }) : <span>Chọn ngày</span>}
               </Button>
-            ))}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Single Day Schedule Editor */}
-        <div className="border rounded-lg p-6 space-y-4 bg-gray-50">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium text-lg">
-              {text.dayOfWeekFull[selectedDayIndex as keyof typeof text.dayOfWeekFull]}
-            </h4>
-          </div>
+        {/* Schedule Editor for Selected Date */}
+        {selectedDate && (() => {
+          const currentSchedule = getScheduleForDate(selectedDate);
+          const dayOfWeek = text.dayOfWeekFull[selectedDate.getDay() as keyof typeof text.dayOfWeekFull];
           
-          {(() => {
-            const daySchedule = editedSchedule.defaultSchedule[selectedDayIndex] || { workType: 'off' };
-            
-            return (
+          return (
+            <div className="border rounded-lg p-6 space-y-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium text-lg">
+                  {format(selectedDate, "dd/MM/yyyy", { locale: vi })} - {dayOfWeek}
+                </h4>
+              </div>
+              
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium mb-2 block">{text.workType}</Label>
                   <Select
-                    value={daySchedule.workType}
-                    onValueChange={(value: WorkType) => handleDayScheduleChange(selectedDayIndex, value)}
+                    value={currentSchedule.workType}
+                    onValueChange={(value: WorkType) => handleDateScheduleChange(selectedDate, value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -694,14 +771,14 @@ function ScheduleEditForm({
                   </Select>
                 </div>
 
-                {daySchedule.workType !== 'off' && (
+                {currentSchedule.workType !== 'off' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium mb-2 block">{text.startTime}</Label>
                       <Input
                         type="time"
-                        value={daySchedule.startTime || ''}
-                        onChange={(e) => handleTimeChange(selectedDayIndex, 'startTime', e.target.value)}
+                        value={currentSchedule.startTime || ''}
+                        onChange={(e) => handleDateTimeChange(selectedDate, 'startTime', e.target.value)}
                         className="w-full"
                       />
                     </div>
@@ -709,17 +786,17 @@ function ScheduleEditForm({
                       <Label className="text-sm font-medium mb-2 block">{text.endTime}</Label>
                       <Input
                         type="time"
-                        value={daySchedule.endTime || ''}
-                        onChange={(e) => handleTimeChange(selectedDayIndex, 'endTime', e.target.value)}
+                        value={currentSchedule.endTime || ''}
+                        onChange={(e) => handleDateTimeChange(selectedDate, 'endTime', e.target.value)}
                         className="w-full"
                       />
                     </div>
                   </div>
                 )}
               </div>
-            );
-          })()}
-        </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Schedule Overrides */}
