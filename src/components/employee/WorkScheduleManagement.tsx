@@ -937,7 +937,6 @@ function ScheduleOverrideDialog({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button size="sm" variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
           Thêm điều chỉnh
         </Button>
       </PopoverTrigger>
@@ -1020,7 +1019,6 @@ function ScheduleOverrideDialog({
             onClick={handleAddOverride}
             disabled={!selectedDate || !overrideReason}
           >
-            <Plus className="w-4 h-4 mr-2" />
             Thêm điều chỉnh
           </Button>
         </div>
