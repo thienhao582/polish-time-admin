@@ -4,13 +4,14 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useDragStore } from "@/stores/useDragStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CheckInSidebar } from "./CheckInSidebar";
 import { EmployeeScheduleDialog } from "./EmployeeScheduleDialog";
+import { QuickScheduleDialog } from "./QuickScheduleDialog";
 
 interface Appointment {
   id: number;
@@ -66,6 +67,18 @@ export function AppointmentDayView({
   // State for employee schedule dialog
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  
+  // State for quick schedule dialog
+  const [isQuickScheduleDialogOpen, setIsQuickScheduleDialogOpen] = useState(false);
+  const [selectedQuickScheduleEmployee, setSelectedQuickScheduleEmployee] = useState<any>(null);
+  
+  // Force re-render when schedules change
+  const [scheduleUpdateCounter, setScheduleUpdateCounter] = useState(0);
+  
+  const handleScheduleUpdate = useCallback(() => {
+    setScheduleUpdateCounter(prev => prev + 1);
+    onScheduleUpdate?.();
+  }, [onScheduleUpdate]);
   
   // Drag highlight ref to avoid rerenders during dragover
   const lastHighlightRef = useRef<HTMLElement | null>(null);
@@ -330,7 +343,7 @@ export function AppointmentDayView({
         return a.employee.name.localeCompare(b.employee.name); // Alphabetical for employees without appointments
       })
       .map(item => item.employee);
-  }, [employees, staffAppointments, dateString]);
+  }, [employees, staffAppointments, dateString, scheduleUpdateCounter]);
 
   // Memoize time slots creation (7:00 to 23:45)
   const allTimeSlots = useMemo(() => {
@@ -526,8 +539,8 @@ export function AppointmentDayView({
                         size="sm"
                         className="h-6 w-6 p-0 hover:bg-blue-100"
                         onClick={() => {
-                          setSelectedEmployee(employee);
-                          setIsScheduleDialogOpen(true);
+                          setSelectedQuickScheduleEmployee(employee);
+                          setIsQuickScheduleDialogOpen(true);
                         }}
                         title="Thiết lập lịch làm việc"
                       >
@@ -703,9 +716,9 @@ export function AppointmentDayView({
                         }
                       };
                       
-                       return (
-                         <div 
-                           key={`${employee.id}-${timeSlot}`} 
+                        return (
+                          <div 
+                            key={`${employee.id}-${timeSlot}-${scheduleUpdateCounter}`}
                             className={cn(
                               "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
                               !availability.available 
@@ -833,7 +846,21 @@ export function AppointmentDayView({
           }}
           employee={selectedEmployee}
           selectedDate={selectedDate}
-          onScheduleUpdate={onScheduleUpdate}
+          onScheduleUpdate={handleScheduleUpdate}
+        />
+      )}
+
+      {/* Quick Schedule Dialog */}
+      {selectedQuickScheduleEmployee && (
+        <QuickScheduleDialog
+          isOpen={isQuickScheduleDialogOpen}
+          onClose={() => {
+            setIsQuickScheduleDialogOpen(false);
+            setSelectedQuickScheduleEmployee(null);
+          }}
+          employee={selectedQuickScheduleEmployee}
+          selectedDate={selectedDate}
+          onScheduleUpdate={handleScheduleUpdate}
         />
       )}
 
