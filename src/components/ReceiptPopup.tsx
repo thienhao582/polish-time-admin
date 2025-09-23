@@ -1,7 +1,10 @@
-import { X, FileText, Printer } from "lucide-react";
+import { X, FileText, Printer, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { format } from "date-fns";
 
 interface ReceiptPopupProps {
@@ -27,9 +30,16 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
   
+  // State for editable discount
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
+  const [discountValue, setDiscountValue] = useState(10); // Default 10%
+  
   // Calculate pricing details for popup display
   const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
-  const discount = Math.floor(serviceTotal * 0.1); // 10% discount
+  const discount = discountType === 'percentage' 
+    ? Math.floor(serviceTotal * (discountValue / 100))
+    : discountValue;
   const tip = Math.floor(serviceTotal * 0.05); // 5% tip
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
@@ -45,11 +55,13 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
     if (printWindow) {
           // Calculate pricing (enhanced with more details)
           const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
-          const discount = Math.floor(serviceTotal * 0.1); // 10% discount
+          const discountAmount = discountType === 'percentage' 
+            ? Math.floor(serviceTotal * (discountValue / 100))
+            : discountValue;
           const tip = Math.floor(serviceTotal * 0.05); // 5% tip
           const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
           const subtotal = serviceTotal;
-          const totalDue = subtotal - discount + tip + tax;
+          const totalDue = subtotal - discountAmount + tip + tax;
           
           // Additional receipt details
           const receiptNumber = `RC${Date.now().toString().slice(-6)}`;
@@ -177,8 +189,8 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                   <span>${subtotal.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div class="total-line">
-                  <span>Discount (10%):</span>
-                  <span>-${discount.toLocaleString('vi-VN')}₫</span>
+                  <span>Discount${discountType === 'percentage' ? ` (${discountValue}%)` : ''}:</span>
+                  <span>-${discountAmount.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div class="total-line">
                   <span>VAT (8%):</span>
@@ -344,10 +356,60 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                       <span>Subtotal:</span>
                       <span>{subtotal.toLocaleString('vi-VN')}₫</span>
                     </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount (10%):</span>
-                      <span>-{discount.toLocaleString('vi-VN')}₫</span>
-                    </div>
+                    {isEditingDiscount ? (
+                      <div className="space-y-2 p-3 bg-blue-50 rounded border">
+                        <div className="flex gap-2">
+                          <Button
+                            variant={discountType === 'percentage' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setDiscountType('percentage')}
+                          >
+                            %
+                          </Button>
+                          <Button
+                            variant={discountType === 'amount' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setDiscountType('amount')}
+                          >
+                            ₫
+                          </Button>
+                        </div>
+                        <div className="flex gap-2 items-center">
+                          <Label className="text-xs">
+                            {discountType === 'percentage' ? 'Giảm %:' : 'Giảm tiền:'}
+                          </Label>
+                          <Input
+                            type="number"
+                            value={discountValue}
+                            onChange={(e) => setDiscountValue(Number(e.target.value) || 0)}
+                            className="h-8 w-20 text-xs"
+                            min="0"
+                            max={discountType === 'percentage' ? 100 : serviceTotal}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => setIsEditingDiscount(false)}
+                          >
+                            OK
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-green-600 group">
+                        <span className="flex items-center gap-2">
+                          Discount{discountType === 'percentage' ? ` (${discountValue}%)` : ''}:
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setIsEditingDiscount(true)}
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </span>
+                        <span>-{discount.toLocaleString('vi-VN')}₫</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>VAT (8%):</span>
                       <span>{tax.toLocaleString('vi-VN')}₫</span>
