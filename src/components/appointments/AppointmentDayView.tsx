@@ -120,21 +120,20 @@ export function AppointmentDayView({
 
   // Helper function to check if employee is working on this date
   const isEmployeeWorkingOnDate = (employee: any, date: string): boolean => {
-    const dayOfWeek = format(new Date(date), 'EEEE').toLowerCase();
-    
-    // Check time records for this employee on this date
-    const employeeTimeRecords = timeRecords.filter(record => 
-      record.employeeId === employee.id && record.date === date
-    );
-    
-    // If there are time records, employee is working
-    if (employeeTimeRecords.length > 0) {
-      return true;
-    }
-    
-    // Fallback: assume service staff (thợ) are working by default
-    // You can enhance this logic based on your work schedule system
-    return employee.role === 'thợ' || employee.role === 'thợ chính' || employee.role === 'phụ tá' || employee.role === 'service';
+    const scheduleStatus = getEmployeeScheduleStatus(employee, new Date(date));
+    return scheduleStatus.status !== 'off';
+  };
+
+  // Helper function to check if time slot is available for an employee
+  const isTimeSlotAvailable = (employee: any, timeSlot: string): boolean => {
+    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+    return availability.available;
+  };
+
+  // Helper function to get unavailability reason for a time slot
+  const getUnavailabilityReason = (employee: any, timeSlot: string): string | undefined => {
+    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+    return availability.reason;
   };
 
   // Helper function to check if an appointment starts at this time slot

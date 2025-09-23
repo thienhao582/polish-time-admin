@@ -19,7 +19,8 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { useDemoData } from "@/hooks/useDemoData";
 import { useDemoMode } from "@/contexts/DemoModeContext";
-import { generateTimeOptions } from "@/utils/timeUtils";
+import { generateTimeOptions, calculateEndTime } from "@/utils/timeUtils";
+import { isEmployeeAvailableAtTime } from "@/utils/scheduleUtils";
 
 const appointmentFormSchema = z.object({
   date: z.date({
@@ -211,6 +212,36 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
       toast.error("Vui lòng chọn ít nhất một dịch vụ");
       setIsSubmitting(false);
       return;
+    }
+
+    // Validate employee availability for each service
+    for (const serviceStaffItem of serviceStaffItems) {
+      for (const staffId of serviceStaffItem.staffIds) {
+        const employee = employees.find(e => e.id === staffId);
+        if (employee) {
+          // Check if employee is available at the selected time
+          const availability = isEmployeeAvailableAtTime(employee, data.date, data.time);
+          if (!availability.available) {
+            toast.error(`${employee.name} không có sẵn vào ${data.time}. Lý do: ${availability.reason}`);
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Check if service duration extends past employee's working hours
+          const service = services.find(s => s.id === serviceStaffItem.serviceId);
+          if (service) {
+            const serviceDuration = service.duration + (data.extraTime || 0);
+            const endTime = calculateEndTime(data.time, `${serviceDuration} phút`);
+            const endAvailability = isEmployeeAvailableAtTime(employee, data.date, endTime);
+            
+            if (!endAvailability.available) {
+              toast.error(`Dịch vụ "${service.name}" sẽ kết thúc lúc ${endTime}, nhưng ${employee.name} ${endAvailability.reason.toLowerCase()}. Vui lòng chọn thời gian khác hoặc giảm thời gian dịch vụ.`);
+              setIsSubmitting(false);
+              return;
+            }
+          }
+        }
+      }
     }
 
     try {
@@ -419,9 +450,38 @@ export function AppointmentForm({ onClose, onSubmit, editData }: AppointmentForm
                   <SelectValue placeholder="Chọn giờ" />
                 </SelectTrigger>
                 <SelectContent>
-                  {generateTimeOptions().map((time) => (
-                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                  ))}
+                  {generateTimeOptions().map((time) => {
+                    // Check if any selected staff is unavailable at this time
+                    let isTimeDisabled = false;
+                    let disabledReason = "";
+                    
+                    for (const serviceStaffItem of serviceStaffItems) {
+                      for (const staffId of serviceStaffItem.staffIds) {
+                        const employee = employees.find(e => e.id === staffId);
+                        if (employee && form.watch("date")) {
+                          const availability = isEmployeeAvailableAtTime(employee, form.watch("date"), time);
+                          if (!availability.available) {
+                            isTimeDisabled = true;
+                            disabledReason = `${employee.name}: ${availability.reason}`;
+                            break;
+                          }
+                        }
+                      }
+                      if (isTimeDisabled) break;
+                    }
+
+                    return (
+                      <SelectItem 
+                        key={time} 
+                        value={time} 
+                        disabled={isTimeDisabled}
+                        className={isTimeDisabled ? "text-gray-400" : ""}
+                        title={isTimeDisabled ? disabledReason : undefined}
+                      >
+                        {time} {isTimeDisabled && "🚫"}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
