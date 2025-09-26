@@ -637,24 +637,27 @@ export function AppointmentDayView({
                        key={`anyone-hour-${hourSlot}`} 
                        className={cn(
                          "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors duration-75 select-none hover:bg-orange-50"
-                       )}
-                        onDragEnter={isDragEnabled ? handleDragEnter : undefined}
-                        onDragOver={isDragEnabled ? handleDragOver : undefined}
-                        onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                       onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, 'Anyone') : undefined}
+                        )}
+                        // TEMPORARILY DISABLED - Drag and drop
+                        // onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                        // onDragOver={isDragEnabled ? handleDragOver : undefined}
+                        // onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                        // onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, 'Anyone') : undefined}
                      >
                       {displayAppointment ? (
                         <div className="space-y-1">
                           {/* First appointment */}
-                            <div
-                              className={cn(
-                                "rounded-md p-1 cursor-move hover:shadow-md transition-colors text-xs relative border",
-                                appointmentColors.anyone,
-                                draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
-                              )}
-                              draggable={isDragEnabled}
-                             onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
-                              onDragEnd={isDragEnabled ? handleDragEnd : undefined}
+                             <div
+                               className={cn(
+                                 "rounded-md p-1 cursor-pointer hover:shadow-md transition-colors text-xs relative border",
+                                 appointmentColors.anyone,
+                                 // TEMPORARILY DISABLED - Drag visual feedback
+                                 // draggedAppointmentId === displayAppointment.id && "opacity-60 transform scale-95"
+                               )}
+                               // TEMPORARILY DISABLED - Draggable behavior
+                               // draggable={isDragEnabled}
+                               // onDragStart={isDragEnabled ? (e) => handleDragStart(e, displayAppointment) : undefined}
+                               // onDragEnd={isDragEnabled ? handleDragEnd : undefined}
                              onClick={(e) => {
                                e.preventDefault();
                                e.stopPropagation();
@@ -727,11 +730,12 @@ export function AppointmentDayView({
                                   ? "bg-white hover:bg-blue-50 cursor-pointer" 
                                   : "bg-white hover:bg-gray-50"
                             )}
-                           onClick={handleTimeSlotClick}
-                           onDragEnter={isDragEnabled ? handleDragEnter : undefined}
-                           onDragOver={isDragEnabled ? handleDragOver : undefined}
-                           onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                           onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
+                            onClick={handleTimeSlotClick}
+                            // TEMPORARILY DISABLED - Drag and drop
+                            // onDragEnter={isDragEnabled ? handleDragEnter : undefined}
+                            // onDragOver={isDragEnabled ? handleDragOver : undefined}
+                            // onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+                            // onDrop={isDragEnabled ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
                            title={!availability.available ? availability.reason : ""}
                          >
                           {/* Show blocked time indicator if not available */}
@@ -773,11 +777,12 @@ export function AppointmentDayView({
                              return (
                                 <div
                                   key={`${apt.id}-${aptIndex}`}
-                                   className={cn(
-                                     "absolute border rounded-md p-1 cursor-move transition-colors text-xs overflow-hidden select-none",
-                                     getAppointmentColor(),
-                                     draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
-                                   )}
+                                    className={cn(
+                                      "absolute border rounded-md p-1 cursor-pointer transition-colors text-xs overflow-hidden select-none",
+                                      getAppointmentColor(),
+                                      // TEMPORARILY DISABLED - Drag visual feedback
+                                      // draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
+                                    )}
                                   style={{
                                     top: '2px',
                                     left: `${aptIndex * 50}%`,
