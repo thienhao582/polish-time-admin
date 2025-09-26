@@ -384,25 +384,44 @@ export function AppointmentDayView({
     [workingEmployees, searchQuery]
   );
 
-  const availabilityCache = useRef(new Map());
+const availabilityCache = useRef(
+  new Map<
+    string, // `${emp.id}-${dateString}-${scheduleUpdateCounter}`
+    Map<string, { available: boolean; reason?: string }>
+  >()
+);
 
-  const employeeAvailability = useMemo(() => {
-    const cacheKey = `${dateString}-${scheduleUpdateCounter}`;
-    if (availabilityCache.current.has(cacheKey)) {
-      return availabilityCache.current.get(cacheKey);
+// Replace your old employeeAvailability useMemo with this:
+const employeeAvailability = useMemo(() => {
+  const result = new Map<
+    string,
+    { available: boolean; reason?: string }
+  >();
+
+  for (const emp of filteredWorkingEmployees) {
+    const cacheKey = `${emp.id}-${dateString}-${scheduleUpdateCounter}`;
+    let slotMap = availabilityCache.current.get(cacheKey);
+
+    if (!slotMap) {
+      slotMap = new Map<string, { available: boolean; reason?: string }>();
+      for (const slot of allTimeSlots) {
+        const value = isEmployeeAvailableAtTime(emp, selectedDate, slot);
+        slotMap.set(slot, value);
+        // ✅ directly write into result (no second loop)
+        result.set(`${emp.id}-${slot}`, value);
+      }
+      availabilityCache.current.set(cacheKey, slotMap);
+    } else {
+      // just reuse cached slotMap
+      for (const [slot, value] of slotMap) {
+        result.set(`${emp.id}-${slot}`, value);
+      }
     }
+  }
 
-    const map = new Map();
-    filteredWorkingEmployees.forEach(emp => {
-      allTimeSlots.forEach(slot => {
-        const key = `${emp.id}-${slot}`;
-        map.set(key, isEmployeeAvailableAtTime(emp, selectedDate, slot));
-      });
-    });
+  return result;
+}, [filteredWorkingEmployees, dateString, allTimeSlots, scheduleUpdateCounter]);
 
-    availabilityCache.current.set(cacheKey, map);
-    return map;
-  }, [filteredWorkingEmployees, dateString, allTimeSlots, scheduleUpdateCounter]);
 
   // Filter time slots based on showFullView setting
   const timeSlots = useMemo(() => 
