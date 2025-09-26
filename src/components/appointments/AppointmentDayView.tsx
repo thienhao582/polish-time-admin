@@ -241,6 +241,10 @@ export function AppointmentDayView({
     )
   }), [allDayAppointments]);
 
+  const handleTimeSlotClick = useCallback((dateString, timeSlot, employeeName) => {
+    if (onTimeSlotClick) onTimeSlotClick(dateString, timeSlot, employeeName);
+  }, [onTimeSlotClick]);
+
   // Get appointments for a specific employee and time slot
   const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
     const slotStartMinutes = timeToMinutes(timeSlot);
@@ -380,21 +384,25 @@ export function AppointmentDayView({
     [workingEmployees, searchQuery]
   );
 
-  // Pre-calculate employee availability for all time slots to optimize performance
+  const availabilityCache = useRef(new Map());
+
   const employeeAvailability = useMemo(() => {
-    const availabilityMap = new Map<string, { available: boolean; reason?: string }>();
-    
-    // Calculate availability for all employees and time slots once
-    filteredWorkingEmployees.forEach(employee => {
-      allTimeSlots.forEach(timeSlot => {
-        const key = `${employee.id}-${timeSlot}`;
-        const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
-        availabilityMap.set(key, availability);
+    const cacheKey = `${dateString}-${scheduleUpdateCounter}`;
+    if (availabilityCache.current.has(cacheKey)) {
+      return availabilityCache.current.get(cacheKey);
+    }
+
+    const map = new Map();
+    filteredWorkingEmployees.forEach(emp => {
+      allTimeSlots.forEach(slot => {
+        const key = `${emp.id}-${slot}`;
+        map.set(key, isEmployeeAvailableAtTime(emp, selectedDate, slot));
       });
     });
-    
-    return availabilityMap;
-  }, [filteredWorkingEmployees, selectedDate, allTimeSlots, scheduleUpdateCounter]);
+
+    availabilityCache.current.set(cacheKey, map);
+    return map;
+  }, [filteredWorkingEmployees, dateString, allTimeSlots, scheduleUpdateCounter]);
 
   // Filter time slots based on showFullView setting
   const timeSlots = useMemo(() => 
@@ -730,12 +738,6 @@ export function AppointmentDayView({
                       const key = `${employee.id}-${timeSlot}`;
                       const availability = employeeAvailability.get(key) || { available: true };
 
-                      const handleTimeSlotClick = () => {
-                        if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
-                          onTimeSlotClick(dateString, timeSlot, employee.name);
-                        }
-                      };
-                      
                         return (
                           <div 
                             key={`${employee.id}-${timeSlot}-${scheduleUpdateCounter}`}
@@ -747,7 +749,7 @@ export function AppointmentDayView({
                                   ? "bg-white hover:bg-blue-50 cursor-pointer" 
                                   : "bg-white hover:bg-gray-50"
                             )}
-                            onClick={handleTimeSlotClick}
+                            onClick={() => handleTimeSlotClick(dateString, timeSlot, employee.name)}
                             // TEMPORARILY DISABLED - Drag and drop
                             // onDragEnter={isDragEnabled ? handleDragEnter : undefined}
                             // onDragOver={isDragEnabled ? handleDragOver : undefined}
