@@ -726,8 +726,9 @@ export function AppointmentDayView({
                         appointmentStartsAtSlot(apt, timeSlot)
                       );
 
-                      // Check if employee is available at this time
-                      const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+                      // Get pre-calculated availability
+                      const key = `${employee.id}-${timeSlot}`;
+                      const availability = employeeAvailability.get(key) || { available: true };
 
                       const handleTimeSlotClick = () => {
                         if (onTimeSlotClick && startingAppointments.length === 0 && availability.available) {
