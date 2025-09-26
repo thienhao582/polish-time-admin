@@ -137,16 +137,16 @@ export function AppointmentDayView({
     return scheduleStatus.status !== 'off';
   };
 
-  // Helper function to check if time slot is available for an employee
+  // Helper function to check if time slot is available for an employee (will be optimized below)
   const isTimeSlotAvailable = (employee: any, timeSlot: string): boolean => {
-    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
-    return availability.available;
+    const key = `${employee.id}-${timeSlot}`;
+    return employeeAvailability.get(key)?.available ?? true;
   };
 
-  // Helper function to get unavailability reason for a time slot
+  // Helper function to get unavailability reason for a time slot (will be optimized below)
   const getUnavailabilityReason = (employee: any, timeSlot: string): string | undefined => {
-    const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
-    return availability.reason;
+    const key = `${employee.id}-${timeSlot}`;
+    return employeeAvailability.get(key)?.reason;
   };
 
   // Helper function to check if an appointment starts at this time slot
@@ -379,6 +379,22 @@ export function AppointmentDayView({
       : workingEmployees,
     [workingEmployees, searchQuery]
   );
+
+  // Pre-calculate employee availability for all time slots to optimize performance
+  const employeeAvailability = useMemo(() => {
+    const availabilityMap = new Map<string, { available: boolean; reason?: string }>();
+    
+    // Calculate availability for all employees and time slots once
+    filteredWorkingEmployees.forEach(employee => {
+      allTimeSlots.forEach(timeSlot => {
+        const key = `${employee.id}-${timeSlot}`;
+        const availability = isEmployeeAvailableAtTime(employee, selectedDate, timeSlot);
+        availabilityMap.set(key, availability);
+      });
+    });
+    
+    return availabilityMap;
+  }, [filteredWorkingEmployees, selectedDate, allTimeSlots, scheduleUpdateCounter]);
 
   // Filter time slots based on showFullView setting
   const timeSlots = useMemo(() => 
