@@ -10,7 +10,7 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useDemoData } from "@/hooks/useDemoData";
-import { CheckInItem } from "@/hooks/useSupabaseCheckIns";
+import { CheckInItem } from "@/stores/useCheckInStore";
 
 interface CheckInEditDialogProps {
   isOpen: boolean;
@@ -34,18 +34,32 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
     if (checkInItem && isOpen) {
       setNotes(checkInItem.notes || "");
       
-      // Initialize services from check-in item
+      // Initialize services from check-in item with staff assignments
       if (checkInItem.services && checkInItem.services.length > 0) {
-        const { services } = useSalonStore.getState();
+        const { services, employees } = useSalonStore.getState();
         const initialServiceItems = checkInItem.services.map((serviceName, index) => {
           const service = services.find(s => s.name === serviceName);
           if (service) {
+            // Find staff assignment for this service
+            const staffAssignment = checkInItem.staffAssignments?.find(sa => sa.serviceName === serviceName);
+            
+            let staffIds = ["anyone"];
+            let staffNames = ["Bất kì"];
+            
+            if (staffAssignment && staffAssignment.staffId !== "anyone") {
+              const assignedEmployee = employees.find(emp => emp.id === staffAssignment.staffId);
+              if (assignedEmployee) {
+                staffIds = [staffAssignment.staffId];
+                staffNames = [assignedEmployee.name];
+              }
+            }
+            
             return {
-              id: `${service.id}-anyone-${Date.now()}-${index}`,
+              id: `${service.id}-${staffIds[0]}-${Date.now()}-${index}`,
               serviceId: service.id,
               serviceName: service.name,
-              staffIds: ["anyone"],
-              staffNames: ["Bất kì"],
+              staffIds,
+              staffNames,
               price: service.price,
               duration: service.duration,
               staffSalaryInfo: []
@@ -174,11 +188,16 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         await createAppointment(appointmentData);
       }
 
-      // Update check-in item status to booked with selected services
+      // Update check-in item status to booked with selected services and staff assignments
       const updatedItem: CheckInItem = {
         ...checkInItem,
         status: "booked",
         services: serviceStaffItems.length > 0 ? serviceStaffItems.map(item => item.serviceName) : [],
+        staffAssignments: serviceStaffItems.map(item => ({
+          serviceName: item.serviceName,
+          staffId: item.staffIds[0] || "anyone",
+          staffName: item.staffNames[0] || "Bất kì"
+        })),
         notes,
         appointmentId: appointmentData.appointmentId // Link to created appointment
       };
@@ -210,6 +229,11 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
     const updatedItem: CheckInItem = {
       ...checkInItem,
       services: serviceStaffItems.map(item => item.serviceName),
+      staffAssignments: serviceStaffItems.map(item => ({
+        serviceName: item.serviceName,
+        staffId: item.staffIds[0] || "anyone",
+        staffName: item.staffNames[0] || "Bất kì"
+      })),
       notes
     };
 

@@ -10,6 +10,11 @@ export interface CheckInItem {
   date: string; // YYYY-MM-DD format
   tags: string[];
   services?: string[];
+  staffAssignments?: Array<{
+    serviceName: string;
+    staffId: string;
+    staffName: string;
+  }>;
   phone?: string;
   waitTime?: number;
   notes?: string;
