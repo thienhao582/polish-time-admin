@@ -124,7 +124,8 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         duration_minutes: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
         price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
         status: "confirmed",
-        notes: notes || `Converted from check-in #${checkInItem.customerNumber}`
+        notes: notes || `Converted from check-in #${checkInItem.customerNumber}`,
+        assignmentType: "anyone"
       };
 
       // Add customer ID if available
@@ -156,7 +157,8 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
             duration: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
             price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
-            notes: appointmentData.notes
+            notes: appointmentData.notes,
+            assignmentType: "anyone"
           };
           const createdAppointment = addAppointment(newAppointmentData);
           
