@@ -146,7 +146,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         );
 
         if (!exists) {
-          // Update Zustand store with selected services and staff
+          // Update Zustand store following the correct appointment model
           const newAppointmentData = {
             date: formattedDate,
             time: appointmentTime,
@@ -158,7 +158,10 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
             price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
             notes: appointmentData.notes,
-            assignmentType: "anyone"
+            assignmentType: "anyone",
+            customerId,
+            serviceId: serviceStaffItems.length > 0 ? serviceStaffItems[0].serviceId : undefined,
+            staffId: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffIds[0] : "anyone"
           };
           const createdAppointment = addAppointment(newAppointmentData);
           
