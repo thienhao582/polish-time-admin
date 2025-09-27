@@ -128,6 +128,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
       const appointmentTime = to24h(checkInItem.checkInTime);
       // Create appointment with proper service selection
       const selectedServiceNames = serviceStaffItems.map(item => item.serviceName);
+      const hasSpecificStaff = serviceStaffItems.length > 0 && serviceStaffItems[0].staffIds[0] !== "anyone";
       const appointmentData: any = {
         appointment_date: formattedDate,
         appointment_time: appointmentTime,
@@ -139,7 +140,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
         status: "confirmed",
         notes: notes || `Converted from check-in #${checkInItem.customerNumber}`,
-        assignmentType: "anyone"
+        assignmentType: hasSpecificStaff ? "pre-assigned" : "anyone"
       };
 
       // Add customer ID if available
@@ -172,7 +173,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
             price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
             notes: appointmentData.notes,
-            assignmentType: "anyone",
+            assignmentType: hasSpecificStaff ? "pre-assigned" : "anyone",
             customerId,
             serviceId: serviceStaffItems.length > 0 ? serviceStaffItems[0].serviceId : undefined,
             staffId: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffIds[0] : "anyone"
