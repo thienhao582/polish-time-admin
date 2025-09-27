@@ -33,7 +33,31 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
   useEffect(() => {
     if (checkInItem && isOpen) {
       setNotes(checkInItem.notes || "");
-      setServiceStaffItems([]);
+      
+      // Initialize services from check-in item
+      if (checkInItem.services && checkInItem.services.length > 0) {
+        const { services } = useSalonStore.getState();
+        const initialServiceItems = checkInItem.services.map((serviceName, index) => {
+          const service = services.find(s => s.name === serviceName);
+          if (service) {
+            return {
+              id: `${service.id}-anyone-${Date.now()}-${index}`,
+              serviceId: service.id,
+              serviceName: service.name,
+              staffIds: ["anyone"],
+              staffNames: ["Bất kì"],
+              price: service.price,
+              duration: service.duration,
+              staffSalaryInfo: []
+            };
+          }
+          return null;
+        }).filter(Boolean);
+        
+        setServiceStaffItems(initialServiceItems);
+      } else {
+        setServiceStaffItems([]);
+      }
     }
   }, [checkInItem, isOpen]);
 
