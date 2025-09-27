@@ -234,10 +234,10 @@ export function AppointmentDayView({
   
   const { anyoneAppointments, staffAppointments } = useMemo(() => ({
     anyoneAppointments: allDayAppointments.filter(apt => 
-      !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone'
+      !apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone' || apt.staff === 'Bất kì'
     ),
     staffAppointments: allDayAppointments.filter(apt => 
-      apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone'
+      apt.staff && apt.staff.trim() !== '' && apt.staff.toLowerCase() !== 'anyone' && apt.staff !== 'Bất kì'
     )
   }), [allDayAppointments]);
 
