@@ -120,7 +120,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
         customer_name: checkInItem.customerName,
         customer_phone: checkInItem.customerNumber,
         service_name: selectedServiceNames.length > 0 ? selectedServiceNames.join(", ") : "",
-        employee_name: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffName : "Anyone",
+        employee_name: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffNames[0] : "Bất kì",
         duration_minutes: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
         price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
         status: "confirmed",
@@ -141,7 +141,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
           a.time === appointmentTime &&
           a.phone === checkInItem.customerNumber &&
           a.customer === checkInItem.customerName &&
-          a.staff === "Anyone"
+          (a.staff === "Anyone" || a.staff === "Bất kì")
         );
 
         if (!exists) {
@@ -152,7 +152,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
             customerName: checkInItem.customerName,
             customerPhone: checkInItem.customerNumber,
             serviceName: selectedServiceNames.length > 0 ? selectedServiceNames.join(", ") : "",
-            staffName: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffName : "Anyone",
+            staffName: serviceStaffItems.length > 0 ? serviceStaffItems[0].staffNames[0] : "Bất kì",
             duration: serviceStaffItems.length > 0 ? serviceStaffItems[0].duration : 60,
             price: serviceStaffItems.reduce((total, item) => total + (item.price || 0), 0),
             status: "confirmed",
