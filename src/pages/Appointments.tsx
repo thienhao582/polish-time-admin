@@ -514,8 +514,8 @@ const Appointments = () => {
 
       {/* Main Content with Sidebar - Full Height Container */}
       <div className={`flex-1 flex gap-4 min-h-0 overflow-hidden ${isMaximized ? 'h-full' : ''}`}>
-        {/* Calendar View - Calculate max width based on available space */}
-        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${showAvailableStaffSidebar && viewMode === "day" ? 'flex-1 max-w-[calc(100vw-320px)]' : 'flex-1'}`}>
+        {/* Calendar View - Flexible width, no viewport-based calc to avoid horizontal body scroll */}
+        <div className={"transition-all duration-300 min-w-0 overflow-hidden flex-1"}>
           <Card className="h-full overflow-hidden">
             <CardContent className="p-0 h-full overflow-hidden">
               {viewMode === "month" && (

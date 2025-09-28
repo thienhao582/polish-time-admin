@@ -53,8 +53,8 @@ export function AppointmentDayView({
   onAppointmentCreated,
   onScheduleUpdate,
   onAppointmentDrop,
-  showAvailableStaffSidebar = false,
-  isSidebarCollapsed = false
+  showAvailableStaffSidebar: _showAvailableStaffSidebar = false,
+  isSidebarCollapsed: _isSidebarCollapsed = false
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -541,15 +541,9 @@ const employeeAvailability = useMemo(() => {
 
       {/* Calendar Container with constrained height for internal scrolling */}
       <div 
-        className={`flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] overflow-hidden ${
-          (() => {
-            // Calculate left sidebar width: collapsed = 56px, expanded = 256px
-            const leftSidebarWidth = isSidebarCollapsed ? 56 : 256;
-            const rightSidebarWidth = showAvailableStaffSidebar ? 256 : 0;
-            const totalSidebarWidth = leftSidebarWidth + rightSidebarWidth;
-            return `max-w-[calc(100dvw-${totalSidebarWidth}px)]`;
-          })()
-        }`}
+        className={
+          "flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] w-full min-w-0 overflow-hidden"
+        }
       >
         {/* Headers Row - Fixed Top */}
         <div className="flex border-b border-gray-200 bg-white z-40 flex-shrink-0">
