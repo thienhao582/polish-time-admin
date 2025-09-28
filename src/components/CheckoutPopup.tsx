@@ -562,8 +562,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         <div 
                           className={`h-full transition-colors ${
                             currentStepIndex > index 
-                              ? 'bg-primary' 
-                              : 'bg-muted'
+                              ? 'bg-green-500' 
+                              : 'bg-gray-200'
                           }`}
                         />
                       </div>
