@@ -528,54 +528,48 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <p className="text-sm text-muted-foreground">Checkout cho {checkInItem.customerName}</p>
               </div>
               
-              {/* Horizontal step indicators with connecting lines */}
-              <div className="relative w-full px-8">
-                {/* Background connecting lines - only between steps, not after step 4 */}
-                <div className="absolute top-4 h-0.5 bg-gray-200" style={{ 
-                  transform: 'translateY(-50%)', 
-                  left: 'calc(25% - 1rem)', 
-                  right: 'calc(25% - 1rem)'
-                }} />
-                
-                {/* Green progress line */}
-                <div 
-                  className="absolute top-4 h-0.5 bg-green-500 transition-all duration-300" 
-                  style={{ 
-                    transform: 'translateY(-50%)', 
-                    left: 'calc(25% - 1rem)',
-                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 50}% + ${currentStepIndex * 0.5}rem)`
-                  }} 
-                />
-
-                <div className="grid grid-cols-4 gap-0 w-full">
-                  {steps.map((step, index) => (
-                    <div key={step.key} className="flex justify-center">
-                      {/* Step circle and label */}
+              {/* Horizontal step indicators with individual connecting lines */}
+              <div className="flex items-center justify-between w-full px-8">
+                {steps.map((step, index) => (
+                  <div key={step.key} className="flex items-center">
+                    {/* Step circle and label */}
+                    <div 
+                      className="flex flex-col items-center cursor-pointer relative z-10"
+                      onClick={() => handleStepClick(step.key)}
+                      title={step.label}
+                    >
                       <div 
-                        className="flex flex-col items-center cursor-pointer relative z-10 bg-background"
-                        onClick={() => handleStepClick(step.key)}
-                        title={step.label}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
+                          currentStep === step.key 
+                            ? 'bg-background text-foreground border-primary border-2' 
+                            : currentStepIndex > index 
+                            ? 'bg-green-500 text-white border-green-500' 
+                            : 'bg-background text-muted-foreground border-gray-300'
+                        } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
                       >
-                        <div 
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
-                            currentStep === step.key 
-                              ? 'bg-background text-foreground border-primary border-2' 
-                              : currentStepIndex > index 
-                              ? 'bg-green-500 text-white border-green-500' 
-                              : 'bg-background text-muted-foreground border-gray-300'
-                          } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
-                        >
-                          {currentStepIndex > index ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            step.number
-                          )}
-                        </div>
-                        <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
+                        {currentStepIndex > index ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          step.number
+                        )}
                       </div>
+                      <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Connecting line - only if not the last step */}
+                    {index < steps.length - 1 && (
+                      <div className="flex-1 h-0.5 mx-4 -mt-6">
+                        <div 
+                          className={`h-full w-16 transition-colors ${
+                            currentStepIndex > index 
+                              ? 'bg-green-500' 
+                              : 'bg-gray-200'
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
