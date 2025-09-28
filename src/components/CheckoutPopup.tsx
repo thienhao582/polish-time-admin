@@ -32,8 +32,6 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
 
-  if (!isOpen) return null;
-
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
   
@@ -54,6 +52,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setPaymentCompleted(false);
     }
   }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const handlePaymentSelect = (method: PaymentMethod) => {
     setSelectedPayment(method);
