@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { format } from "date-fns";
 
 interface CheckoutPopupProps {
@@ -159,31 +160,31 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
   // Fixed left sidebar content - always visible
   const renderFixedInvoiceInfo = () => (
-    <div className="bg-muted/30 h-full p-8 overflow-y-auto">
-      <div className="space-y-8">
+    <div className="bg-muted/30 h-full overflow-y-auto">
+      <div className="p-6 space-y-6">
         {/* Customer Info */}
-        <div className="text-center space-y-3">
-          <h3 className="text-4xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
-          <p className="text-2xl font-medium">{checkInItem.customerName}</p>
-          {checkInItem.phone && <p className="text-lg text-muted-foreground">{checkInItem.phone}</p>}
-          <p className="text-base text-muted-foreground">{currentDate} {currentTime}</p>
+        <div className="text-center space-y-2">
+          <h3 className="text-3xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
+          <p className="text-xl font-medium">{checkInItem.customerName}</p>
+          {checkInItem.phone && <p className="text-sm text-muted-foreground">{checkInItem.phone}</p>}
+          <p className="text-xs text-muted-foreground">{currentDate} {currentTime}</p>
         </div>
 
         <Separator />
 
         {/* Services */}
         <div>
-          <h4 className="text-xl font-semibold mb-4">Dịch vụ đã sử dụng</h4>
-          <div className="space-y-3">
+          <h4 className="text-lg font-semibold mb-3">Dịch vụ đã sử dụng</h4>
+          <div className="space-y-2">
             {checkInItem.services && checkInItem.services.length > 0 ? (
               checkInItem.services.map((service, index) => (
-                <div key={index} className="flex justify-between items-center p-4 bg-background rounded-lg">
-                  <span className="text-lg font-medium">{service}</span>
-                  <span className="text-lg font-semibold">50,000₫</span>
+                <div key={index} className="flex justify-between items-center p-3 bg-background rounded-lg">
+                  <span className="text-sm font-medium">{service}</span>
+                  <span className="text-sm font-semibold">50,000₫</span>
                 </div>
               ))
             ) : (
-              <p className="text-lg text-muted-foreground">Không có dịch vụ</p>
+              <p className="text-sm text-muted-foreground">Không có dịch vụ</p>
             )}
           </div>
         </div>
@@ -192,9 +193,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         {serviceTotal > 0 && (
           <>
             <Separator />
-            <div className="space-y-4">
-              <h4 className="font-semibold">Tổng kết thanh toán</h4>
-              <div className="space-y-3 text-sm">
+            <div className="space-y-3">
+              <h4 className="text-lg font-semibold">Tổng kết thanh toán</h4>
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span>{subtotal.toLocaleString('vi-VN')}₫</span>
@@ -209,7 +210,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         type="number"
                         value={editableDiscount}
                         onChange={(e) => setEditableDiscount(Number(e.target.value) || 0)}
-                        className="w-12 h-6 text-xs text-center"
+                        className="w-10 h-6 text-xs text-center"
                         min="0"
                         max="100"
                       />
@@ -233,7 +234,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         type="number"
                         value={editableTip}
                         onChange={(e) => setEditableTip(Number(e.target.value) || 0)}
-                        className="w-12 h-6 text-xs text-center"
+                        className="w-10 h-6 text-xs text-center"
                         min="0"
                         max="100"
                       />
@@ -244,7 +245,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
                 
                 <Separator />
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between font-bold text-base">
                   <span>Tổng cộng:</span>
                   <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
                 </div>
@@ -475,19 +476,21 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
 
-  return (
-    <>
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Overlay */}
       <div 
-        className="fixed inset-0 bg-black/50 z-50"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
       
-      {/* Popup - 90% dynamic viewport width and height */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-background rounded-lg shadow-xl flex flex-col overflow-hidden max-w-none max-h-none" style={{ width: '90dvw', height: '90dvh' }}>
-          {/* Header */}
-          <div className="flex items-center justify-between p-8 border-b">
+      {/* Popup Container - Full viewport with padding */}
+      <div className="relative w-[90vw] h-[90vh] max-w-none max-h-none">
+        <div className="bg-background rounded-xl shadow-2xl flex flex-col h-full overflow-hidden">
+          {/* Header - Fixed height */}
+          <div className="flex items-center justify-between p-6 border-b shrink-0">
             <div className="flex items-center gap-4">
               {canGoBack() && (
                 <Button 
@@ -495,14 +498,14 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   size="lg"
                   onClick={handleBack}
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-6 w-6" />
                 </Button>
               )}
               <div>
-                <h2 className="text-3xl font-semibold">
+                <h2 className="text-2xl font-semibold">
                   {steps.find(s => s.key === currentStep)?.label || 'Checkout'}
                 </h2>
-                <p className="text-lg text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Checkout cho {checkInItem.customerName}
                 </p>
               </div>
@@ -510,11 +513,11 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             
             <div className="flex items-center gap-6">
               {/* Clickable Step indicators */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center">
                     <div 
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold cursor-pointer transition-colors ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-colors ${
                         currentStep === step.key ? 'bg-primary text-primary-foreground' : 
                         currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
                         'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -524,7 +527,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     >
                       {step.number}
                     </div>
-                    {index < steps.length - 1 && <div className="w-8 h-px bg-muted mx-3" />}
+                    {index < steps.length - 1 && <div className="w-6 h-px bg-muted mx-2" />}
                   </div>
                 ))}
               </div>
@@ -534,32 +537,32 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 size="lg" 
                 onClick={onClose}
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </Button>
             </div>
           </div>
 
-          {/* Main Content - 2 columns */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* Main Content - Flexible height with scroll */}
+          <div className="flex-1 flex overflow-hidden min-h-0">
             {/* Left sidebar - Fixed invoice info (40%) */}
-            <div className="w-2/5 border-r">
+            <div className="w-2/5 border-r flex flex-col min-h-0">
               {renderFixedInvoiceInfo()}
             </div>
 
             {/* Right content area (60%) */}
-            <div className="flex-1 flex flex-col">
-              {/* Step content */}
-              <div className="flex-1 overflow-y-auto p-8">
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Step content - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-6">
                 {getStepContent()}
               </div>
 
-              {/* Footer with navigation */}
-              <div className="border-t p-8">
+              {/* Footer with navigation - Fixed height */}
+              <div className="border-t p-6 shrink-0">
                 <div className="flex justify-between items-center">
                   <div className="flex gap-4">
                     {canGoBack() && (
                       <Button variant="outline" size="lg" onClick={handleBack}>
-                        <ArrowLeft className="h-5 w-5 mr-3" />
+                        <ArrowLeft className="h-5 w-5 mr-2" />
                         Quay lại
                       </Button>
                     )}
@@ -578,7 +581,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         disabled={currentStep === 'payment' && !selectedPayment}
                         size="lg"
                       >
-                        <ArrowRight className="h-5 w-5 mr-3" />
+                        <ArrowRight className="h-5 w-5 mr-2" />
                         {currentStep === 'overview' ? 'Tiếp tục' : 'Thanh toán'}
                       </Button>
                     )}
@@ -589,6 +592,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
           </div>
         </div>
       </div>
-    </>
+    </div>,
+    document.body
   );
 }
