@@ -528,23 +528,29 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <p className="text-sm text-muted-foreground">Checkout cho {checkInItem.customerName}</p>
               </div>
               
-              {/* Horizontal step indicators */}
-              <div className="flex items-center gap-2">
+              {/* Horizontal step indicators with arrows */}
+              <div className="flex items-start gap-2">
                 {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center">
                     <div 
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors ${
-                        currentStep === step.key ? 'bg-primary text-primary-foreground' : 
-                        currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
-                        'bg-muted text-muted-foreground hover:bg-muted/80'
-                      } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                      className="flex flex-col items-center cursor-pointer"
                       onClick={() => handleStepClick(step.key)}
                       title={step.label}
                     >
-                      {step.number}
+                      <div 
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors mb-1 ${
+                          currentStep === step.key ? 'bg-primary text-primary-foreground' : 
+                          currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
+                          'bg-muted text-muted-foreground hover:bg-muted/80'
+                        } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                      >
+                        {step.number}
+                      </div>
+                      <span className="text-xs font-medium text-center">{step.label}</span>
                     </div>
-                    <span className="text-xs font-medium ml-1">{step.label}</span>
-                    {index < steps.length - 1 && <div className="w-4 h-px bg-muted mx-2" />}
+                    {index < steps.length - 1 && (
+                      <ArrowRight className="w-3 h-3 text-muted-foreground mx-2 mt-1" />
+                    )}
                   </div>
                 ))}
               </div>
