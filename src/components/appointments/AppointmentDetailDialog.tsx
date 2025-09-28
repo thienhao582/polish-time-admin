@@ -346,7 +346,10 @@ export function AppointmentDetailDialog({
             {canCheckout && (
               <Button 
                 className="bg-green-600 hover:bg-green-700"
-                onClick={handleCheckout}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCheckout();
+                }}
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Checkout

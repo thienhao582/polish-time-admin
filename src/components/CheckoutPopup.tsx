@@ -483,14 +483,33 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       
       {/* Popup Container - Full viewport with padding */}
-      <div className="relative w-[90vw] h-[90vh] max-w-none max-h-none">
+      <div 
+        className="relative w-[90vw] h-[90vh] max-w-none max-h-none"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-background rounded-xl shadow-2xl flex flex-col h-full overflow-hidden">
+          {/* Close button - Positioned absolutely at top right */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-4 right-4 z-10 w-8 h-8 p-0 hover:bg-muted/80"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+
           {/* Header - Fixed height */}
-          <div className="flex items-center justify-between p-6 border-b shrink-0">
+          <div className="flex items-center justify-between p-6 border-b shrink-0 pr-16">
             <div className="flex items-center gap-4">
               {canGoBack() && (
                 <Button 
@@ -531,14 +550,6 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   </div>
                 ))}
               </div>
-              
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                onClick={onClose}
-              >
-                <X className="h-6 w-6" />
-              </Button>
             </div>
           </div>
 
