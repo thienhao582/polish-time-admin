@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { useDragStore } from "@/stores/useDragStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CheckInSidebar } from "./CheckInSidebar";
 import { EmployeeScheduleDialog } from "./EmployeeScheduleDialog";
 import { QuickScheduleDialog } from "./QuickScheduleDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Appointment {
   id: number;
@@ -74,6 +75,9 @@ export function AppointmentDayView({
   
   // Force re-render when schedules change
   const [scheduleUpdateCounter, setScheduleUpdateCounter] = useState(0);
+  
+  // Loading state for availability calculations
+  const [isCalculatingAvailability, setIsCalculatingAvailability] = useState(false);
   
   const handleScheduleUpdate = useCallback(() => {
     setScheduleUpdateCounter(prev => prev + 1);
@@ -393,6 +397,8 @@ const availabilityCache = useRef(
 
 // Replace your old employeeAvailability useMemo with this:
 const employeeAvailability = useMemo(() => {
+  setIsCalculatingAvailability(true);
+  
   const result = new Map<
     string,
     { available: boolean; reason?: string }
@@ -421,6 +427,17 @@ const employeeAvailability = useMemo(() => {
 
   return result;
 }, [filteredWorkingEmployees, dateString, allTimeSlots, scheduleUpdateCounter]);
+
+// Effect to handle loading state completion
+useEffect(() => {
+  if (employeeAvailability.size > 0) {
+    // Use setTimeout to ensure loading state is visible and avoid blocking
+    const timer = setTimeout(() => {
+      setIsCalculatingAvailability(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }
+}, [employeeAvailability]);
 
 
   // Filter time slots based on showFullView setting
@@ -642,7 +659,7 @@ const employeeAvailability = useMemo(() => {
           {/* Main scrollable content area - Both horizontal and vertical scroll */}
           <div 
             id="content-scroll"
-            className="flex-1 overflow-auto"
+            className="flex-1 overflow-auto relative"
             style={{ 
               maxHeight: 'calc(100vh - 250px)'
             }}
@@ -660,6 +677,19 @@ const employeeAvailability = useMemo(() => {
               }
             }}
           >
+            {/* Loading overlay */}
+            {isCalculatingAvailability && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Đang tính toán lịch làm việc...</p>
+                    <p className="text-xs text-gray-500">Xin chờ trong giây lát</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="flex min-w-max">
               {/* Anyone column */}
               <div className="flex-shrink-0 border-r border-gray-200 w-36">
