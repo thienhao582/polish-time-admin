@@ -530,25 +530,29 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               
               {/* Horizontal step indicators with connecting lines */}
               <div className="relative w-full px-2">
-                {/* Background connecting lines - always visible */}
-                <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" style={{ transform: 'translateY(-50%)', marginLeft: '2.5rem', marginRight: '2.5rem' }} />
+                {/* Background connecting lines - only between steps */}
+                <div className="absolute top-4 left-0 h-0.5 bg-gray-200" style={{ 
+                  transform: 'translateY(-50%)', 
+                  marginLeft: '4rem', 
+                  width: 'calc(100% - 8rem)'
+                }} />
                 
                 {/* Green progress line */}
                 <div 
                   className="absolute top-4 left-0 h-0.5 bg-green-500 transition-all duration-300" 
                   style={{ 
                     transform: 'translateY(-50%)', 
-                    marginLeft: '2.5rem',
-                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 1.25rem)`
+                    marginLeft: '4rem',
+                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 4rem)`
                   }} 
                 />
 
-                <div className="flex items-center w-full">
+                <div className="grid grid-cols-4 gap-0 w-full">
                   {steps.map((step, index) => (
-                    <div key={step.key} className="flex items-center flex-1">
+                    <div key={step.key} className="flex justify-center">
                       {/* Step circle and label */}
                       <div 
-                        className="flex flex-col items-center cursor-pointer relative z-10 bg-background px-2"
+                        className="flex flex-col items-center cursor-pointer relative z-10 bg-background"
                         onClick={() => handleStepClick(step.key)}
                         title={step.label}
                       >
