@@ -13,7 +13,7 @@ import { useDemoMode } from "@/contexts/DemoModeContext";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { toast } from "sonner";
 import { CustomerHistoryPopup } from "./CustomerHistoryPopup";
-import { ReceiptPopup } from "../ReceiptPopup";
+import { CheckoutPopup } from "../CheckoutPopup";
 
 interface Appointment {
   id: number;
@@ -371,8 +371,8 @@ export function AppointmentDetailDialog({
           customerPhone={appointment.phone}
         />
 
-        {/* Receipt Popup */}
-        <ReceiptPopup
+        {/* Checkout Popup */}
+        <CheckoutPopup
           isOpen={isReceiptOpen}
           onClose={() => setIsReceiptOpen(false)}
           checkInItem={{

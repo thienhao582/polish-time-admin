@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import QRCodePopup from "@/components/QRCodePopup";
 import { CheckInEditDialog } from "@/components/CheckInEditDialog";
 import { useToast } from "@/hooks/use-toast";
-import { ReceiptPopup } from "@/components/ReceiptPopup";
+import { CheckoutPopup } from "@/components/CheckoutPopup";
 
 interface CheckInSidebarProps {
   isOpen: boolean;
@@ -388,9 +388,9 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
         />
       )}
 
-      {/* Receipt Popup */}
+      {/* Checkout Popup */}
       {receiptItem && (
-        <ReceiptPopup
+        <CheckoutPopup
           isOpen={!!receiptItem}
           onClose={() => setReceiptItem(null)}
           checkInItem={receiptItem}
