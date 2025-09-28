@@ -536,7 +536,7 @@ const employeeAvailability = useMemo(() => {
       </div>
 
       {/* Calendar Container with constrained height for internal scrolling */}
-      <div className="flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] max-w-[calc(100dvw-256px)] overflow-hidden">
         {/* Headers Row - Fixed Top */}
         <div className="flex border-b border-gray-200 bg-white z-40 flex-shrink-0">
           {/* Time column header - Fixed left-top corner */}
