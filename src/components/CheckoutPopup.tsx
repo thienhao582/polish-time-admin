@@ -483,9 +483,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         onClick={onClose}
       />
       
-      {/* Popup - 90% viewport */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-[5vh]">
-        <div className="bg-background rounded-lg shadow-xl w-full h-full flex flex-col overflow-hidden">
+      {/* Popup - 90% dynamic viewport */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-background rounded-lg shadow-xl flex flex-col overflow-hidden" style={{ width: '90dvw', height: '90dvh' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
             <div className="flex items-center gap-3">
