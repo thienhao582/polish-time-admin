@@ -1,4 +1,4 @@
-import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -543,11 +543,15 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           currentStep === step.key 
                             ? 'bg-primary text-primary-foreground border-primary' 
                             : currentStepIndex > index 
-                            ? 'bg-primary text-primary-foreground border-primary' 
+                            ? 'bg-green-500 text-white border-green-500' 
                             : 'bg-background text-muted-foreground border-muted hover:border-muted-foreground'
                         } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
                       >
-                        {step.number}
+                        {currentStepIndex > index ? (
+                          <Check className="w-4 h-4" />
+                        ) : (
+                          step.number
+                        )}
                       </div>
                       <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
                     </div>
