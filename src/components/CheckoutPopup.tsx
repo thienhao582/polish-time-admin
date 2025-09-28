@@ -1,8 +1,10 @@
-import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2 } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 
@@ -31,14 +33,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [editableDiscount, setEditableDiscount] = useState(10); // percentage
+  const [editableTip, setEditableTip] = useState(5); // percentage
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
   
   // Calculate pricing
   const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
-  const discount = Math.floor(serviceTotal * 0.1); // 10% discount
-  const tip = Math.floor(serviceTotal * 0.05); // 5% tip
+  const discount = Math.floor(serviceTotal * (editableDiscount / 100));
+  const tip = Math.floor(serviceTotal * (editableTip / 100));
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
   const totalDue = subtotal - discount + tip + tax;
@@ -50,6 +54,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setSelectedPayment(null);
       setIsProcessing(false);
       setPaymentCompleted(false);
+      setEditableDiscount(10);
+      setEditableTip(5);
     }
   }, [isOpen]);
 
@@ -106,68 +112,191 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     }
   };
 
+  const handleStepClick = (step: CheckoutStep) => {
+    // Allow navigation to any step except processing
+    if (step !== 'processing') {
+      setCurrentStep(step);
+    }
+  };
+
+  const canGoNext = () => {
+    switch (currentStep) {
+      case 'overview': return true;
+      case 'payment': return selectedPayment !== null;
+      case 'processing': return false;
+      case 'receipt': return false;
+      default: return false;
+    }
+  };
+
+  const canGoBack = () => {
+    return currentStep === 'payment' || currentStep === 'receipt';
+  };
+
+  const handleNext = () => {
+    switch (currentStep) {
+      case 'overview':
+        setCurrentStep('payment');
+        break;
+      case 'payment':
+        if (selectedPayment) {
+          handlePaymentSelect(selectedPayment);
+        }
+        break;
+    }
+  };
+
+  const handleBack = () => {
+    switch (currentStep) {
+      case 'payment':
+        setCurrentStep('overview');
+        break;
+      case 'receipt':
+        setCurrentStep('payment');
+        break;
+    }
+  };
+
+  // Fixed left sidebar content - always visible
+  const renderFixedInvoiceInfo = () => (
+    <div className="bg-muted/30 h-full p-6 overflow-y-auto">
+      <div className="space-y-6">
+        {/* Customer Info */}
+        <div className="text-center space-y-2">
+          <h3 className="text-2xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
+          <p className="text-xl font-medium">{checkInItem.customerName}</p>
+          {checkInItem.phone && <p className="text-muted-foreground">{checkInItem.phone}</p>}
+          <p className="text-sm text-muted-foreground">{currentDate} {currentTime}</p>
+        </div>
+
+        <Separator />
+
+        {/* Services */}
+        <div>
+          <h4 className="font-semibold mb-3">Dịch vụ đã sử dụng</h4>
+          <div className="space-y-2">
+            {checkInItem.services && checkInItem.services.length > 0 ? (
+              checkInItem.services.map((service, index) => (
+                <div key={index} className="flex justify-between items-center p-3 bg-background rounded-lg">
+                  <span className="font-medium">{service}</span>
+                  <span className="font-semibold">50,000₫</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground">Không có dịch vụ</p>
+            )}
+          </div>
+        </div>
+
+        {/* Pricing Summary */}
+        {serviceTotal > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <h4 className="font-semibold">Tổng kết thanh toán</h4>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+                </div>
+                
+                {/* Editable Discount */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span>Discount:</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={editableDiscount}
+                        onChange={(e) => setEditableDiscount(Number(e.target.value) || 0)}
+                        className="w-12 h-6 text-xs text-center"
+                        min="0"
+                        max="100"
+                      />
+                      <span className="text-xs">%</span>
+                    </div>
+                  </div>
+                  <span className="text-green-600">-{discount.toLocaleString('vi-VN')}₫</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span>VAT (8%):</span>
+                  <span>{tax.toLocaleString('vi-VN')}₫</span>
+                </div>
+                
+                {/* Editable Tip */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span>Tip:</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={editableTip}
+                        onChange={(e) => setEditableTip(Number(e.target.value) || 0)}
+                        className="w-12 h-6 text-xs text-center"
+                        min="0"
+                        max="100"
+                      />
+                      <span className="text-xs">%</span>
+                    </div>
+                  </div>
+                  <span>{tip.toLocaleString('vi-VN')}₫</span>
+                </div>
+                
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Tổng cộng:</span>
+                  <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   const getStepContent = () => {
     switch (currentStep) {
       case 'overview':
         return (
           <div className="space-y-6">
-            {/* Customer Info */}
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
-              <p className="text-xl font-medium">{checkInItem.customerName}</p>
-              {checkInItem.phone && <p className="text-muted-foreground">{checkInItem.phone}</p>}
+            <div className="text-center">
+              <h3 className="text-2xl font-semibold mb-4">Xác nhận thông tin hóa đơn</h3>
+              <p className="text-muted-foreground">
+                Vui lòng kiểm tra lại thông tin trước khi tiến hành thanh toán
+              </p>
             </div>
-
-            <Separator />
-
-            {/* Services Summary */}
-            <div>
-              <h4 className="font-semibold mb-3">Dịch vụ đã sử dụng</h4>
-              <div className="space-y-2">
-                {checkInItem.services && checkInItem.services.length > 0 ? (
-                  checkInItem.services.map((service, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                      <span className="font-medium">{service}</span>
-                      <span className="font-semibold">50,000₫</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">Không có dịch vụ</p>
-                )}
-              </div>
-            </div>
-
-            {/* Pricing Summary */}
-            {serviceTotal > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="font-semibold">Tổng kết thanh toán</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>{subtotal.toLocaleString('vi-VN')}₫</span>
-                    </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount (10%):</span>
-                      <span>-{discount.toLocaleString('vi-VN')}₫</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>VAT (8%):</span>
-                      <span>{tax.toLocaleString('vi-VN')}₫</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Tip (5%):</span>
-                      <span>{tip.toLocaleString('vi-VN')}₫</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>Tổng cộng:</span>
-                      <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
-                    </div>
-                  </div>
+            
+            <Card className="p-6">
+              <h4 className="font-semibold mb-4">Thông tin khách hàng</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="text-muted-foreground">Tên khách hàng</Label>
+                  <p className="font-medium">{checkInItem.customerName}</p>
                 </div>
-              </>
+                <div>
+                  <Label className="text-muted-foreground">Số thứ tự</Label>
+                  <p className="font-medium">#{checkInItem.customerNumber}</p>
+                </div>
+                {checkInItem.phone && (
+                  <div>
+                    <Label className="text-muted-foreground">Số điện thoại</Label>
+                    <p className="font-medium">{checkInItem.phone}</p>
+                  </div>
+                )}
+                <div>
+                  <Label className="text-muted-foreground">Thời gian check-in</Label>
+                  <p className="font-medium">{checkInItem.checkInTime}</p>
+                </div>
+              </div>
+            </Card>
+
+            {checkInItem.notes && (
+              <Card className="p-6">
+                <h4 className="font-semibold mb-2">Ghi chú</h4>
+                <p className="text-sm text-muted-foreground">{checkInItem.notes}</p>
+              </Card>
             )}
           </div>
         );
@@ -186,7 +315,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
                   selectedPayment === 'card' ? 'border-primary bg-primary/5' : 'border-border'
                 }`}
-                onClick={() => handlePaymentSelect('card')}
+                onClick={() => setSelectedPayment('card')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-100 rounded-full">
@@ -207,7 +336,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
                   selectedPayment === 'cash' ? 'border-primary bg-primary/5' : 'border-border'
                 }`}
-                onClick={() => handlePaymentSelect('cash')}
+                onClick={() => setSelectedPayment('cash')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-green-100 rounded-full">
@@ -233,7 +362,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
                   selectedPayment === 'apple-pay' ? 'border-primary bg-primary/5' : 'border-border'
                 }`}
-                onClick={() => handlePaymentSelect('apple-pay')}
+                onClick={() => setSelectedPayment('apple-pay')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-gray-100 rounded-full">
@@ -288,18 +417,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
             </div>
 
-            <Separator />
-
-            {/* Receipt Summary */}
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="text-center font-semibold">HÓA ĐƠN THANH TOÁN</div>
-              <div className="text-center text-sm text-muted-foreground">
-                {currentDate} {currentTime}
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2 text-sm">
+            <Card className="p-6">
+              <div className="text-center font-semibold mb-4">HÓA ĐƠN THANH TOÁN</div>
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span>Khách hàng:</span>
                   <span>{checkInItem.customerName} (#{checkInItem.customerNumber})</span>
@@ -317,7 +437,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   <span>{selectedPayment === 'card' ? 'Thẻ' : selectedPayment === 'cash' ? 'Tiền mặt' : 'Apple Pay'}</span>
                 </div>
               </div>
-            </div>
+            </Card>
 
             <div className="flex gap-3">
               <Button 
@@ -346,8 +466,14 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     }
   };
 
-  const canGoBack = currentStep === 'payment';
-  const canGoNext = currentStep === 'overview';
+  const steps: { key: CheckoutStep; label: string; number: number }[] = [
+    { key: 'overview', label: 'Xem trước', number: 1 },
+    { key: 'payment', label: 'Thanh toán', number: 2 },
+    { key: 'processing', label: 'Xử lý', number: 3 },
+    { key: 'receipt', label: 'Hoàn tất', number: 4 },
+  ];
+
+  const currentStepIndex = steps.findIndex(step => step.key === currentStep);
 
   return (
     <>
@@ -357,27 +483,24 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         onClick={onClose}
       />
       
-      {/* Popup */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      {/* Popup - 90% viewport */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-[5vh]">
+        <div className="bg-background rounded-lg shadow-xl w-full h-full flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
             <div className="flex items-center gap-3">
-              {canGoBack && (
+              {canGoBack() && (
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => setCurrentStep('overview')}
+                  onClick={handleBack}
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
               <div>
                 <h2 className="text-xl font-semibold">
-                  {currentStep === 'overview' && 'Chi tiết hóa đơn'}
-                  {currentStep === 'payment' && 'Thanh toán'}
-                  {currentStep === 'processing' && 'Đang xử lý'}
-                  {currentStep === 'receipt' && 'Hoàn tất'}
+                  {steps.find(s => s.key === currentStep)?.label || 'Checkout'}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   Checkout cho {checkInItem.customerName}
@@ -385,16 +508,23 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              {/* Step indicators */}
-              <div className="hidden sm:flex items-center gap-2 mr-4">
-                {['overview', 'payment', 'processing', 'receipt'].map((step, index) => (
-                  <div key={step} className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full ${
-                      currentStep === step ? 'bg-primary' : 
-                      ['overview', 'payment', 'processing', 'receipt'].indexOf(currentStep) > index ? 'bg-primary/50' : 'bg-muted'
-                    }`} />
-                    {index < 3 && <div className="w-4 h-px bg-muted mx-1" />}
+            <div className="flex items-center gap-4">
+              {/* Clickable Step indicators */}
+              <div className="flex items-center gap-2">
+                {steps.map((step, index) => (
+                  <div key={step.key} className="flex items-center">
+                    <div 
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium cursor-pointer transition-colors ${
+                        currentStep === step.key ? 'bg-primary text-primary-foreground' : 
+                        currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
+                        'bg-muted text-muted-foreground hover:bg-muted/80'
+                      } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                      onClick={() => handleStepClick(step.key)}
+                      title={step.label}
+                    >
+                      {step.number}
+                    </div>
+                    {index < steps.length - 1 && <div className="w-6 h-px bg-muted mx-2" />}
                   </div>
                 ))}
               </div>
@@ -409,23 +539,53 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6">
-            {getStepContent()}
-          </div>
-
-          {/* Footer */}
-          {currentStep === 'overview' && (
-            <div className="flex justify-end gap-3 p-6 border-t">
-              <Button variant="outline" onClick={onClose}>
-                Hủy
-              </Button>
-              <Button onClick={() => setCurrentStep('payment')}>
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Tiếp tục thanh toán
-              </Button>
+          {/* Main Content - 2 columns */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left sidebar - Fixed invoice info (40%) */}
+            <div className="w-2/5 border-r">
+              {renderFixedInvoiceInfo()}
             </div>
-          )}
+
+            {/* Right content area (60%) */}
+            <div className="flex-1 flex flex-col">
+              {/* Step content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {getStepContent()}
+              </div>
+
+              {/* Footer with navigation */}
+              <div className="border-t p-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-3">
+                    {canGoBack() && (
+                      <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Quay lại
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    {currentStep !== 'receipt' && currentStep !== 'processing' && (
+                      <Button variant="outline" onClick={onClose}>
+                        Hủy
+                      </Button>
+                    )}
+                    
+                    {canGoNext() && (
+                      <Button 
+                        onClick={handleNext}
+                        disabled={currentStep === 'payment' && !selectedPayment}
+                      >
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        {currentStep === 'overview' ? 'Tiếp tục' : 'Thanh toán'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>
