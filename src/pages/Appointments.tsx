@@ -20,6 +20,7 @@ import { useDemoData } from "@/hooks/useDemoData";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { AvailableStaffSidebar } from "@/components/appointments/AvailableStaffSidebar";
 import { toast } from "sonner";
+import { useSidebar } from "@/components/ui/sidebar";
 
 // Interface for components that expect the old format
 interface LegacyAppointment {
@@ -48,6 +49,8 @@ interface LegacyAppointment {
 
 const Appointments = () => {
   const { t } = useLanguage();
+  const { state: sidebarState } = useSidebar();
+  const isSidebarCollapsed = sidebarState === "collapsed";
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -546,6 +549,7 @@ const Appointments = () => {
                   onAppointmentCreated={loadAppointments}
                   onAppointmentDrop={handleAppointmentDrop}
                   showAvailableStaffSidebar={showAvailableStaffSidebar}
+                  isSidebarCollapsed={isSidebarCollapsed}
                 />
               )}
             </CardContent>

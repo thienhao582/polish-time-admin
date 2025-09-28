@@ -39,6 +39,7 @@ interface AppointmentDayViewProps {
   onScheduleUpdate?: () => void;
   onAppointmentDrop?: (appointmentId: number, newTime: string, newStaff?: string) => void;
   showAvailableStaffSidebar?: boolean;
+  isSidebarCollapsed?: boolean;
 }
 
 export function AppointmentDayView({
@@ -52,7 +53,8 @@ export function AppointmentDayView({
   onAppointmentCreated,
   onScheduleUpdate,
   onAppointmentDrop,
-  showAvailableStaffSidebar = false
+  showAvailableStaffSidebar = false,
+  isSidebarCollapsed = false
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -540,9 +542,13 @@ const employeeAvailability = useMemo(() => {
       {/* Calendar Container with constrained height for internal scrolling */}
       <div 
         className={`flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] overflow-hidden ${
-          showAvailableStaffSidebar 
-            ? 'max-w-[calc(100dvw-256px-256px)]' // Left sidebar (256px) + Right sidebar (256px)
-            : 'max-w-[calc(100dvw-256px)]'      // Only left sidebar (256px)
+          (() => {
+            // Calculate left sidebar width: collapsed = 56px, expanded = 256px
+            const leftSidebarWidth = isSidebarCollapsed ? 56 : 256;
+            const rightSidebarWidth = showAvailableStaffSidebar ? 256 : 0;
+            const totalSidebarWidth = leftSidebarWidth + rightSidebarWidth;
+            return `max-w-[calc(100dvw-${totalSidebarWidth}px)]`;
+          })()
         }`}
       >
         {/* Headers Row - Fixed Top */}
