@@ -529,47 +529,49 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
               
               {/* Horizontal step indicators with connecting lines */}
-              <div className="flex items-center w-full px-2">
-                {steps.map((step, index) => (
-                  <div key={step.key} className="flex items-center flex-1">
-                    {/* Step circle and label */}
-                    <div 
-                      className="flex flex-col items-center cursor-pointer relative z-10 bg-background px-2"
-                      onClick={() => handleStepClick(step.key)}
-                      title={step.label}
-                    >
+              <div className="relative w-full px-2">
+                {/* Background connecting lines - always visible */}
+                <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200" style={{ transform: 'translateY(-50%)', marginLeft: '2.5rem', marginRight: '2.5rem' }} />
+                
+                {/* Green progress line */}
+                <div 
+                  className="absolute top-4 left-0 h-0.5 bg-green-500 transition-all duration-300" 
+                  style={{ 
+                    transform: 'translateY(-50%)', 
+                    marginLeft: '2.5rem',
+                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 1.25rem)`
+                  }} 
+                />
+
+                <div className="flex items-center w-full">
+                  {steps.map((step, index) => (
+                    <div key={step.key} className="flex items-center flex-1">
+                      {/* Step circle and label */}
                       <div 
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
-                          currentStep === step.key 
-                            ? 'bg-primary text-primary-foreground border-primary' 
-                            : currentStepIndex > index 
-                            ? 'bg-green-500 text-white border-green-500' 
-                            : 'bg-background text-muted-foreground border-muted hover:border-muted-foreground'
-                        } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                        className="flex flex-col items-center cursor-pointer relative z-10 bg-background px-2"
+                        onClick={() => handleStepClick(step.key)}
+                        title={step.label}
                       >
-                        {currentStepIndex > index ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          step.number
-                        )}
-                      </div>
-                      <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
-                    </div>
-                    
-                    {/* Connecting line */}
-                    {index < steps.length - 1 && (
-                      <div className="flex-1 h-0.5 mx-3 -mt-6 relative">
                         <div 
-                          className={`h-full transition-colors ${
-                            currentStepIndex > index 
-                              ? 'bg-green-500' 
-                              : 'bg-gray-200'
-                          }`}
-                        />
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
+                            currentStep === step.key 
+                              ? 'bg-background text-foreground border-primary border-2' 
+                              : currentStepIndex > index 
+                              ? 'bg-green-500 text-white border-green-500' 
+                              : 'bg-background text-muted-foreground border-gray-300'
+                          } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                        >
+                          {currentStepIndex > index ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            step.number
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
