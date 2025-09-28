@@ -528,28 +528,40 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <p className="text-sm text-muted-foreground">Checkout cho {checkInItem.customerName}</p>
               </div>
               
-              {/* Horizontal step indicators with arrows */}
-              <div className="flex items-start">
+              {/* Horizontal step indicators with connecting lines */}
+              <div className="flex items-center justify-between w-full px-4">
                 {steps.map((step, index) => (
-                  <div key={step.key} className="flex items-center">
+                  <div key={step.key} className="flex items-center flex-1">
                     <div 
-                      className="flex flex-col items-center cursor-pointer w-16"
+                      className="flex flex-col items-center cursor-pointer relative z-10"
                       onClick={() => handleStepClick(step.key)}
                       title={step.label}
                     >
                       <div 
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors mb-1 ${
-                          currentStep === step.key ? 'bg-primary text-primary-foreground' : 
-                          currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
-                          'bg-muted text-muted-foreground hover:bg-muted/80'
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
+                          currentStep === step.key 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : currentStepIndex > index 
+                            ? 'bg-primary text-primary-foreground border-primary' 
+                            : 'bg-background text-muted-foreground border-muted hover:border-muted-foreground'
                         } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
                       >
                         {step.number}
                       </div>
                       <span className="text-xs font-medium text-center leading-tight">{step.label}</span>
                     </div>
+                    
+                    {/* Connecting line */}
                     {index < steps.length - 1 && (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground mx-1 mt-2 flex-shrink-0" />
+                      <div className="flex-1 h-0.5 mx-4 relative -mt-6">
+                        <div 
+                          className={`h-full transition-colors ${
+                            currentStepIndex > index 
+                              ? 'bg-primary' 
+                              : 'bg-muted'
+                          }`}
+                        />
+                      </div>
                     )}
                   </div>
                 ))}
