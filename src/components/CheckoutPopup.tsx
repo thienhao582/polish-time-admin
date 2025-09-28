@@ -529,21 +529,21 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
               
               {/* Horizontal step indicators with connecting lines */}
-              <div className="relative w-full px-2">
-                {/* Background connecting lines - only between steps */}
-                <div className="absolute top-4 left-0 h-0.5 bg-gray-200" style={{ 
+              <div className="relative w-full px-8">
+                {/* Background connecting lines - only between steps, not after step 4 */}
+                <div className="absolute top-4 h-0.5 bg-gray-200" style={{ 
                   transform: 'translateY(-50%)', 
-                  marginLeft: '4rem', 
-                  width: 'calc(100% - 8rem)'
+                  left: 'calc(25% - 1rem)', 
+                  right: 'calc(25% - 1rem)'
                 }} />
                 
                 {/* Green progress line */}
                 <div 
-                  className="absolute top-4 left-0 h-0.5 bg-green-500 transition-all duration-300" 
+                  className="absolute top-4 h-0.5 bg-green-500 transition-all duration-300" 
                   style={{ 
                     transform: 'translateY(-50%)', 
-                    marginLeft: '4rem',
-                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 4rem)`
+                    left: 'calc(25% - 1rem)',
+                    width: `calc(${(currentStepIndex / (steps.length - 1)) * 50}% + ${currentStepIndex * 0.5}rem)`
                   }} 
                 />
 
