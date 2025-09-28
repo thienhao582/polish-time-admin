@@ -41,12 +41,12 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   
   const dateString = format(selectedDate, "yyyy-MM-dd");
   
-  // Initialize demo data if in demo mode and no check-ins exist
+  // Initialize demo data if in demo mode
   useEffect(() => {
-    if (isDemoMode && demoCheckIns.length === 0) {
+    if (isDemoMode) {
       initializeWithDemoData();
     }
-  }, [isDemoMode, demoCheckIns.length, initializeWithDemoData]);
+  }, [isDemoMode, initializeWithDemoData]);
 
   // Fetch Supabase data when not in demo mode
   useEffect(() => {
@@ -57,7 +57,7 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   
   // Get filtered and sorted check-ins based on mode
   const filteredCheckIns = isDemoMode 
-    ? getDemoFiltered(dateString, statusFilter, searchTerm)
+    ? getDemoFiltered(new Date().toISOString().split('T')[0], statusFilter, searchTerm) // Always use today's date for demo
     : getSupabaseFiltered(dateString, statusFilter, searchTerm);
 
   const getStatusBadge = (status: string) => {
