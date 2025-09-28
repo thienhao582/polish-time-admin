@@ -479,10 +479,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const steps: { key: CheckoutStep; label: string; number: number }[] = [
-    { key: 'overview', label: 'Review', number: 1 },
-    { key: 'payment', label: 'Payment', number: 2 },
-    { key: 'processing', label: 'Process', number: 3 },
-    { key: 'receipt', label: 'Done', number: 4 },
+    { key: 'overview', label: 'Xem trước', number: 1 },
+    { key: 'payment', label: 'Thanh toán', number: 2 },
+    { key: 'processing', label: 'Xử lý', number: 3 },
+    { key: 'receipt', label: 'Hoàn tất', number: 4 },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
@@ -529,11 +529,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
               
               {/* Horizontal step indicators with connecting lines */}
-              <div className="flex items-center justify-between w-full px-4">
+              <div className="flex items-center w-full px-2">
                 {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center flex-1">
+                    {/* Step circle and label */}
                     <div 
-                      className="flex flex-col items-center cursor-pointer relative z-10"
+                      className="flex flex-col items-center cursor-pointer relative z-10 bg-background px-2"
                       onClick={() => handleStepClick(step.key)}
                       title={step.label}
                     >
@@ -548,12 +549,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       >
                         {step.number}
                       </div>
-                      <span className="text-xs font-medium text-center leading-tight">{step.label}</span>
+                      <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
                     </div>
                     
                     {/* Connecting line */}
                     {index < steps.length - 1 && (
-                      <div className="flex-1 h-0.5 mx-4 relative -mt-6">
+                      <div className="flex-1 h-0.5 mx-3 -mt-6 relative">
                         <div 
                           className={`h-full transition-colors ${
                             currentStepIndex > index 
