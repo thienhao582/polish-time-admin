@@ -20,7 +20,6 @@ import { useDemoData } from "@/hooks/useDemoData";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { AvailableStaffSidebar } from "@/components/appointments/AvailableStaffSidebar";
 import { toast } from "sonner";
-import { useSidebar } from "@/components/ui/sidebar";
 
 // Interface for components that expect the old format
 interface LegacyAppointment {
@@ -49,8 +48,6 @@ interface LegacyAppointment {
 
 const Appointments = () => {
   const { t } = useLanguage();
-  const { state: sidebarState } = useSidebar();
-  const isSidebarCollapsed = sidebarState === "collapsed";
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -514,8 +511,8 @@ const Appointments = () => {
 
       {/* Main Content with Sidebar - Full Height Container */}
       <div className={`flex-1 flex gap-4 min-h-0 overflow-hidden ${isMaximized ? 'h-full' : ''}`}>
-        {/* Calendar View - Flexible width, no viewport-based calc to avoid horizontal body scroll */}
-        <div className={"transition-all duration-300 min-w-0 overflow-hidden flex-1"}>
+        {/* Calendar View - Calculate max width based on available space */}
+        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${showAvailableStaffSidebar && viewMode === "day" ? 'flex-1 max-w-[calc(100vw-320px)]' : 'flex-1'}`}>
           <Card className="h-full overflow-hidden">
             <CardContent className="p-0 h-full overflow-hidden">
               {viewMode === "month" && (
@@ -548,8 +545,6 @@ const Appointments = () => {
                   searchQuery={searchQuery}
                   onAppointmentCreated={loadAppointments}
                   onAppointmentDrop={handleAppointmentDrop}
-                  showAvailableStaffSidebar={showAvailableStaffSidebar}
-                  isSidebarCollapsed={isSidebarCollapsed}
                 />
               )}
             </CardContent>
