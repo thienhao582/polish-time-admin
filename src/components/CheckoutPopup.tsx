@@ -1,4 +1,4 @@
-import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3 } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -529,16 +529,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
               
               {/* Horizontal step indicators with arrows */}
-              <div className="flex items-start gap-2">
+              <div className="flex items-start">
                 {steps.map((step, index) => (
                   <div key={step.key} className="flex items-center">
                     <div 
-                      className="flex flex-col items-center cursor-pointer"
+                      className="flex flex-col items-center cursor-pointer w-16"
                       onClick={() => handleStepClick(step.key)}
                       title={step.label}
                     >
                       <div 
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors mb-1 ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors mb-1 ${
                           currentStep === step.key ? 'bg-primary text-primary-foreground' : 
                           currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
                           'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -546,10 +546,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       >
                         {step.number}
                       </div>
-                      <span className="text-xs font-medium text-center">{step.label}</span>
+                      <span className="text-xs font-medium text-center leading-tight">{step.label}</span>
                     </div>
                     {index < steps.length - 1 && (
-                      <ArrowRight className="w-3 h-3 text-muted-foreground mx-2 mt-1" />
+                      <ChevronRight className="w-4 h-4 text-muted-foreground mx-1 mt-2 flex-shrink-0" />
                     )}
                   </div>
                 ))}
