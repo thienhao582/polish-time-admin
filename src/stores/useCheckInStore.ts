@@ -68,29 +68,114 @@ const initialCheckIns: CheckInItem[] = [
     id: "3",
     customerNumber: "2895",
     customerName: "John Doe",
-    status: "waiting",
+    status: "booked",
     checkInTime: "11:15 AM",
     date: new Date().toISOString().split('T')[0],
     tags: ["REGULAR"],
-    services: ["Trim"],
+    services: ["Trim", "Beard Style"],
+    staffAssignments: [
+      { serviceName: "Trim", staffId: "staff-3", staffName: "Ngọ Giang" },
+      { serviceName: "Beard Style", staffId: "staff-3", staffName: "Ngọ Giang" }
+    ],
     phone: "0555123456",
     waitTime: 5,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    appointmentId: "appt-3"
   },
   {
     id: "4",
     customerNumber: "2701",
     customerName: "Maria Garcia",
-    status: "waiting",
+    status: "booked",
     checkInTime: "11:30 AM",
     date: new Date().toISOString().split('T')[0],
     tags: ["NEW"],
     services: ["Manicure", "Pedicure"],
+    staffAssignments: [
+      { serviceName: "Manicure", staffId: "staff-4", staffName: "Bùi Thúy" },
+      { serviceName: "Pedicure", staffId: "staff-4", staffName: "Bùi Thúy" }
+    ],
     phone: "0444987654",
     waitTime: 20,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    appointmentId: "appt-4"
+  },
+  {
+    id: "5",
+    customerNumber: "4567",
+    customerName: "Lê Văn Tùng",
+    status: "completed",
+    checkInTime: "08:30 AM",
+    date: new Date().toISOString().split('T')[0],
+    tags: ["VIP", "REGULAR"],
+    services: ["Haircut", "Shampoo", "Style"],
+    staffAssignments: [
+      { serviceName: "Haircut", staffId: "staff-1", staffName: "Bùi Cúc" },
+      { serviceName: "Shampoo", staffId: "staff-1", staffName: "Bùi Cúc" },
+      { serviceName: "Style", staffId: "staff-1", staffName: "Bùi Cúc" }
+    ],
+    phone: "0912345678",
+    waitTime: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    appointmentId: "appt-5",
+    notes: "Khách hàng yêu cầu cắt ngắn"
+  },
+  {
+    id: "6",
+    customerNumber: "8901",
+    customerName: "Trần Thị Lan",
+    status: "waiting",
+    checkInTime: "12:15 PM",
+    date: new Date().toISOString().split('T')[0],
+    tags: ["VIP"],
+    services: ["Hair Color", "Treatment"],
+    phone: "0898765432",
+    waitTime: 25,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    notes: "Muốn nhuộm màu nâu"
+  },
+  {
+    id: "7",
+    customerNumber: "1234",
+    customerName: "Nguyễn Minh Hoàng",
+    status: "booked",
+    checkInTime: "01:45 PM",
+    date: new Date().toISOString().split('T')[0],
+    tags: ["REGULAR"],
+    services: ["Facial", "Massage"],
+    staffAssignments: [
+      { serviceName: "Facial", staffId: "staff-2", staffName: "Phạm Diệu" },
+      { serviceName: "Massage", staffId: "staff-2", staffName: "Phạm Diệu" }
+    ],
+    phone: "0977888999",
+    waitTime: 10,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    appointmentId: "appt-7"
+  },
+  {
+    id: "8",
+    customerNumber: "5678",
+    customerName: "Võ Thị Mai",
+    status: "completed",
+    checkInTime: "07:30 AM",
+    date: new Date().toISOString().split('T')[0],
+    tags: ["NEW"],
+    services: ["Eyebrow", "Lash Extension"],
+    staffAssignments: [
+      { serviceName: "Eyebrow", staffId: "staff-4", staffName: "Bùi Thúy" },
+      { serviceName: "Lash Extension", staffId: "staff-4", staffName: "Bùi Thúy" }
+    ],
+    phone: "0933444555",
+    waitTime: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    appointmentId: "appt-8",
+    notes: "Lần đầu làm mi"
   }
 ];
 
