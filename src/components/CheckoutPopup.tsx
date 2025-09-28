@@ -494,7 +494,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         className="relative w-[90vw] h-[90vh] max-w-none max-h-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-background rounded-xl shadow-2xl flex flex-col h-full overflow-hidden">
+        <div className="bg-background rounded-xl shadow-2xl flex h-full overflow-hidden">
           {/* Close button - Positioned absolutely at top right */}
           <Button 
             variant="ghost" 
@@ -503,40 +503,26 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-4 right-4 z-10 w-8 h-8 p-0 hover:bg-muted/80"
+            className="absolute top-2 right-2 z-10 w-8 h-8 p-0 hover:bg-muted/80"
           >
             <X className="h-5 w-5" />
           </Button>
 
-          {/* Header - Fixed height */}
-          <div className="flex items-center justify-between p-6 border-b shrink-0 pr-16">
-            <div className="flex items-center gap-4">
-              {canGoBack() && (
-                <Button 
-                  variant="ghost" 
-                  size="lg"
-                  onClick={handleBack}
-                >
-                  <ArrowLeft className="h-6 w-6" />
-                </Button>
-              )}
-              <div>
-                <h2 className="text-2xl font-semibold">
-                  {steps.find(s => s.key === currentStep)?.label || 'Checkout'}
-                </h2>
-                <p className="text-base text-muted-foreground">
-                  Checkout cho {checkInItem.customerName}
-                </p>
+          {/* Left sidebar - Steps and invoice info */}
+          <div className="w-2/5 border-r flex flex-col min-h-0">
+            {/* Steps section */}
+            <div className="p-6 border-b bg-muted/20 shrink-0">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold">Xem trước</h2>
+                <p className="text-sm text-muted-foreground">Checkout cho {checkInItem.customerName}</p>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              {/* Clickable Step indicators */}
-              <div className="flex items-center gap-2">
+              
+              {/* Vertical step indicators */}
+              <div className="space-y-3">
                 {steps.map((step, index) => (
-                  <div key={step.key} className="flex items-center">
+                  <div key={step.key} className="flex items-center gap-3">
                     <div 
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-colors ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-colors ${
                         currentStep === step.key ? 'bg-primary text-primary-foreground' : 
                         currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
                         'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -546,57 +532,54 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     >
                       {step.number}
                     </div>
-                    {index < steps.length - 1 && <div className="w-6 h-px bg-muted mx-2" />}
+                    <span className="text-sm font-medium">{step.label}</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Main Content - Flexible height with scroll */}
-          <div className="flex-1 flex overflow-hidden min-h-0">
-            {/* Left sidebar - Fixed invoice info (40%) */}
-            <div className="w-2/5 border-r flex flex-col min-h-0">
+            {/* Invoice info */}
+            <div className="flex-1 min-h-0">
               {renderFixedInvoiceInfo()}
             </div>
+          </div>
 
-            {/* Right content area (60%) */}
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Step content - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-6">
-                {getStepContent()}
-              </div>
+          {/* Right content area */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Step content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {getStepContent()}
+            </div>
 
-              {/* Footer with navigation - Fixed height */}
-              <div className="border-t p-6 shrink-0">
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-4">
-                    {canGoBack() && (
-                      <Button variant="outline" size="lg" onClick={handleBack}>
-                        <ArrowLeft className="h-5 w-5 mr-2" />
-                        Quay lại
-                      </Button>
-                    )}
-                  </div>
+            {/* Footer with navigation - Fixed height */}
+            <div className="border-t p-6 shrink-0">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-4">
+                  {canGoBack() && (
+                    <Button variant="outline" size="lg" onClick={handleBack}>
+                      <ArrowLeft className="h-5 w-5 mr-2" />
+                      Quay lại
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="flex gap-4">
+                  {currentStep !== 'receipt' && currentStep !== 'processing' && (
+                    <Button variant="outline" size="lg" onClick={onClose}>
+                      Hủy
+                    </Button>
+                  )}
                   
-                  <div className="flex gap-4">
-                    {currentStep !== 'receipt' && currentStep !== 'processing' && (
-                      <Button variant="outline" size="lg" onClick={onClose}>
-                        Hủy
-                      </Button>
-                    )}
-                    
-                    {canGoNext() && (
-                      <Button 
-                        onClick={handleNext}
-                        disabled={currentStep === 'payment' && !selectedPayment}
-                        size="lg"
-                      >
-                        <ArrowRight className="h-5 w-5 mr-2" />
-                        {currentStep === 'overview' ? 'Tiếp tục' : 'Thanh toán'}
-                      </Button>
-                    )}
-                  </div>
+                  {canGoNext() && (
+                    <Button 
+                      onClick={handleNext}
+                      disabled={currentStep === 'payment' && !selectedPayment}
+                      size="lg"
+                    >
+                      <ArrowRight className="h-5 w-5 mr-2" />
+                      {currentStep === 'overview' ? 'Tiếp tục' : 'Thanh toán'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
