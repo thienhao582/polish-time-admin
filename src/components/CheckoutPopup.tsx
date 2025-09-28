@@ -57,7 +57,18 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setPaymentCompleted(false);
       setEditableDiscount(10);
       setEditableTip(5);
+      
+      // Prevent body scroll when popup is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore body scroll when popup is closed
+      document.body.style.overflow = 'unset';
     }
+
+    // Cleanup function to restore scroll on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
