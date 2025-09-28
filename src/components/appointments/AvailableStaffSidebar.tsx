@@ -57,7 +57,8 @@ export function AvailableStaffSidebar({ selectedDate, filteredAppointments, isCo
 
       // Get employee's appointments for the day  
       const employeeAppointments = dayAppointments.filter(apt => 
-        apt.staff.includes(employee.name) || employee.name.includes(apt.staff)
+        (apt.staff && apt.staff.includes && apt.staff.includes(employee.name)) || 
+        (apt.staff && employee.name.includes(apt.staff))
       );
       
       // Calculate priority based on current status
