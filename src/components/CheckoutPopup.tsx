@@ -34,8 +34,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
-  const [editableDiscount, setEditableDiscount] = useState(10); // percentage
-  const [editableTip, setEditableTip] = useState(5); // percentage
+  const [editableDiscount, setEditableDiscount] = useState(0); // percentage - default 0%
+  const [editableTip, setEditableTip] = useState(5); // percentage - default 5%
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -55,7 +55,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setSelectedPayment(null);
       setIsProcessing(false);
       setPaymentCompleted(false);
-      setEditableDiscount(10);
+      setEditableDiscount(0);
       setEditableTip(5);
       
       // Prevent body scroll when popup is open
