@@ -38,6 +38,7 @@ interface AppointmentDayViewProps {
   onAppointmentCreated?: () => void;
   onScheduleUpdate?: () => void;
   onAppointmentDrop?: (appointmentId: number, newTime: string, newStaff?: string) => void;
+  showAvailableStaffSidebar?: boolean;
 }
 
 export function AppointmentDayView({
@@ -50,7 +51,8 @@ export function AppointmentDayView({
   searchQuery,
   onAppointmentCreated,
   onScheduleUpdate,
-  onAppointmentDrop
+  onAppointmentDrop,
+  showAvailableStaffSidebar = false
 }: AppointmentDayViewProps) {
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
@@ -536,7 +538,13 @@ const employeeAvailability = useMemo(() => {
       </div>
 
       {/* Calendar Container with constrained height for internal scrolling */}
-      <div className="flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] max-w-[calc(100dvw-256px)] overflow-hidden">
+      <div 
+        className={`flex-1 flex flex-col min-h-0 max-h-[calc(100vh-200px)] overflow-hidden ${
+          showAvailableStaffSidebar 
+            ? 'max-w-[calc(100dvw-256px-256px)]' // Left sidebar (256px) + Right sidebar (256px)
+            : 'max-w-[calc(100dvw-256px)]'      // Only left sidebar (256px)
+        }`}
+      >
         {/* Headers Row - Fixed Top */}
         <div className="flex border-b border-gray-200 bg-white z-40 flex-shrink-0">
           {/* Time column header - Fixed left-top corner */}

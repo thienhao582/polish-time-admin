@@ -545,6 +545,7 @@ const Appointments = () => {
                   searchQuery={searchQuery}
                   onAppointmentCreated={loadAppointments}
                   onAppointmentDrop={handleAppointmentDrop}
+                  showAvailableStaffSidebar={showAvailableStaffSidebar}
                 />
               )}
             </CardContent>
