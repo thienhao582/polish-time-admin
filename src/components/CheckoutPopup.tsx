@@ -482,7 +482,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Overlay */}
       <div 
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 z-0"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -491,7 +491,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       
       {/* Popup Container - Full viewport with padding */}
       <div 
-        className="relative w-[90vw] h-[90vh] max-w-none max-h-none"
+        className="relative z-10 w-[90vw] h-[90vh] max-w-none max-h-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-background rounded-xl shadow-2xl flex h-full overflow-hidden">
