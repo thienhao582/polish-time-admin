@@ -479,10 +479,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const steps: { key: CheckoutStep; label: string; number: number }[] = [
-    { key: 'overview', label: 'Xem trước', number: 1 },
-    { key: 'payment', label: 'Thanh toán', number: 2 },
-    { key: 'processing', label: 'Xử lý', number: 3 },
-    { key: 'receipt', label: 'Hoàn tất', number: 4 },
+    { key: 'overview', label: 'Review', number: 1 },
+    { key: 'payment', label: 'Payment', number: 2 },
+    { key: 'processing', label: 'Process', number: 3 },
+    { key: 'receipt', label: 'Done', number: 4 },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
@@ -528,12 +528,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <p className="text-sm text-muted-foreground">Checkout cho {checkInItem.customerName}</p>
               </div>
               
-              {/* Vertical step indicators */}
-              <div className="space-y-3">
+              {/* Horizontal step indicators */}
+              <div className="flex items-center gap-2">
                 {steps.map((step, index) => (
-                  <div key={step.key} className="flex items-center gap-3">
+                  <div key={step.key} className="flex items-center">
                     <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-colors ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-colors ${
                         currentStep === step.key ? 'bg-primary text-primary-foreground' : 
                         currentStepIndex > index ? 'bg-primary/50 text-primary-foreground' : 
                         'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -543,7 +543,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     >
                       {step.number}
                     </div>
-                    <span className="text-sm font-medium">{step.label}</span>
+                    <span className="text-xs font-medium ml-1">{step.label}</span>
+                    {index < steps.length - 1 && <div className="w-4 h-px bg-muted mx-2" />}
                   </div>
                 ))}
               </div>
