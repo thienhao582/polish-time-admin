@@ -55,6 +55,27 @@
     /* Custom colors for appointments - soft, eye-friendly colors */
     --customer-name: 158 40% 35%; /* Soft sage green - calming and easy on eyes */
     --staff-name: 25 60% 40%; /* Warm amber brown - comfortable for long viewing */
+    
+    /* Appointment status colors */
+    --status-confirmed: 210 100% 50%; /* Blue - Xác nhận */
+    --status-confirmed-bg: 210 100% 95%;
+    --status-confirmed-border: 210 100% 70%;
+    
+    --status-in-progress: 45 100% 50%; /* Yellow/Gold - Đang làm */
+    --status-in-progress-bg: 45 100% 95%;
+    --status-in-progress-border: 45 100% 60%;
+    
+    --status-completed: 140 60% 45%; /* Green - Hoàn thành */
+    --status-completed-bg: 140 60% 95%;
+    --status-completed-border: 140 60% 60%;
+    
+    --status-cancelled: 0 70% 50%; /* Red - Hủy */
+    --status-cancelled-bg: 0 70% 95%;
+    --status-cancelled-border: 0 70% 60%;
+    
+    --status-pending: 280 60% 55%; /* Purple - Chờ xác nhận */
+    --status-pending-bg: 280 60% 95%;
+    --status-pending-border: 280 60% 65%;
   }
 
   .dark {
@@ -97,6 +118,27 @@
     /* Custom colors for appointments - soft, eye-friendly colors */
     --customer-name: 158 45% 50%; /* Lighter sage green for dark mode */
     --staff-name: 25 70% 55%; /* Lighter amber brown for dark mode */
+    
+    /* Appointment status colors - dark mode */
+    --status-confirmed: 210 90% 60%;
+    --status-confirmed-bg: 210 80% 20%;
+    --status-confirmed-border: 210 80% 40%;
+    
+    --status-in-progress: 45 90% 60%;
+    --status-in-progress-bg: 45 80% 20%;
+    --status-in-progress-border: 45 80% 40%;
+    
+    --status-completed: 140 60% 50%;
+    --status-completed-bg: 140 50% 20%;
+    --status-completed-border: 140 50% 35%;
+    
+    --status-cancelled: 0 70% 55%;
+    --status-cancelled-bg: 0 60% 20%;
+    --status-cancelled-border: 0 60% 35%;
+    
+    --status-pending: 280 50% 60%;
+    --status-pending-bg: 280 50% 20%;
+    --status-pending-border: 280 50% 35%;
   }
 }
 

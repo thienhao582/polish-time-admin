@@ -739,17 +739,33 @@ export function AppointmentDayView({
                         // onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, "anyone") : undefined}
                         onClick={() => handleTimeSlotClick(dateString, hourSlot, "Bất kì")}
                       >
-                        {displayAppointment && (
-                          <div
-                            className={cn(
-                              "absolute inset-1 border rounded-md p-1 cursor-pointer transition-colors text-xs overflow-hidden select-none",
-                              appointmentColors.anyone
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAppointmentClick(displayAppointment, e);
-                            }}
-                          >
+                         {displayAppointment && (
+                           <div
+                             className={cn(
+                               "absolute inset-1 border rounded-md p-1 cursor-pointer transition-colors text-xs overflow-hidden select-none",
+                               (() => {
+                                 const status = displayAppointment.status?.toLowerCase() || 'confirmed';
+                                 switch (status) {
+                                   case 'confirmed':
+                                     return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
+                                   case 'in-progress':
+                                     return 'bg-[hsl(var(--status-in-progress-bg))] border-[hsl(var(--status-in-progress-border))] text-[hsl(var(--status-in-progress))]';
+                                   case 'completed':
+                                     return 'bg-[hsl(var(--status-completed-bg))] border-[hsl(var(--status-completed-border))] text-[hsl(var(--status-completed))]';
+                                   case 'cancelled':
+                                     return 'bg-[hsl(var(--status-cancelled-bg))] border-[hsl(var(--status-cancelled-border))] text-[hsl(var(--status-cancelled))]';
+                                   case 'pending':
+                                     return 'bg-[hsl(var(--status-pending-bg))] border-[hsl(var(--status-pending-border))] text-[hsl(var(--status-pending))]';
+                                   default:
+                                     return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
+                                 }
+                               })()
+                             )}
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleAppointmentClick(displayAppointment, e);
+                             }}
+                           >
                             <div className="font-semibold leading-tight truncate">
                               {displayAppointment.customer}
                             </div>
@@ -824,26 +840,24 @@ export function AppointmentDayView({
                             const height = Math.max(14, durationMinutes * pixelsPerMinute); // Minimum 1 slot height
                             const topOffset = relativeStart * pixelsPerMinute;
 
-                            // Determine appointment color
+                            // Determine appointment color based on status
                             const getAppointmentColor = () => {
-                              // Check if this appointment was originally assigned to "anyone"
-                              const assignmentType = (() => {
-                                if (!apt.staff || apt.staff.trim() === '' || apt.staff.toLowerCase() === 'anyone' || apt.staff === 'Bất kì') {
-                                  return 'anyone';
-                                } else if (apt.staff !== employee.name) {
-                                  return 'reassigned-from-anyone';
-                                } else {
-                                  return 'pre-assigned';
-                                }
-                              })();
+                              const status = apt.status?.toLowerCase() || 'confirmed';
                               
-                              if (assignmentType === 'anyone') {
-                                 return appointmentColors.anyone;
-                               } else if (assignmentType === 'reassigned-from-anyone') {
-                                 return appointmentColors.reassigned;
-                               } else {
-                                 return appointmentColors.preAssigned;
-                               }
+                              switch (status) {
+                                case 'confirmed':
+                                  return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
+                                case 'in-progress':
+                                  return 'bg-[hsl(var(--status-in-progress-bg))] border-[hsl(var(--status-in-progress-border))] text-[hsl(var(--status-in-progress))]';
+                                case 'completed':
+                                  return 'bg-[hsl(var(--status-completed-bg))] border-[hsl(var(--status-completed-border))] text-[hsl(var(--status-completed))]';
+                                case 'cancelled':
+                                  return 'bg-[hsl(var(--status-cancelled-bg))] border-[hsl(var(--status-cancelled-border))] text-[hsl(var(--status-cancelled))]';
+                                case 'pending':
+                                  return 'bg-[hsl(var(--status-pending-bg))] border-[hsl(var(--status-pending-border))] text-[hsl(var(--status-pending))]';
+                                default:
+                                  return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
+                              }
                              };
                             
                              return (

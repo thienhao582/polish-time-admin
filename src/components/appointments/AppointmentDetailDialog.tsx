@@ -77,18 +77,16 @@ export function AppointmentDetailDialog({
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      confirmed: { label: "Xác nhận", variant: "default" as const },
-      pending: { label: "Chờ xác nhận", variant: "secondary" as const },
-      completed: { label: "Hoàn thành", variant: "default" as const },
-      cancelled: { label: "Đã hủy", variant: "destructive" as const },
+      confirmed: { label: "Xác nhận", variant: "default" as const, color: "bg-blue-100 text-blue-700 hover:bg-blue-100" },
+      "in-progress": { label: "Đang làm", variant: "default" as const, color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" },
+      pending: { label: "Chờ xác nhận", variant: "secondary" as const, color: "bg-purple-100 text-purple-700 hover:bg-purple-100" },
+      completed: { label: "Hoàn thành", variant: "default" as const, color: "bg-green-100 text-green-700 hover:bg-green-100" },
+      cancelled: { label: "Đã hủy", variant: "destructive" as const, color: "bg-red-100 text-red-700 hover:bg-red-100" },
     };
     
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.confirmed;
     return (
-      <Badge variant={config.variant} className={
-        status === "confirmed" ? "bg-green-100 text-green-700 hover:bg-green-100" :
-        status === "completed" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : ""
-      }>
+      <Badge variant={config.variant} className={config.color}>
         {config.label}
       </Badge>
     );
@@ -148,7 +146,7 @@ export function AppointmentDetailDialog({
     }
   };
 
-  const canCheckout = appointment?.status === "confirmed" || appointment?.status === "pending";
+  const canCheckout = appointment?.status === "confirmed" || appointment?.status === "pending" || appointment?.status === "in-progress";
 
   if (!appointment) return null;
 

@@ -25,6 +25,25 @@ interface AppointmentOverflowProps {
   onAppointmentClick: (appointment: Appointment, event: React.MouseEvent) => void;
 }
 
+const getStatusClasses = (status: string) => {
+  const normalizedStatus = status?.toLowerCase() || 'confirmed';
+  
+  switch (normalizedStatus) {
+    case 'confirmed':
+      return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] hover:bg-[hsl(var(--status-confirmed-bg))]/80';
+    case 'in-progress':
+      return 'bg-[hsl(var(--status-in-progress-bg))] border-[hsl(var(--status-in-progress-border))] hover:bg-[hsl(var(--status-in-progress-bg))]/80';
+    case 'completed':
+      return 'bg-[hsl(var(--status-completed-bg))] border-[hsl(var(--status-completed-border))] hover:bg-[hsl(var(--status-completed-bg))]/80';
+    case 'cancelled':
+      return 'bg-[hsl(var(--status-cancelled-bg))] border-[hsl(var(--status-cancelled-border))] hover:bg-[hsl(var(--status-cancelled-bg))]/80';
+    case 'pending':
+      return 'bg-[hsl(var(--status-pending-bg))] border-[hsl(var(--status-pending-border))] hover:bg-[hsl(var(--status-pending-bg))]/80';
+    default:
+      return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] hover:bg-[hsl(var(--status-confirmed-bg))]/80';
+  }
+};
+
 export function AppointmentOverflow({
   appointments,
   maxVisible,
@@ -39,7 +58,7 @@ export function AppointmentOverflow({
         {appointments.map((apt) => (
           <div
             key={apt.id}
-            className="text-xs p-2 bg-pink-50 border-l-2 border-pink-400 rounded text-gray-700 truncate cursor-pointer hover:bg-pink-100 transition-colors mb-1"
+            className={`text-xs p-2 border-l-2 rounded text-gray-700 truncate cursor-pointer transition-colors mb-1 ${getStatusClasses(apt.status)}`}
             title={`${apt.time} - ${apt.customer} (${apt.service})`}
             onClick={(e) => onAppointmentClick(apt, e)}
           >
@@ -68,7 +87,7 @@ export function AppointmentOverflow({
       {visibleAppointments.map((apt) => (
         <div
           key={apt.id}
-          className="text-xs p-2 bg-pink-50 border-l-2 border-pink-400 rounded text-gray-700 truncate cursor-pointer hover:bg-pink-100 transition-colors mb-1"
+          className={`text-xs p-2 border-l-2 rounded text-gray-700 truncate cursor-pointer transition-colors mb-1 ${getStatusClasses(apt.status)}`}
           title={`${apt.time} - ${apt.customer} (${apt.service})`}
           onClick={(e) => onAppointmentClick(apt, e)}
         >
@@ -104,7 +123,7 @@ export function AppointmentOverflow({
             {appointments.map((apt) => (
               <div
                 key={apt.id}
-                className="p-3 bg-pink-50 border border-pink-200 rounded cursor-pointer hover:bg-pink-100 transition-colors"
+                className={`p-3 border rounded cursor-pointer transition-colors ${getStatusClasses(apt.status)}`}
                 onClick={(e) => {
                   onAppointmentClick(apt, e);
                   setIsOpen(false);
