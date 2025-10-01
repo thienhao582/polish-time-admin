@@ -92,6 +92,7 @@ export function AppointmentFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="confirmed">Xác nhận</SelectItem>
+                <SelectItem value="in-progress">Đang làm</SelectItem>
                 <SelectItem value="completed">Hoàn thành</SelectItem>
                 <SelectItem value="cancelled">Đã hủy</SelectItem>
                 <SelectItem value="all">Tất cả</SelectItem>
