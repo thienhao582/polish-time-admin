@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Search, FileText, Printer, Phone, Mail } from "lucide-react";
+import { Calendar, Clock, User, Search, FileText, Printer, Phone, Mail, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ export function CustomerServiceManagement({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [historyAppointments, setHistoryAppointments] = useState<HistoryAppointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<HistoryAppointment | null>(null);
   const { appointments: demoAppointments, customers: demoCustomers } = useSalonStore();
   const { isDemoMode } = useDemoMode();
 
@@ -420,10 +421,10 @@ export function CustomerServiceManagement({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handlePrintInvoice(appointment)}
+                                onClick={() => setSelectedInvoice(appointment)}
                                 className="h-7 w-7 p-0"
                               >
-                                <Printer className="w-4 h-4" />
+                                <Eye className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>
@@ -464,6 +465,105 @@ export function CustomerServiceManagement({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Invoice Detail Dialog */}
+      <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Hóa đơn thanh toán</DialogTitle>
+          </DialogHeader>
+          
+          {selectedInvoice && (
+            <div className="space-y-6">
+              {/* Customer Info */}
+              <div className="text-center pb-4 border-b">
+                <div className="text-3xl font-bold mb-2">#{selectedInvoice.id.slice(0, 8)}</div>
+                <div className="text-xl font-semibold mb-1">{selectedCustomer?.name}</div>
+                {selectedCustomer?.phone && (
+                  <div className="text-sm text-muted-foreground">{selectedCustomer.phone}</div>
+                )}
+                <div className="text-sm text-muted-foreground mt-1">
+                  {format(new Date(selectedInvoice.appointment_date), "dd/MM/yyyy HH:mm", { locale: vi })}
+                </div>
+              </div>
+
+              {/* Services Section */}
+              <div>
+                <h3 className="font-semibold mb-3">Dịch vụ đã sử dụng</h3>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{selectedInvoice.service_name}</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Nhân viên: {selectedInvoice.employee_name}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Thời gian: {selectedInvoice.duration_minutes} phút
+                      </div>
+                    </div>
+                    <div className="text-lg font-semibold">
+                      {selectedInvoice.price.toLocaleString('vi-VN')}đ
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Tổng kết thanh toán</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span>{selectedInvoice.price.toLocaleString('vi-VN')}đ</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Discount:</span>
+                    <span>0đ</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">VAT (8%):</span>
+                    <span>{Math.round(selectedInvoice.price * 0.08).toLocaleString('vi-VN')}đ</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Tip:</span>
+                    <span>0đ</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Tổng cộng:</span>
+                    <span>{Math.round(selectedInvoice.price * 1.08).toLocaleString('vi-VN')}đ</span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedInvoice.notes && (
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="text-sm font-medium mb-1">Ghi chú:</div>
+                  <div className="text-sm text-muted-foreground">{selectedInvoice.notes}</div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePrintInvoice(selectedInvoice)}
+                  className="flex-1"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  In hóa đơn
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedInvoice(null)}
+                  className="flex-1"
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
