@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { CampaignFilters } from "@/components/campaign/CampaignFilters";
 import { CampaignTable } from "@/components/campaign/CampaignTable";
 import { CampaignForm } from "@/components/campaign/CampaignForm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useCampaignStore } from "@/stores/useCampaignStore";
 import { Campaign } from "@/stores/types/campaign";
 import { toast } from "sonner";
@@ -98,22 +99,10 @@ export default function CampaignManagement() {
     setEditingCampaign(undefined);
   };
 
-  if (isFormOpen) {
-    return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <CampaignForm
-          campaign={editingCampaign}
-          onSave={handleSaveCampaign}
-          onCancel={handleCancelForm}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Quản lý Campaign</h1>
           <p className="text-muted-foreground mt-1">
@@ -127,7 +116,7 @@ export default function CampaignManagement() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Đang hoạt động</CardDescription>
@@ -181,6 +170,17 @@ export default function CampaignManagement() {
         onDelete={handleDeleteCampaign}
         getStatus={getCampaignStatus}
       />
+
+      {/* Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <CampaignForm
+            campaign={editingCampaign}
+            onSave={handleSaveCampaign}
+            onCancel={handleCancelForm}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
@@ -100,12 +100,15 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>{campaign ? 'Chỉnh sửa Campaign' : 'Tạo Campaign mới'}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+    <>
+      <DialogHeader>
+        <DialogTitle>{campaign ? 'Chỉnh sửa Campaign' : 'Tạo Campaign mới'}</DialogTitle>
+        <DialogDescription>
+          {campaign ? 'Cập nhật thông tin campaign giảm giá' : 'Tạo campaign giảm giá tự động cho dịch vụ'}
+        </DialogDescription>
+      </DialogHeader>
+      
+      <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           {/* Tên campaign */}
           <div className="space-y-2">
             <Label htmlFor="name">Tên Campaign *</Label>
@@ -275,17 +278,16 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
             />
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3 justify-end pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Hủy
-            </Button>
-            <Button type="submit">
-              {campaign ? 'Cập nhật' : 'Tạo Campaign'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </form>
+        {/* Buttons */}
+        <div className="flex gap-3 justify-end pt-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Hủy
+          </Button>
+          <Button type="submit">
+            {campaign ? 'Cập nhật' : 'Tạo Campaign'}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }
