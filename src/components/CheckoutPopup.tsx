@@ -97,36 +97,108 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
+    // Create a hidden iframe for printing
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.top = '-10000px';
+    printFrame.style.left = '-10000px';
+    document.body.appendChild(printFrame);
+
+    const printDoc = printFrame.contentWindow?.document;
+    if (printDoc) {
+      printDoc.open();
+      printDoc.write(`
         <html>
           <head>
             <title>Hóa đơn - ${checkInItem.customerName}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 20px; max-width: 300px; margin: 0 auto; }
-              .header { text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px; margin-bottom: 10px; }
-              .total-line { display: flex; justify-content: space-between; margin: 5px 0; }
-              .total-due { font-weight: bold; border-top: 1px solid #333; padding-top: 5px; }
+              @media print {
+                @page { margin: 0; }
+                body { margin: 1cm; }
+              }
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                max-width: 300px; 
+                margin: 0 auto; 
+              }
+              .header { 
+                text-align: center; 
+                border-bottom: 1px dashed #333; 
+                padding-bottom: 10px; 
+                margin-bottom: 10px; 
+              }
+              .service-line {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px 0;
+                padding: 5px 0;
+              }
+              .total-line { 
+                display: flex; 
+                justify-content: space-between; 
+                margin: 5px 0; 
+              }
+              .total-due { 
+                font-weight: bold; 
+                border-top: 1px solid #333; 
+                padding-top: 5px; 
+                margin-top: 10px;
+              }
             </style>
           </head>
           <body>
             <div class="header">
-              <h2>SALON RECEIPT</h2>
+              <h2>HOÁ ĐƠN THANH TOÁN</h2>
               <p>${currentDate} ${currentTime}</p>
             </div>
-            <p><strong>${checkInItem.customerName}</strong> (#${checkInItem.customerNumber})</p>
-            <p>Payment: ${selectedPayment === 'card' ? 'Credit/Debit Card' : selectedPayment === 'cash' ? 'Cash' : 'Apple Pay'}</p>
+            <p><strong>Khách hàng:</strong> ${checkInItem.customerName} (#${checkInItem.customerNumber})</p>
+            ${checkInItem.phone ? `<p><strong>SĐT:</strong> ${checkInItem.phone}</p>` : ''}
+            <hr style="border: 1px dashed #ccc; margin: 10px 0;">
+            <h3>Dịch vụ:</h3>
+            ${checkInItem.services?.map(service => `
+              <div class="service-line">
+                <span>${service}</span>
+                <span>50,000₫</span>
+              </div>
+            `).join('') || '<p>Không có dịch vụ</p>'}
+            <hr style="border: 1px dashed #ccc; margin: 10px 0;">
+            <div class="total-line">
+              <span>Subtotal:</span>
+              <span>${subtotal.toLocaleString('vi-VN')}₫</span>
+            </div>
+            <div class="total-line">
+              <span>Discount:</span>
+              <span>-${discount.toLocaleString('vi-VN')}₫</span>
+            </div>
+            <div class="total-line">
+              <span>VAT (8%):</span>
+              <span>${tax.toLocaleString('vi-VN')}₫</span>
+            </div>
+            <div class="total-line">
+              <span>Tip:</span>
+              <span>${tip.toLocaleString('vi-VN')}₫</span>
+            </div>
             <div class="total-line total-due">
-              <span>Total:</span>
+              <span>Tổng cộng:</span>
               <span>${totalDue.toLocaleString('vi-VN')}₫</span>
             </div>
-            <p style="text-align: center; margin-top: 20px;">Thank you!</p>
+            <p style="margin-top: 10px;"><strong>Thanh toán:</strong> ${selectedPayment === 'card' ? 'Tiền mặt' : selectedPayment === 'cash' ? 'Tiền mặt' : 'Apple Pay'}</p>
+            <p style="text-align: center; margin-top: 20px;">Cảm ơn quý khách!</p>
           </body>
         </html>
       `);
-      printWindow.document.close();
-      printWindow.print();
+      printDoc.close();
+
+      // Wait for content to load then print
+      printFrame.contentWindow?.focus();
+      setTimeout(() => {
+        printFrame.contentWindow?.print();
+        // Clean up after printing
+        setTimeout(() => {
+          document.body.removeChild(printFrame);
+        }, 100);
+      }, 250);
     }
   };
 
