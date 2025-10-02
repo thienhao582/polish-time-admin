@@ -35,6 +35,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [editableDiscount, setEditableDiscount] = useState(0); // percentage - default 0%
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
+  const [discountAmount, setDiscountAmount] = useState(0); // specific amount in VND
   const [editableTip, setEditableTip] = useState(5); // percentage - default 5%
 
   const currentTime = format(new Date(), "HH:mm");
@@ -42,7 +44,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   
   // Calculate pricing
   const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
-  const discount = Math.floor(serviceTotal * (editableDiscount / 100));
+  const discount = discountType === 'percentage' 
+    ? Math.floor(serviceTotal * (editableDiscount / 100))
+    : discountAmount;
   const tip = Math.floor(serviceTotal * (editableTip / 100));
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
@@ -56,6 +60,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setIsProcessing(false);
       setPaymentCompleted(false);
       setEditableDiscount(0);
+      setDiscountType('percentage');
+      setDiscountAmount(0);
       setEditableTip(5);
       
       // Prevent body scroll when popup is open
@@ -217,15 +223,43 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   <div className="flex items-center gap-2">
                     <span>Discount:</span>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={editableDiscount}
-                        onChange={(e) => setEditableDiscount(Number(e.target.value) || 0)}
-                        className="w-10 h-6 text-xs text-center"
-                        min="0"
-                        max="100"
-                      />
-                      <span className="text-xs">%</span>
+                      {discountType === 'percentage' ? (
+                        <>
+                          <Input
+                            type="number"
+                            value={editableDiscount}
+                            onChange={(e) => setEditableDiscount(Number(e.target.value) || 0)}
+                            className="w-12 h-6 text-xs text-center"
+                            min="0"
+                            max="100"
+                          />
+                          <span className="text-xs">%</span>
+                        </>
+                      ) : (
+                        <Input
+                          type="number"
+                          value={discountAmount}
+                          onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
+                          className="w-20 h-6 text-xs text-center"
+                          min="0"
+                          placeholder="₫"
+                        />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setDiscountType(discountType === 'percentage' ? 'amount' : 'percentage');
+                          if (discountType === 'percentage') {
+                            setDiscountAmount(discount);
+                          } else {
+                            setEditableDiscount(0);
+                          }
+                        }}
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                   <span className="text-green-600">-{discount.toLocaleString('vi-VN')}₫</span>
