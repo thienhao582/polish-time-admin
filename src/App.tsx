@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import AccountManagement from "./pages/AccountManagement";
 import NotFound from "./pages/NotFound";
 import Invoices from "./pages/Invoices";
+import CampaignManagement from "./pages/CampaignManagement";
 import Login from "./pages/Login";
 import CheckIn from "./pages/CheckIn";
 
@@ -46,6 +47,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="invoices" element={<Invoices />} />
+              <Route path="campaigns" element={<CampaignManagement />} />
               <Route path="employees/*" element={
                 <ProtectedRoute requiredPermission="manage_employees">
                   <EmployeeManagement />

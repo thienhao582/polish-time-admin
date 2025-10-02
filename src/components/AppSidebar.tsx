@@ -1,6 +1,6 @@
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays, UserIcon, History, ClipboardList, LogIn } from "lucide-react";
+import { Calendar, Users, Scissors, DollarSign, Clock, Settings, BarChart3, Receipt, UserCog, ChevronRight, User, Calculator, CalendarDays, UserIcon, History, ClipboardList, LogIn, Percent } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -101,6 +101,11 @@ const AppSidebar = () => {
       titleKey: "sidebar.invoices",
       url: "/invoices",
       icon: Receipt,
+    },
+    {
+      titleKey: "sidebar.campaigns",
+      url: "/campaigns",
+      icon: Percent,
     },
     {
       titleKey: "sidebar.timetracking",
