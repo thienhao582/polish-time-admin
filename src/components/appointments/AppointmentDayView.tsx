@@ -585,14 +585,8 @@ export function AppointmentDayView({
           {/* Scrollable headers area */}
           <div 
             id="header-scroll"
-            className="flex-1 overflow-x-auto scrollbar-hide"
-            onScroll={(e) => {
-              // Sync horizontal scroll with content
-              const contentScrollArea = document.getElementById('content-scroll');
-              if (contentScrollArea) {
-                contentScrollArea.scrollLeft = e.currentTarget.scrollLeft;
-              }
-            }}
+            className="flex-1 overflow-x-hidden"
+            style={{ overflowY: 'hidden' }}
           >
             <div className="flex min-w-max">
               {/* Anyone column header */}
@@ -656,15 +650,8 @@ export function AppointmentDayView({
           <div className="w-20 bg-gray-50 border-r border-gray-200 flex-shrink-0 z-30 shadow-sm">
             <div 
               id="time-scroll"
-              className="h-full overflow-y-auto scrollbar-hide" 
-              style={{ maxHeight: 'calc(100vh - 250px)' }}
-              onScroll={(e) => {
-                // Sync vertical scroll with content
-                const contentScrollArea = document.getElementById('content-scroll');
-                if (contentScrollArea) {
-                  contentScrollArea.scrollTop = e.currentTarget.scrollTop;
-                }
-              }}
+              className="h-full overflow-y-hidden" 
+              style={{ maxHeight: 'calc(100vh - 250px)', overflowX: 'hidden' }}
             >
               {calculatedData.timeSlots.map((timeSlot) => (
                 <div 
