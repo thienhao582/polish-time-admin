@@ -1,4 +1,4 @@
-import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Smartphone, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight, Check } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Gift, ArrowRightLeft, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -27,7 +27,7 @@ interface CheckoutPopupProps {
 }
 
 type CheckoutStep = 'overview' | 'payment' | 'processing' | 'receipt';
-type PaymentMethod = 'card' | 'cash' | 'apple-pay' | null;
+type PaymentMethod = 'card' | 'cash' | 'gift-card' | 'other' | null;
 
 export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }: CheckoutPopupProps) {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('overview');
@@ -90,7 +90,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         setPaymentCompleted(true);
         setCurrentStep('receipt');
       }, 3000);
-    } else if (method === 'cash' || method === 'apple-pay') {
+    } else if (method === 'cash' || method === 'gift-card' || method === 'other') {
       setCurrentStep('receipt');
       setPaymentCompleted(true);
     }
@@ -183,7 +183,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               <span>Tổng cộng:</span>
               <span>${totalDue.toLocaleString('vi-VN')}₫</span>
             </div>
-            <p style="margin-top: 10px;"><strong>Thanh toán:</strong> ${selectedPayment === 'card' ? 'Tiền mặt' : selectedPayment === 'cash' ? 'Tiền mặt' : 'Apple Pay'}</p>
+            <p style="margin-top: 10px;"><strong>Thanh toán:</strong> ${selectedPayment === 'card' ? 'Credit/Debit Card' : selectedPayment === 'cash' ? 'Tiền mặt' : selectedPayment === 'gift-card' ? 'Gift Card' : 'Other (Chuyển khoản)'}</p>
             <p style="text-align: center; margin-top: 20px;">Cảm ơn quý khách!</p>
           </body>
         </html>
@@ -475,20 +475,41 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
               </Card>
 
-              {/* Apple Pay */}
+              {/* Gift Card */}
               <Card 
                 className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
-                  selectedPayment === 'apple-pay' ? 'border-primary bg-primary/5' : 'border-border'
+                  selectedPayment === 'gift-card' ? 'border-primary bg-primary/5' : 'border-border'
                 }`}
-                onClick={() => setSelectedPayment('apple-pay')}
+                onClick={() => setSelectedPayment('gift-card')}
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gray-100 rounded-full">
-                    <Smartphone className="h-6 w-6 text-gray-600" />
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <Gift className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold">Apple Pay</h4>
-                    <p className="text-sm text-muted-foreground">Touch ID or Face ID</p>
+                    <h4 className="font-semibold">Gift Card</h4>
+                    <p className="text-sm text-muted-foreground">Gift card payment</p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Pay {totalDue.toLocaleString('vi-VN')}₫
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Other - Transfer */}
+              <Card 
+                className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
+                  selectedPayment === 'other' ? 'border-primary bg-primary/5' : 'border-border'
+                }`}
+                onClick={() => setSelectedPayment('other')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-orange-100 rounded-full">
+                    <ArrowRightLeft className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Other</h4>
+                    <p className="text-sm text-muted-foreground">Chuyển khoản - Transfer</p>
                   </div>
                   <Button variant="outline" size="sm">
                     Pay {totalDue.toLocaleString('vi-VN')}₫
