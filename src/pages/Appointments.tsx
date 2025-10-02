@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Maximize2 } from "lucide-react";
+import { Plus, Maximize2, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -19,6 +19,7 @@ import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useDemoData } from "@/hooks/useDemoData";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { AvailableStaffSidebar } from "@/components/appointments/AvailableStaffSidebar";
+import { CustomerServiceManagement } from "@/components/appointments/CustomerServiceManagement";
 import { toast } from "sonner";
 
 // Interface for components that expect the old format
@@ -65,6 +66,7 @@ const Appointments = () => {
   const [loading, setLoading] = useState(true);
   const [appointmentStatus, setAppointmentStatus] = useState("all");
   const [initialFormData, setInitialFormData] = useState<any>(null);
+  const [isCustomerServiceOpen, setIsCustomerServiceOpen] = useState(false);
 
   // Prevent heavy reload after optimistic updates (drag/drop etc.)
   const skipNextLoadRef = useRef(false);
@@ -413,6 +415,15 @@ const Appointments = () => {
             Reset Demo Data
           </Button>
           
+          <Button 
+            variant="outline" 
+            onClick={() => setIsCustomerServiceOpen(true)}
+            className="border-purple-600 text-purple-600 hover:bg-purple-50"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Quản lý dịch vụ khách hàng
+          </Button>
+
           <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="border-pink-600 text-pink-600 hover:bg-pink-50">
@@ -602,6 +613,12 @@ const Appointments = () => {
           setIsAppointmentDetailOpen(false);
           toast.success("Đã hoàn thành lịch hẹn");
         }}
+      />
+
+      {/* Customer Service Management Dialog */}
+      <CustomerServiceManagement 
+        isOpen={isCustomerServiceOpen}
+        onOpenChange={setIsCustomerServiceOpen}
       />
 
       {/* Edit Appointment Dialog */}
