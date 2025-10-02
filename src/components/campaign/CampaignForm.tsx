@@ -27,7 +27,9 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
   const [formData, setFormData] = useState({
     name: campaign?.name || '',
     startDate: campaign?.startDate || '',
+    startTime: campaign?.startDate ? format(new Date(campaign.startDate), 'HH:mm') : '00:00',
     endDate: campaign?.endDate || '',
+    endTime: campaign?.endDate ? format(new Date(campaign.endDate), 'HH:mm') : '23:59',
     discountType: campaign?.discountType || 'percentage' as 'percentage' | 'fixed',
     discountValue: campaign?.discountValue || 0,
     isActive: campaign?.isActive ?? true,
@@ -52,10 +54,10 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
     }
 
     if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
+      const start = new Date(`${formData.startDate}T${formData.startTime}`);
+      const end = new Date(`${formData.endDate}T${formData.endTime}`);
       if (start >= end) {
-        newErrors.endDate = 'Ngày kết thúc phải sau ngày bắt đầu';
+        newErrors.endDate = 'Ngày và giờ kết thúc phải sau ngày và giờ bắt đầu';
       }
     }
 
@@ -78,7 +80,15 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSave(formData);
+      // Combine date and time into ISO string
+      const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`).toISOString();
+      const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`).toISOString();
+      
+      onSave({
+        ...formData,
+        startDate: startDateTime,
+        endDate: endDateTime,
+      });
     }
   };
 
@@ -125,65 +135,81 @@ export function CampaignForm({ campaign, onSave, onCancel }: CampaignFormProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Ngày bắt đầu *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.startDate ? (
-                      format(new Date(formData.startDate), "dd/MM/yyyy", { locale: vi })
-                    ) : (
-                      <span>Chọn ngày</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.startDate ? new Date(formData.startDate) : undefined}
-                    onSelect={(date) => setFormData({ ...formData, startDate: date?.toISOString() || '' })}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !formData.startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.startDate ? (
+                        format(new Date(formData.startDate), "dd/MM/yyyy", { locale: vi })
+                      ) : (
+                        <span>Chọn ngày</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.startDate ? new Date(formData.startDate) : undefined}
+                      onSelect={(date) => setFormData({ ...formData, startDate: date?.toISOString().split('T')[0] || '' })}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className="w-32"
+                />
+              </div>
               {errors.startDate && <p className="text-sm text-destructive">{errors.startDate}</p>}
             </div>
 
             <div className="space-y-2">
               <Label>Ngày kết thúc *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.endDate ? (
-                      format(new Date(formData.endDate), "dd/MM/yyyy", { locale: vi })
-                    ) : (
-                      <span>Chọn ngày</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={formData.endDate ? new Date(formData.endDate) : undefined}
-                    onSelect={(date) => setFormData({ ...formData, endDate: date?.toISOString() || '' })}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !formData.endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.endDate ? (
+                        format(new Date(formData.endDate), "dd/MM/yyyy", { locale: vi })
+                      ) : (
+                        <span>Chọn ngày</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.endDate ? new Date(formData.endDate) : undefined}
+                      onSelect={(date) => setFormData({ ...formData, endDate: date?.toISOString().split('T')[0] || '' })}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  className="w-32"
+                />
+              </div>
               {errors.endDate && <p className="text-sm text-destructive">{errors.endDate}</p>}
             </div>
           </div>

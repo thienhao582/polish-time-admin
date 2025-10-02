@@ -95,9 +95,9 @@ export function CampaignTable({
                 <TableCell className="font-medium">{campaign.name}</TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    <div>{format(new Date(campaign.startDate), 'dd/MM/yyyy', { locale: vi })}</div>
+                    <div>{format(new Date(campaign.startDate), 'dd/MM/yyyy HH:mm', { locale: vi })}</div>
                     <div className="text-muted-foreground">
-                      đến {format(new Date(campaign.endDate), 'dd/MM/yyyy', { locale: vi })}
+                      đến {format(new Date(campaign.endDate), 'dd/MM/yyyy HH:mm', { locale: vi })}
                     </div>
                   </div>
                 </TableCell>
