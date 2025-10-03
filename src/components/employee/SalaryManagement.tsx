@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +11,9 @@ import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
 import { formatCurrency } from "@/lib/currencyUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CalendarIcon, DollarSign, TrendingUp } from "lucide-react";
+import { CalendarIcon, DollarSign, TrendingUp, FileText } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { PayslipDialog } from "./PayslipDialog";
 import { cn } from "@/lib/utils";
 
 interface SalaryCalculation {
@@ -27,14 +27,14 @@ interface SalaryCalculation {
 
 export function SalaryManagement() {
   const { language, t } = useLanguage();
-  const { employees, updateEmployee } = useSalonStore();
+  const { employees } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
   const [selectedPeriod, setSelectedPeriod] = useState("this-month");
   const [salaryData, setSalaryData] = useState<SalaryCalculation[]>([]);
-  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
-  const [tempCommissionRate, setTempCommissionRate] = useState<string>("");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
+  const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [allAppointments, setAllAppointments] = useState<any[]>([]);
 
   const translations = {
     vi: {
@@ -54,9 +54,7 @@ export function SalaryManagement() {
       avgServicePrice: "Giá TB dịch vụ",
       totalEarnings: "Tổng thu nhập",
       actions: "Thao tác",
-      save: "Lưu",
-      cancel: "Hủy",
-      edit: "Sửa",
+      payslip: "Phiếu Lương",
       calculate: "Tính toán",
       noData: "Chưa có dữ liệu lương cho kỳ này",
       summary: "Tổng kết",
@@ -81,9 +79,7 @@ export function SalaryManagement() {
       avgServicePrice: "Avg Service Price",
       totalEarnings: "Total Earnings",
       actions: "Actions",
-      save: "Save",
-      cancel: "Cancel",
-      edit: "Edit",
+      payslip: "Payslip",
       calculate: "Calculate",
       noData: "No salary data for this period",
       summary: "Summary",
@@ -98,6 +94,7 @@ export function SalaryManagement() {
   const calculateSalaryData = async () => {
     try {
       const appointments = await fetchAppointments();
+      setAllAppointments(appointments);
       
       let startDate: Date;
       let endDate = new Date();
@@ -168,26 +165,64 @@ export function SalaryManagement() {
     }
   };
 
-  const handleEditCommission = (employeeId: string, currentRate: number) => {
-    setEditingEmployeeId(employeeId);
-    setTempCommissionRate((currentRate * 100).toString()); // Convert to percentage
+  const handleViewPayslip = (employeeId: string) => {
+    setSelectedEmployee(employeeId);
   };
 
-  const handleSaveCommission = async (employeeId: string) => {
-    const newRate = parseFloat(tempCommissionRate) / 100; // Convert back to decimal
-    if (isNaN(newRate) || newRate < 0 || newRate > 1) {
-      return;
+  const getEmployeeAppointments = (employeeId: string) => {
+    let startDate: Date;
+    let endDate = new Date();
+    
+    switch (selectedPeriod) {
+      case "this-month":
+        startDate = startOfMonth(new Date());
+        endDate = endOfMonth(new Date());
+        break;
+      case "last-month":
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        startDate = startOfMonth(lastMonth);
+        endDate = endOfMonth(lastMonth);
+        break;
+      case "last-7-days":
+        startDate = subDays(new Date(), 7);
+        break;
+      case "last-30-days":
+        startDate = subDays(new Date(), 30);
+        break;
+      case "custom-range":
+        if (customStartDate && customEndDate) {
+          startDate = customStartDate;
+          endDate = customEndDate;
+        } else {
+          startDate = startOfMonth(new Date());
+          endDate = endOfMonth(new Date());
+        }
+        break;
+      default:
+        startDate = startOfMonth(new Date());
     }
 
-    await updateEmployee(employeeId, { commission_rate: newRate } as any);
-    setEditingEmployeeId(null);
-    setTempCommissionRate("");
-    calculateSalaryData(); // Recalculate with new rate
-  };
+    const filteredAppointments = allAppointments.filter(apt => {
+      const aptDate = new Date(apt.appointment_date);
+      return apt.employee_id === employeeId && aptDate >= startDate && aptDate <= endDate;
+    });
 
-  const handleCancelEdit = () => {
-    setEditingEmployeeId(null);
-    setTempCommissionRate("");
+    const uniqueDates = new Set(filteredAppointments.map(apt => apt.appointment_date));
+    const workingDays = uniqueDates.size;
+
+    return {
+      appointments: filteredAppointments.map(apt => ({
+        id: apt.id,
+        date: apt.appointment_date,
+        service: apt.service_name || "Service",
+        tip: 0, // Would need to be tracked separately
+        supply: 0, // Would need to be tracked separately
+        discount: 0, // Would need to be tracked separately
+        price: apt.price || 0
+      })),
+      workingDays
+    };
   };
 
   // Auto-calculate on component mount
@@ -401,25 +436,9 @@ export function SalaryManagement() {
                   <TableRow key={data.employeeId}>
                     <TableCell className="font-medium">{data.employeeName}</TableCell>
                     <TableCell>
-                      {editingEmployeeId === data.employeeId ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={tempCommissionRate}
-                            onChange={(e) => setTempCommissionRate(e.target.value)}
-                            placeholder="10"
-                            className="w-20"
-                            min="0"
-                            max="100"
-                            step="0.1"
-                          />
-                          <span className="text-sm">%</span>
-                        </div>
-                      ) : (
-                        <Badge variant="outline">
-                          {(data.commissionRate * 100).toFixed(1)}%
-                        </Badge>
-                      )}
+                      <Badge variant="outline">
+                        {(data.commissionRate * 100).toFixed(1)}%
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{data.appointmentCount}</Badge>
@@ -429,31 +448,15 @@ export function SalaryManagement() {
                       {formatCurrency(data.totalEarnings)}
                     </TableCell>
                     <TableCell>
-                      {editingEmployeeId === data.employeeId ? (
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveCommission(data.employeeId)}
-                          >
-                            {text.save}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleCancelEdit}
-                          >
-                            {text.cancel}
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditCommission(data.employeeId, data.commissionRate)}
-                        >
-                          {text.edit}
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewPayslip(data.employeeId)}
+                        className="gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        {text.payslip}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -462,6 +465,24 @@ export function SalaryManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Payslip Dialog */}
+      {selectedEmployee && (() => {
+        const employeeData = salaryData.find(d => d.employeeId === selectedEmployee);
+        const { appointments, workingDays } = getEmployeeAppointments(selectedEmployee);
+        
+        return employeeData ? (
+          <PayslipDialog
+            open={!!selectedEmployee}
+            onOpenChange={(open) => !open && setSelectedEmployee(null)}
+            employeeName={employeeData.employeeName}
+            appointments={appointments}
+            commissionRate={employeeData.commissionRate}
+            totalEarnings={employeeData.totalEarnings}
+            workingDays={workingDays}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }
