@@ -79,7 +79,7 @@ export function PayslipDialog({
   const totalSupply = appointments.reduce((sum, apt) => sum + apt.supply, 0);
   const totalDiscount = appointments.reduce((sum, apt) => sum + apt.discount, 0);
   const totalRevenue = appointments.reduce((sum, apt) => sum + apt.price, 0);
-  const profit = totalRevenue - totalDiscount;
+  const profit = totalRevenue - totalDiscount - totalSupply;
   const checkAmount = totalEarnings + totalTips;
 
   const handlePrint = () => {
@@ -116,13 +116,13 @@ export function PayslipDialog({
                   </TableCell>
                   <TableCell className="text-sm">{apt.service}</TableCell>
                   <TableCell className="text-right text-sm">
-                    {apt.tip > 0 ? formatCurrency(apt.tip) : "0.00"}
+                    {apt.tip > 0 ? formatCurrency(apt.tip) : "-"}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {apt.supply > 0 ? formatCurrency(apt.supply) : "0.00"}
+                    {apt.supply > 0 ? formatCurrency(apt.supply) : "-"}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {apt.discount > 0 ? formatCurrency(apt.discount) : "0.00"}
+                    {apt.discount > 0 ? formatCurrency(apt.discount) : "-"}
                   </TableCell>
                 </TableRow>
               ))}
@@ -132,22 +132,24 @@ export function PayslipDialog({
           <Separator />
 
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between font-semibold">
+            <div className="flex justify-between">
               <span>{workingDays} {text.workingDays}</span>
-              <span>{formatCurrency(totalRevenue)}</span>
+              <span className="font-semibold">{formatCurrency(totalRevenue)}</span>
             </div>
             
-            <div className="flex justify-between">
-              <span>{text.miscDeduct}</span>
-              <span>0.00</span>
+            <div className="flex justify-between text-red-600">
+              <span>{text.supply} Cost</span>
+              <span>-{formatCurrency(totalSupply)}</span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between text-red-600">
               <span>{text.discountTotal}</span>
-              <span>{formatCurrency(totalDiscount)}</span>
+              <span>-{formatCurrency(totalDiscount)}</span>
             </div>
             
-            <div className="flex justify-between">
+            <Separator />
+            
+            <div className="flex justify-between font-semibold">
               <span>{text.profit}</span>
               <span>{formatCurrency(profit)}</span>
             </div>

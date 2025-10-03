@@ -211,25 +211,31 @@ export function SalaryManagement() {
     const uniqueDates = new Set(filteredAppointments.map(apt => apt.appointment_date));
     const workingDays = uniqueDates.size;
 
-    // Generate realistic mock data for tips, supply, and discount
+    // Generate realistic mock data for each appointment
     return {
-      appointments: filteredAppointments.map(apt => {
-        const price = apt.price || 0;
-        // Mock tip: 10-20% of price
-        const tip = Math.floor(price * (0.1 + Math.random() * 0.1));
-        // Mock supply cost: 5-15% of price
-        const supply = Math.floor(price * (0.05 + Math.random() * 0.1));
-        // Mock discount: 0-10% of price (not all appointments have discount)
-        const discount = Math.random() > 0.6 ? Math.floor(price * (Math.random() * 0.1)) : 0;
+      appointments: filteredAppointments.map((apt, index) => {
+        const price = apt.price || (40 + Math.random() * 60); // $40-100 range
+        
+        // Realistic tip amounts: typically $5-20
+        const tipOptions = [5, 8, 10, 12, 15, 18, 20, 0];
+        const tip = tipOptions[Math.floor(Math.random() * tipOptions.length)];
+        
+        // Supply cost: $3-10
+        const supplyOptions = [3, 4, 5, 6, 7, 8, 9, 10];
+        const supply = supplyOptions[Math.floor(Math.random() * supplyOptions.length)];
+        
+        // Discount: only some appointments, $5-15
+        const hasDiscount = Math.random() > 0.7;
+        const discount = hasDiscount ? (5 + Math.floor(Math.random() * 10)) : 0;
         
         return {
           id: apt.id,
           date: apt.appointment_date,
-          service: apt.service_name || "Service",
+          service: apt.service_name || `Service ${index + 1}`,
           tip,
           supply,
           discount,
-          price
+          price: Math.round(price)
         };
       }),
       workingDays
