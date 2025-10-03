@@ -211,16 +211,27 @@ export function SalaryManagement() {
     const uniqueDates = new Set(filteredAppointments.map(apt => apt.appointment_date));
     const workingDays = uniqueDates.size;
 
+    // Generate realistic mock data for tips, supply, and discount
     return {
-      appointments: filteredAppointments.map(apt => ({
-        id: apt.id,
-        date: apt.appointment_date,
-        service: apt.service_name || "Service",
-        tip: 0, // Would need to be tracked separately
-        supply: 0, // Would need to be tracked separately
-        discount: 0, // Would need to be tracked separately
-        price: apt.price || 0
-      })),
+      appointments: filteredAppointments.map(apt => {
+        const price = apt.price || 0;
+        // Mock tip: 10-20% of price
+        const tip = Math.floor(price * (0.1 + Math.random() * 0.1));
+        // Mock supply cost: 5-15% of price
+        const supply = Math.floor(price * (0.05 + Math.random() * 0.1));
+        // Mock discount: 0-10% of price (not all appointments have discount)
+        const discount = Math.random() > 0.6 ? Math.floor(price * (Math.random() * 0.1)) : 0;
+        
+        return {
+          id: apt.id,
+          date: apt.appointment_date,
+          service: apt.service_name || "Service",
+          tip,
+          supply,
+          discount,
+          price
+        };
+      }),
       workingDays
     };
   };
