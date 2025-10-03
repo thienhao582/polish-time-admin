@@ -29,6 +29,11 @@ interface CheckoutPopupProps {
 type CheckoutStep = 'overview' | 'payment' | 'processing' | 'receipt';
 type PaymentMethod = 'card' | 'cash' | 'gift-card' | 'other' | null;
 
+interface PaymentRecord {
+  method: PaymentMethod;
+  amount: number;
+}
+
 export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }: CheckoutPopupProps) {
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('overview');
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>(null);
@@ -38,6 +43,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountAmount, setDiscountAmount] = useState(0); // specific amount in VND
   const [editableTip, setEditableTip] = useState(5); // percentage - default 5%
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
+  const [disabledMethods, setDisabledMethods] = useState<Set<PaymentMethod>>(new Set());
+  const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
+  const [showCustomInput, setShowCustomInput] = useState<PaymentMethod | null>(null);
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -51,6 +60,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
   const totalDue = subtotal - discount + tip + tax;
+  const totalPaid = paymentRecords.reduce((sum, record) => sum + record.amount, 0);
+  const remainingDue = Math.max(0, totalDue - totalPaid);
 
   // Reset state when popup opens
   useEffect(() => {
@@ -63,6 +74,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setDiscountType('percentage');
       setDiscountAmount(0);
       setEditableTip(5);
+      setPaymentRecords([]);
+      setDisabledMethods(new Set());
+      setCustomAmountInput('');
+      setShowCustomInput(null);
       
       // Prevent body scroll when popup is open
       document.body.style.overflow = 'hidden';
@@ -79,20 +94,56 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
   if (!isOpen) return null;
 
-  const handlePaymentSelect = (method: PaymentMethod) => {
-    setSelectedPayment(method);
+  const handlePaymentSelect = (method: PaymentMethod, amount: number) => {
+    const newPaymentRecord: PaymentRecord = { method, amount };
+    const newPaymentRecords = [...paymentRecords, newPaymentRecord];
+    setPaymentRecords(newPaymentRecords);
+    
+    const newTotalPaid = newPaymentRecords.reduce((sum, record) => sum + record.amount, 0);
+    const newRemaining = totalDue - newTotalPaid;
+    
     if (method === 'card') {
       setCurrentStep('processing');
       setIsProcessing(true);
       // Simulate POS connection and processing
       setTimeout(() => {
         setIsProcessing(false);
+        if (newRemaining <= 0) {
+          setPaymentCompleted(true);
+          setCurrentStep('receipt');
+        } else {
+          setCurrentStep('payment');
+          setSelectedPayment(null);
+        }
+      }, 3000);
+    } else {
+      if (newRemaining <= 0) {
         setPaymentCompleted(true);
         setCurrentStep('receipt');
-      }, 3000);
-    } else if (method === 'cash' || method === 'gift-card' || method === 'other') {
-      setCurrentStep('receipt');
-      setPaymentCompleted(true);
+      } else {
+        setSelectedPayment(null);
+        setShowCustomInput(null);
+        setCustomAmountInput('');
+      }
+    }
+  };
+
+  const handlePayFullClick = (method: PaymentMethod) => {
+    setSelectedPayment(method);
+    setShowCustomInput(null);
+    handlePaymentSelect(method, remainingDue);
+  };
+
+  const handleCustomClick = (method: PaymentMethod) => {
+    setShowCustomInput(method);
+    setCustomAmountInput(remainingDue);
+  };
+
+  const handleCustomPayment = (method: PaymentMethod) => {
+    const amount = typeof customAmountInput === 'number' ? customAmountInput : 0;
+    if (amount > 0 && amount <= remainingDue) {
+      setDisabledMethods(new Set([...disabledMethods, method]));
+      handlePaymentSelect(method, amount);
     }
   };
 
@@ -210,13 +261,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const canGoNext = () => {
-    switch (currentStep) {
-      case 'overview': return true;
-      case 'payment': return selectedPayment !== null;
-      case 'processing': return false;
-      case 'receipt': return false;
-      default: return false;
-    }
+    return currentStep === 'overview';
   };
 
   const canGoBack = () => {
@@ -227,11 +272,6 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     switch (currentStep) {
       case 'overview':
         setCurrentStep('payment');
-        break;
-      case 'payment':
-        if (selectedPayment) {
-          handlePaymentSelect(selectedPayment);
-        }
         break;
     }
   };
@@ -366,6 +406,38 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   <span>Tổng cộng:</span>
                   <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
                 </div>
+                {totalPaid > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Đã thanh toán:</span>
+                      <span>-{totalPaid.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base">
+                      <span>Còn lại:</span>
+                      <span className="text-orange-600">{remainingDue.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Payment Records */}
+        {paymentRecords.length > 0 && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Lịch sử thanh toán</h4>
+              <div className="space-y-2">
+                {paymentRecords.map((record, index) => (
+                  <div key={index} className="flex justify-between items-center text-xs p-2 bg-background rounded">
+                    <span className="text-muted-foreground">
+                      {record.method === 'card' ? 'Thẻ' : record.method === 'cash' ? 'Tiền mặt' : record.method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
+                    </span>
+                    <span className="font-medium">{record.amount.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                ))}
               </div>
             </div>
           </>
@@ -424,16 +496,20 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-xl font-semibold mb-2">Chọn phương thức thanh toán</h3>
-              <p className="text-2xl font-bold text-primary">{totalDue.toLocaleString('vi-VN')}₫</p>
+              <p className="text-2xl font-bold text-primary">{remainingDue.toLocaleString('vi-VN')}₫</p>
+              {totalPaid > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">Đã thanh toán: {totalPaid.toLocaleString('vi-VN')}₫</p>
+              )}
             </div>
 
             <div className="grid gap-4">
               {/* Card Payment */}
               <Card 
-                className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
-                  selectedPayment === 'card' ? 'border-primary bg-primary/5' : 'border-border'
+                className={`p-6 border-2 transition-all ${
+                  disabledMethods.has('card') 
+                    ? 'opacity-50 cursor-not-allowed border-border' 
+                    : 'hover:shadow-md border-border cursor-pointer'
                 }`}
-                onClick={() => setSelectedPayment('card')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-100 rounded-full">
@@ -443,18 +519,63 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <h4 className="font-semibold">Credit/Debit Card</h4>
                     <p className="text-sm text-muted-foreground">Visa, Mastercard, Credit/Debit</p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Charge {totalDue.toLocaleString('vi-VN')}₫
-                  </Button>
+                  {!disabledMethods.has('card') && (
+                    <div className="flex gap-2">
+                      {showCustomInput === 'card' ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="number"
+                            value={customAmountInput}
+                            onChange={(e) => setCustomAmountInput(e.target.value ? Number(e.target.value) : '')}
+                            className="w-32"
+                            placeholder="Số tiền"
+                            max={remainingDue}
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => handleCustomPayment('card')}
+                            disabled={!customAmountInput || customAmountInput <= 0 || customAmountInput > remainingDue}
+                          >
+                            OK
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowCustomInput(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePayFullClick('card')}
+                          >
+                            Charge {remainingDue.toLocaleString('vi-VN')}₫
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleCustomClick('card')}
+                          >
+                            Custom
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Card>
 
               {/* Cash Payment */}
               <Card 
-                className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
-                  selectedPayment === 'cash' ? 'border-primary bg-primary/5' : 'border-border'
+                className={`p-6 border-2 transition-all ${
+                  disabledMethods.has('cash') 
+                    ? 'opacity-50 cursor-not-allowed border-border' 
+                    : 'hover:shadow-md border-border'
                 }`}
-                onClick={() => setSelectedPayment('cash')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-green-100 rounded-full">
@@ -464,23 +585,63 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <h4 className="font-semibold">Cash</h4>
                     <p className="text-sm text-muted-foreground">Tiền mặt</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm">
-                      {totalDue.toLocaleString('vi-VN')}₫
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Custom
-                    </Button>
-                  </div>
+                  {!disabledMethods.has('cash') && (
+                    <div className="flex gap-2">
+                      {showCustomInput === 'cash' ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="number"
+                            value={customAmountInput}
+                            onChange={(e) => setCustomAmountInput(e.target.value ? Number(e.target.value) : '')}
+                            className="w-32"
+                            placeholder="Số tiền"
+                            max={remainingDue}
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => handleCustomPayment('cash')}
+                            disabled={!customAmountInput || customAmountInput <= 0 || customAmountInput > remainingDue}
+                          >
+                            OK
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowCustomInput(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePayFullClick('cash')}
+                          >
+                            {remainingDue.toLocaleString('vi-VN')}₫
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleCustomClick('cash')}
+                          >
+                            Custom
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Card>
 
               {/* Gift Card */}
               <Card 
-                className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
-                  selectedPayment === 'gift-card' ? 'border-primary bg-primary/5' : 'border-border'
+                className={`p-6 border-2 transition-all ${
+                  disabledMethods.has('gift-card') 
+                    ? 'opacity-50 cursor-not-allowed border-border' 
+                    : 'hover:shadow-md border-border'
                 }`}
-                onClick={() => setSelectedPayment('gift-card')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-purple-100 rounded-full">
@@ -490,18 +651,63 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <h4 className="font-semibold">Gift Card</h4>
                     <p className="text-sm text-muted-foreground">Gift card payment</p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Pay {totalDue.toLocaleString('vi-VN')}₫
-                  </Button>
+                  {!disabledMethods.has('gift-card') && (
+                    <div className="flex gap-2">
+                      {showCustomInput === 'gift-card' ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="number"
+                            value={customAmountInput}
+                            onChange={(e) => setCustomAmountInput(e.target.value ? Number(e.target.value) : '')}
+                            className="w-32"
+                            placeholder="Số tiền"
+                            max={remainingDue}
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => handleCustomPayment('gift-card')}
+                            disabled={!customAmountInput || customAmountInput <= 0 || customAmountInput > remainingDue}
+                          >
+                            OK
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowCustomInput(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePayFullClick('gift-card')}
+                          >
+                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleCustomClick('gift-card')}
+                          >
+                            Custom
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Card>
 
               {/* Other - Transfer */}
               <Card 
-                className={`p-6 cursor-pointer border-2 transition-all hover:shadow-md ${
-                  selectedPayment === 'other' ? 'border-primary bg-primary/5' : 'border-border'
+                className={`p-6 border-2 transition-all ${
+                  disabledMethods.has('other') 
+                    ? 'opacity-50 cursor-not-allowed border-border' 
+                    : 'hover:shadow-md border-border'
                 }`}
-                onClick={() => setSelectedPayment('other')}
               >
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-orange-100 rounded-full">
@@ -511,9 +717,53 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <h4 className="font-semibold">Other</h4>
                     <p className="text-sm text-muted-foreground">Chuyển khoản - Transfer</p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Pay {totalDue.toLocaleString('vi-VN')}₫
-                  </Button>
+                  {!disabledMethods.has('other') && (
+                    <div className="flex gap-2">
+                      {showCustomInput === 'other' ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="number"
+                            value={customAmountInput}
+                            onChange={(e) => setCustomAmountInput(e.target.value ? Number(e.target.value) : '')}
+                            className="w-32"
+                            placeholder="Số tiền"
+                            max={remainingDue}
+                          />
+                          <Button 
+                            size="sm"
+                            onClick={() => handleCustomPayment('other')}
+                            disabled={!customAmountInput || customAmountInput <= 0 || customAmountInput > remainingDue}
+                          >
+                            OK
+                          </Button>
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowCustomInput(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handlePayFullClick('other')}
+                          >
+                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleCustomClick('other')}
+                          >
+                            Custom
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </Card>
             </div>
@@ -738,11 +988,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   {canGoNext() && (
                     <Button 
                       onClick={handleNext}
-                      disabled={currentStep === 'payment' && !selectedPayment}
                       size="lg"
                     >
                       <ArrowRight className="h-5 w-5 mr-2" />
-                      {currentStep === 'overview' ? 'Tiếp tục' : 'Thanh toán'}
+                      Tiếp tục
                     </Button>
                   )}
                 </div>
