@@ -49,12 +49,14 @@ interface CheckoutPopupProps {
   onConfirmCheckOut: () => void;
 }
 
-type CheckoutStep = 'overview' | 'payment' | 'processing' | 'receipt';
+type CheckoutStep = 'overview' | 'payment' | 'receipt';
 type PaymentMethod = 'card' | 'cash' | 'gift-card' | 'other' | null;
 
 interface PaymentRecord {
   method: PaymentMethod;
   amount: number;
+  cashReceived?: number; // For cash payments
+  change?: number; // For cash payments
 }
 
 export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }: CheckoutPopupProps) {
@@ -206,8 +208,14 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
   if (!isOpen) return null;
 
-  const handlePaymentSelect = (method: PaymentMethod, amount: number) => {
-    const newPaymentRecord: PaymentRecord = { method, amount };
+  const handlePaymentSelect = (method: PaymentMethod, amount: number, cashReceivedAmount?: number) => {
+    const change = cashReceivedAmount && cashReceivedAmount > amount ? cashReceivedAmount - amount : undefined;
+    const newPaymentRecord: PaymentRecord = { 
+      method, 
+      amount,
+      cashReceived: cashReceivedAmount,
+      change
+    };
     const newPaymentRecords = [...paymentRecords, newPaymentRecord];
     setPaymentRecords(newPaymentRecords);
     
@@ -215,7 +223,6 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     const newRemaining = totalDue - newTotalPaid;
     
     if (method === 'card') {
-      setCurrentStep('processing');
       setIsProcessing(true);
       setSelectedPayment('card');
       // Simulate POS connection and processing with the actual amount
@@ -279,6 +286,28 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
     const printDoc = printFrame.contentWindow?.document;
     if (printDoc) {
+      // Generate payment methods HTML
+      const paymentMethodsHtml = paymentRecords.map((record, index) => {
+        let html = `<div class="total-line"><span>${
+          record.method === 'card' ? 'Thẻ' : 
+          record.method === 'cash' ? 'Tiền mặt' : 
+          record.method === 'gift-card' ? 'Gift Card' : 
+          'Chuyển khoản'
+        }:</span><span>${record.amount.toLocaleString('vi-VN')}₫</span></div>`;
+        
+        if (record.method === 'cash' && record.cashReceived && record.change && record.change > 0) {
+          html += `<div class="total-line" style="font-size: 12px; color: #666;">
+            <span style="padding-left: 20px;">Khách đưa:</span>
+            <span>${record.cashReceived.toLocaleString('vi-VN')}₫</span>
+          </div>`;
+          html += `<div class="total-line" style="font-size: 12px; color: #22c55e; font-weight: bold;">
+            <span style="padding-left: 20px;">Tiền thối:</span>
+            <span>${record.change.toLocaleString('vi-VN')}₫</span>
+          </div>`;
+        }
+        return html;
+      }).join('');
+
       printDoc.open();
       printDoc.write(`
         <html>
@@ -356,7 +385,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               <span>Tổng cộng:</span>
               <span>${totalDue.toLocaleString('vi-VN')}₫</span>
             </div>
-            <p style="margin-top: 10px;"><strong>Thanh toán:</strong> ${selectedPayment === 'card' ? 'Credit/Debit Card' : selectedPayment === 'cash' ? 'Tiền mặt' : selectedPayment === 'gift-card' ? 'Gift Card' : 'Other (Chuyển khoản)'}</p>
+            <hr style="border: 1px dashed #ccc; margin: 10px 0;">
+            <h3>Thanh toán:</h3>
+            ${paymentMethodsHtml}
             <p style="text-align: center; margin-top: 20px;">Cảm ơn quý khách!</p>
           </body>
         </html>
@@ -376,10 +407,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const handleStepClick = (step: CheckoutStep) => {
-    // Allow navigation to any step except processing
-    if (step !== 'processing') {
-      setCurrentStep(step);
-    }
+    // Allow navigation to any completed step
+    setCurrentStep(step);
   };
 
   const canGoNext = () => {
@@ -667,11 +696,18 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               <h4 className="text-sm font-semibold">Lịch sử thanh toán</h4>
               <div className="space-y-2">
                 {paymentRecords.map((record, index) => (
-                  <div key={index} className="flex justify-between items-center text-xs p-2 bg-background rounded">
-                    <span className="text-muted-foreground">
-                      {record.method === 'card' ? 'Thẻ' : record.method === 'cash' ? 'Tiền mặt' : record.method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
-                    </span>
-                    <span className="font-medium">{record.amount.toLocaleString('vi-VN')}₫</span>
+                  <div key={index} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs p-2 bg-background rounded">
+                      <span className="text-muted-foreground">
+                        {record.method === 'card' ? 'Thẻ' : record.method === 'cash' ? 'Tiền mặt' : record.method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
+                      </span>
+                      <span className="font-medium">{record.amount.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    {record.method === 'cash' && record.cashReceived && record.change && record.change > 0 && (
+                      <div className="text-[10px] text-muted-foreground pl-2">
+                        Khách đưa: {record.cashReceived.toLocaleString('vi-VN')}₫ • Thối lại: {record.change.toLocaleString('vi-VN')}₫
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1029,33 +1065,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
           </div>
         );
 
-      case 'processing':
-        // Get the most recent card payment amount for POS simulation
-        const currentCardPayment = paymentRecords.length > 0 
-          ? paymentRecords[paymentRecords.length - 1].amount 
-          : remainingDue;
-        
-        return (
-          <div className="flex flex-col items-center justify-center py-12 space-y-6">
-            <div className="p-6 bg-blue-100 rounded-full">
-              <Clock className="h-12 w-12 text-blue-600" />
-            </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-semibold">Đang kết nối máy POS</h3>
-              <p className="text-muted-foreground">Vui lòng chờ khách hàng quẹt thẻ...</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Đang xử lý thanh toán...</span>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">{currentCardPayment.toLocaleString('vi-VN')}₫</p>
-              <p className="text-sm text-muted-foreground">Số tiền đang thanh toán</p>
-            </div>
-          </div>
-        );
-
       case 'receipt':
+        // Get cash payment with change if exists
+        const cashPaymentWithChange = paymentRecords.find(r => r.method === 'cash' && r.change && r.change > 0);
+        
         return (
           <div className="space-y-6">
             <div className="text-center space-y-4">
@@ -1064,9 +1077,13 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-green-600">Thanh toán thành công!</h3>
-                <p className="text-muted-foreground">
-                  Phương thức: {selectedPayment === 'card' ? 'Thẻ tín dụng/ghi nợ' : selectedPayment === 'cash' ? 'Tiền mặt' : 'Apple Pay'}
-                </p>
+                {paymentRecords.length === 1 ? (
+                  <p className="text-muted-foreground">
+                    Phương thức: {paymentRecords[0].method === 'card' ? 'Thẻ tín dụng/ghi nợ' : paymentRecords[0].method === 'cash' ? 'Tiền mặt' : paymentRecords[0].method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">Thanh toán kết hợp</p>
+                )}
               </div>
             </div>
 
@@ -1085,9 +1102,31 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   <span>Tổng tiền:</span>
                   <span>{totalDue.toLocaleString('vi-VN')}₫</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Thanh toán:</span>
-                  <span>{selectedPayment === 'card' ? 'Thẻ' : selectedPayment === 'cash' ? 'Tiền mặt' : 'Apple Pay'}</span>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-muted-foreground">Thanh toán:</div>
+                  {paymentRecords.map((record, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between text-sm">
+                        <span>
+                          {record.method === 'card' ? 'Thẻ' : record.method === 'cash' ? 'Tiền mặt' : record.method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
+                        </span>
+                        <span>{record.amount.toLocaleString('vi-VN')}₫</span>
+                      </div>
+                      {record.method === 'cash' && record.cashReceived && record.change && record.change > 0 && (
+                        <div className="flex justify-between text-xs text-muted-foreground pl-4 mt-1">
+                          <span>Khách đưa:</span>
+                          <span>{record.cashReceived.toLocaleString('vi-VN')}₫</span>
+                        </div>
+                      )}
+                      {record.method === 'cash' && record.change && record.change > 0 && (
+                        <div className="flex justify-between text-xs text-green-600 pl-4 font-medium">
+                          <span>Tiền thối:</span>
+                          <span>{record.change.toLocaleString('vi-VN')}₫</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </Card>
@@ -1122,8 +1161,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const steps: { key: CheckoutStep; label: string; number: number }[] = [
     { key: 'overview', label: 'Xem trước', number: 1 },
     { key: 'payment', label: 'Thanh toán', number: 2 },
-    { key: 'processing', label: 'Xử lý', number: 3 },
-    { key: 'receipt', label: 'Hoàn tất', number: 4 },
+    { key: 'receipt', label: 'Hoàn tất', number: 3 },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
@@ -1198,7 +1236,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             : currentStepIndex > index 
                             ? 'bg-green-500 text-white border-2 border-green-500' 
                             : 'bg-background text-muted-foreground border-2 border-gray-300'
-                        } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
+                        }`}
                       >
                         {currentStepIndex > index ? (
                           <Check className="w-4 h-4" />
@@ -1244,7 +1282,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
                 
                 <div className="flex gap-4">
-                  {currentStep !== 'receipt' && currentStep !== 'processing' && (
+                  {currentStep !== 'receipt' && (
                     <Button variant="outline" size="lg" onClick={onClose}>
                       Hủy
                     </Button>
@@ -1342,7 +1380,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             </Button>
             <Button
               onClick={() => {
-                handlePaymentSelect('cash', cashPaymentAmount);
+                const cashReceivedNum = typeof cashReceived === 'number' ? cashReceived : 0;
+                handlePaymentSelect('cash', cashPaymentAmount, cashReceivedNum);
                 setShowCashDialog(false);
                 setCashReceived('');
                 setShowCustomInput(null);
