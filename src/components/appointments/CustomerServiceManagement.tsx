@@ -800,7 +800,7 @@ export function CustomerServiceManagement({
                           <div className="flex justify-between text-sm font-medium pt-2 border-t">
                             <span>Tổng tip:</span>
                             <span>
-                              {currentTotalTip.toLocaleString('vi-VN')}đ
+                              {invoiceTotalTip.toLocaleString('vi-VN')}đ
                             </span>
                           </div>
                           <div className="flex justify-between text-xs text-muted-foreground">
