@@ -205,7 +205,32 @@ export function CustomerServiceManagement({
           return;
         }
 
-        setHistoryInvoices((invoicesData || []) as HistoryInvoice[]);
+        // Enrich invoices with staff information from appointments
+        const enrichedInvoices = await Promise.all((invoicesData || []).map(async (invoice) => {
+          if (invoice.appointment_id) {
+            const { data: appointment } = await supabase
+              .from('appointments')
+              .select('employee_name')
+              .eq('id', invoice.appointment_id)
+              .maybeSingle();
+
+            if (appointment && appointment.employee_name) {
+              // Update services with staff information
+              const enrichedServices = (invoice.services as any[]).map((service: any) => ({
+                ...service,
+                staff: service.staff || [{ name: appointment.employee_name }]
+              }));
+              
+              return {
+                ...invoice,
+                services: enrichedServices
+              };
+            }
+          }
+          return invoice;
+        }));
+
+        setHistoryInvoices(enrichedInvoices as HistoryInvoice[]);
       }
     } catch (error) {
       console.error('Error loading customer history:', error);
