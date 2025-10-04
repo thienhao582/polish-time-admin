@@ -702,45 +702,87 @@ export function CustomerServiceManagement({
               {invoiceData && (
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
-                  <div className="space-y-3">
-                    {invoiceData.services?.map((service: any, idx: number) => {
-                      if (!service.staff || service.staff.length === 0) return null;
-                      
-                      return service.staff.map((staffMember: any) => {
-                        const staffKey = `${staffMember.name}-${idx}`;
-                        return (
-                          <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
-                            <div>
-                              <div className="font-medium">{staffMember.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                Dịch vụ: {service.name}
+                  {(() => {
+                    // Calculate original total tip from invoice
+                    const originalTotalTip = selectedInvoice.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+                    const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
+                    const remainingTip = originalTotalTip - currentTotalTip;
+                    
+                    return (
+                      <div className="space-y-3">
+                        {invoiceData.services?.map((service: any, idx: number) => {
+                          if (!service.staff || service.staff.length === 0) return null;
+                          
+                          return service.staff.map((staffMember: any) => {
+                            const staffKey = `${staffMember.name}-${idx}`;
+                            const currentStaffTip = staffTips[staffKey] || 0;
+                            
+                            return (
+                              <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                                <div>
+                                  <div className="font-medium">{staffMember.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Dịch vụ: {service.name}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    value={currentStaffTip}
+                                    onChange={(e) => {
+                                      const newValue = Number(e.target.value);
+                                      
+                                      // Validate: must be >= 0
+                                      if (newValue < 0) {
+                                        return;
+                                      }
+                                      
+                                      // Calculate what the new total would be
+                                      const otherTips = Object.entries(staffTips)
+                                        .filter(([key]) => key !== staffKey)
+                                        .reduce((sum, [, tip]) => sum + tip, 0);
+                                      const newTotal = otherTips + newValue;
+                                      
+                                      // Validate: total cannot exceed original total tip
+                                      if (newTotal > originalTotalTip) {
+                                        toast.error(`Tổng tip không được vượt quá ${originalTotalTip.toLocaleString('vi-VN')}đ`);
+                                        return;
+                                      }
+                                      
+                                      setStaffTips(prev => ({
+                                        ...prev,
+                                        [staffKey]: newValue
+                                      }));
+                                    }}
+                                    className="w-28 h-8 text-right"
+                                    min="0"
+                                    max={originalTotalTip}
+                                  />
+                                  <span className="text-sm">đ</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                value={staffTips[staffKey] || 0}
-                                onChange={(e) => {
-                                  const newValue = Number(e.target.value);
-                                  setStaffTips(prev => ({
-                                    ...prev,
-                                    [staffKey]: newValue >= 0 ? newValue : 0
-                                  }));
-                                }}
-                                className="w-28 h-8 text-right"
-                                min="0"
-                              />
-                              <span className="text-sm">đ</span>
-                            </div>
+                            );
+                          });
+                        })}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm font-medium pt-2 border-t">
+                            <span>Tổng tip:</span>
+                            <span className={currentTotalTip > originalTotalTip ? 'text-red-600' : ''}>
+                              {currentTotalTip.toLocaleString('vi-VN')}đ
+                            </span>
                           </div>
-                        );
-                      });
-                    })}
-                    <div className="flex justify-between text-sm font-medium pt-2 border-t">
-                      <span>Tổng tip:</span>
-                      <span>{Object.values(staffTips).reduce((sum, tip) => sum + tip, 0).toLocaleString('vi-VN')}đ</span>
-                    </div>
-                  </div>
+                          {remainingTip !== 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>Còn lại:</span>
+                              <span className={remainingTip < 0 ? 'text-red-600' : 'text-green-600'}>
+                                {remainingTip.toLocaleString('vi-VN')}đ
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
