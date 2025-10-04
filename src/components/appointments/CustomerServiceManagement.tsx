@@ -724,10 +724,10 @@ export function CustomerServiceManagement({
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
                   {(() => {
                     // Get original total tip from invoice
-                    // Formula: total = subtotal - discount + VAT + tip
-                    // So: tip = total - (subtotal - discount + VAT)
+                    // Formula: total = subtotal + VAT + tip - discount
+                    // So: tip = total - subtotal - VAT + discount
                     const vat = Math.round(selectedInvoice.subtotal * 0.08);
-                    const invoiceTotalTip = Math.round(selectedInvoice.total - (selectedInvoice.subtotal - selectedInvoice.discount + vat));
+                    const invoiceTotalTip = selectedInvoice.total - selectedInvoice.subtotal - vat + selectedInvoice.discount;
                     // Calculate total tip being distributed to staff
                     const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
                     const remainingTip = invoiceTotalTip - currentTotalTip;
