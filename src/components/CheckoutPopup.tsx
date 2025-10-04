@@ -1274,7 +1274,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   // Render cash payment dialog separately using portal to ensure it's on top
   const cashDialogPortal = showCashDialog ? createPortal(
     <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
-      <DialogContent className="sm:max-w-md z-[100]">
+      <DialogContent className="sm:max-w-md z-[10000]">
         <DialogHeader>
           <DialogTitle>Thanh toán tiền mặt</DialogTitle>
         </DialogHeader>
