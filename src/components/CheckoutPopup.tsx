@@ -93,6 +93,46 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const totalPaid = paymentRecords.reduce((sum, record) => sum + record.amount, 0);
   const remainingDue = Math.max(0, totalDue - totalPaid);
 
+  // Calculate tip distribution for each staff member
+  const calculateTipDistribution = () => {
+    if (tip <= 0 || selectedServiceItems.length === 0) return [];
+
+    // Create a map of staff revenue
+    const staffRevenue = new Map<string, { name: string; revenue: number }>();
+    
+    selectedServiceItems.forEach(item => {
+      item.staffIds.forEach((staffId, index) => {
+        const staffName = item.staffNames[index];
+        const currentRevenue = staffRevenue.get(staffId) || { name: staffName, revenue: 0 };
+        // Divide service price equally among staff working on it
+        const revenueShare = item.price / item.staffIds.length;
+        staffRevenue.set(staffId, {
+          name: staffName,
+          revenue: currentRevenue.revenue + revenueShare
+        });
+      });
+    });
+
+    // Calculate tip distribution based on revenue percentage
+    const tipDistribution: Array<{ staffId: string; staffName: string; revenue: number; tipAmount: number; percentage: number }> = [];
+    
+    staffRevenue.forEach((data, staffId) => {
+      const percentage = (data.revenue / serviceTotal) * 100;
+      const staffTip = Math.floor((data.revenue / serviceTotal) * tip);
+      tipDistribution.push({
+        staffId,
+        staffName: data.name,
+        revenue: data.revenue,
+        tipAmount: staffTip,
+        percentage
+      });
+    });
+
+    return tipDistribution;
+  };
+
+  const tipDistribution = calculateTipDistribution();
+
   // Reset state when popup opens
   useEffect(() => {
     if (isOpen) {
@@ -516,6 +556,26 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   </div>
                   <span>{tip.toLocaleString('vi-VN')}₫</span>
                 </div>
+
+                {/* Tip Distribution for Staff */}
+                {tip > 0 && tipDistribution.length > 0 && (
+                  <div className="mt-2 p-3 bg-background rounded-lg border border-border">
+                    <div className="text-xs font-medium mb-2 text-muted-foreground">Phân chia tip cho nhân viên:</div>
+                    <div className="space-y-1.5">
+                      {tipDistribution.map((dist, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-xs">
+                          <div className="flex-1">
+                            <span className="font-medium">{dist.staffName}</span>
+                            <span className="text-muted-foreground ml-2">
+                              ({dist.percentage.toFixed(1)}% - {dist.revenue.toLocaleString('vi-VN')}₫)
+                            </span>
+                          </div>
+                          <span className="font-semibold text-green-600">{dist.tipAmount.toLocaleString('vi-VN')}₫</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
