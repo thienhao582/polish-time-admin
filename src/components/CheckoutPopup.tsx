@@ -72,6 +72,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
   const [showCustomInput, setShowCustomInput] = useState<PaymentMethod | null>(null);
   const [selectedServiceItems, setSelectedServiceItems] = useState<ServiceStaffItem[]>([]);
+  const [customStaffTips, setCustomStaffTips] = useState<Map<string, number>>(new Map());
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -113,12 +114,15 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       });
     });
 
-    // Calculate tip distribution based on revenue percentage
+    // Calculate tip distribution based on revenue percentage or custom values
     const tipDistribution: Array<{ staffId: string; staffName: string; revenue: number; tipAmount: number; percentage: number }> = [];
     
     staffRevenue.forEach((data, staffId) => {
       const percentage = (data.revenue / serviceTotal) * 100;
-      const staffTip = Math.floor((data.revenue / serviceTotal) * tip);
+      // Use custom tip if set, otherwise use calculated tip
+      const staffTip = customStaffTips.has(staffId) 
+        ? customStaffTips.get(staffId)! 
+        : Math.floor((data.revenue / serviceTotal) * tip);
       tipDistribution.push({
         staffId,
         staffName: data.name,
@@ -132,6 +136,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const tipDistribution = calculateTipDistribution();
+  
+  // Calculate total custom tips
+  const totalCustomTips = tipDistribution.reduce((sum, dist) => sum + dist.tipAmount, 0);
 
   // Reset state when popup opens
   useEffect(() => {
@@ -150,6 +157,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setDisabledMethods(new Set());
       setCustomAmountInput('');
       setShowCustomInput(null);
+      setCustomStaffTips(new Map());
       
       // Initialize selected services from checkInItem with staff information
       if (checkInItem.services && checkInItem.services.length > 0) {
@@ -560,19 +568,42 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 {/* Tip Distribution for Staff */}
                 {tip > 0 && tipDistribution.length > 0 && (
                   <div className="mt-2 p-3 bg-background rounded-lg border border-border">
-                    <div className="text-xs font-medium mb-2 text-muted-foreground">Phân chia tip cho nhân viên:</div>
-                    <div className="space-y-1.5">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-xs font-medium text-muted-foreground">Phân chia tip cho nhân viên:</div>
+                      {totalCustomTips > tip && (
+                        <span className="text-xs text-destructive font-medium">Vượt quá {(totalCustomTips - tip).toLocaleString('vi-VN')}₫</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
                       {tipDistribution.map((dist, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-xs">
-                          <div className="flex-1">
-                            <span className="font-medium">{dist.staffName}</span>
-                            <span className="text-muted-foreground ml-2">
+                        <div key={idx} className="flex justify-between items-center gap-2 text-xs">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{dist.staffName}</div>
+                            <div className="text-muted-foreground text-[10px]">
                               ({dist.percentage.toFixed(1)}% - {dist.revenue.toLocaleString('vi-VN')}₫)
-                            </span>
+                            </div>
                           </div>
-                          <span className="font-semibold text-green-600">{dist.tipAmount.toLocaleString('vi-VN')}₫</span>
+                          <Input
+                            type="number"
+                            value={customStaffTips.get(dist.staffId) ?? dist.tipAmount}
+                            onChange={(e) => {
+                              const newValue = Number(e.target.value) || 0;
+                              const newMap = new Map(customStaffTips);
+                              newMap.set(dist.staffId, newValue);
+                              setCustomStaffTips(newMap);
+                            }}
+                            className={`w-24 h-7 text-xs text-right ${
+                              totalCustomTips > tip ? 'border-destructive' : ''
+                            }`}
+                          />
                         </div>
                       ))}
+                    </div>
+                    <div className="flex justify-between items-center pt-2 mt-2 border-t border-border text-xs">
+                      <span className="font-medium">Tổng tip phân chia:</span>
+                      <span className={`font-semibold ${totalCustomTips > tip ? 'text-destructive' : 'text-green-600'}`}>
+                        {totalCustomTips.toLocaleString('vi-VN')}₫
+                      </span>
                     </div>
                   </div>
                 )}
