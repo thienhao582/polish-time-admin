@@ -103,7 +103,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
             <SelectTrigger>
               <SelectValue placeholder="Chọn dịch vụ" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background z-[9999] max-h-[300px]">
               {services.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
                   {service.name} - {service.price.toLocaleString('vi-VN')}đ
