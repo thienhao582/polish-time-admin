@@ -1130,7 +1130,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
   if (!isOpen) return null;
 
-  return createPortal(
+  const checkoutPortal = createPortal(
     <>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center">
         {/* Overlay */}
@@ -1267,92 +1267,103 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       </div>
       </div>
 
-      {/* Cash Payment Dialog */}
-      <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Thanh toán tiền mặt</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="flex justify-between items-center text-sm mb-1">
-                <span className="text-muted-foreground">Số tiền cần thanh toán:</span>
-                <span className="text-lg font-bold text-primary">
-                  {cashPaymentAmount.toLocaleString('vi-VN')}₫
+    </>,
+    document.body
+  );
+  
+  // Render cash payment dialog separately using portal to ensure it's on top
+  const cashDialogPortal = showCashDialog ? createPortal(
+    <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
+      <DialogContent className="sm:max-w-md z-[100]">
+        <DialogHeader>
+          <DialogTitle>Thanh toán tiền mặt</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="flex justify-between items-center text-sm mb-1">
+              <span className="text-muted-foreground">Số tiền cần thanh toán:</span>
+              <span className="text-lg font-bold text-primary">
+                {cashPaymentAmount.toLocaleString('vi-VN')}₫
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Số tiền khách đưa</Label>
+            <Input
+              type="number"
+              value={cashReceived}
+              onChange={(e) => setCashReceived(e.target.value ? Number(e.target.value) : '')}
+              placeholder="Nhập số tiền..."
+              autoFocus
+            />
+          </div>
+
+          {typeof cashReceived === 'number' && cashReceived >= cashPaymentAmount && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Khách đưa:</span>
+                <span className="font-medium">{cashReceived.toLocaleString('vi-VN')}₫</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Cần thanh toán:</span>
+                <span className="font-medium">{cashPaymentAmount.toLocaleString('vi-VN')}₫</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-green-700">Tiền thối lại:</span>
+                <span className="text-xl font-bold text-green-700">
+                  {(cashReceived - cashPaymentAmount).toLocaleString('vi-VN')}₫
                 </span>
               </div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label>Số tiền khách đưa</Label>
-              <Input
-                type="number"
-                value={cashReceived}
-                onChange={(e) => setCashReceived(e.target.value ? Number(e.target.value) : '')}
-                placeholder="Nhập số tiền..."
-                autoFocus
-              />
+          {typeof cashReceived === 'number' && cashReceived < cashPaymentAmount && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">
+                Số tiền chưa đủ. Còn thiếu: {(cashPaymentAmount - cashReceived).toLocaleString('vi-VN')}₫
+              </p>
             </div>
+          )}
 
-            {cashReceived !== '' && cashReceived >= cashPaymentAmount && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Khách đưa:</span>
-                  <span className="font-medium">{(cashReceived as number).toLocaleString('vi-VN')}₫</span>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground">Cần thanh toán:</span>
-                  <span className="font-medium">{cashPaymentAmount.toLocaleString('vi-VN')}₫</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-green-700">Tiền thối lại:</span>
-                  <span className="text-xl font-bold text-green-700">
-                    {((cashReceived as number) - cashPaymentAmount).toLocaleString('vi-VN')}₫
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {cashReceived !== '' && cashReceived < cashPaymentAmount && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">
-                  Số tiền chưa đủ. Còn thiếu: {(cashPaymentAmount - (cashReceived as number)).toLocaleString('vi-VN')}₫
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCashDialog(false);
-                  setCashReceived('');
-                  setShowCustomInput(null);
-                  setCustomAmountInput('');
-                }}
-                className="flex-1"
-              >
-                Hủy
-              </Button>
-              <Button
-                onClick={() => {
-                  handlePaymentSelect('cash', cashPaymentAmount);
-                  setShowCashDialog(false);
-                  setCashReceived('');
-                  setShowCustomInput(null);
-                  setCustomAmountInput('');
-                }}
-                disabled={cashReceived === '' || (cashReceived as number) < cashPaymentAmount}
-                className="flex-1"
-              >
-                Hoàn thành
-              </Button>
-            </div>
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCashDialog(false);
+                setCashReceived('');
+                setShowCustomInput(null);
+                setCustomAmountInput('');
+              }}
+              className="flex-1"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={() => {
+                handlePaymentSelect('cash', cashPaymentAmount);
+                setShowCashDialog(false);
+                setCashReceived('');
+                setShowCustomInput(null);
+                setCustomAmountInput('');
+              }}
+              disabled={typeof cashReceived !== 'number' || cashReceived < cashPaymentAmount}
+              className="flex-1"
+            >
+              Hoàn thành
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>,
+        </div>
+      </DialogContent>
+    </Dialog>,
     document.body
+  ) : null;
+  
+  return (
+    <>
+      {checkoutPortal}
+      {cashDialogPortal}
+    </>
   );
 }
