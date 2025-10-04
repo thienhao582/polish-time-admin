@@ -1231,12 +1231,14 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     >
                       <div 
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 ${
-                          currentStepIndex >= index 
+                          currentStepIndex > index 
                             ? 'bg-green-500 text-white border-2 border-green-500' 
+                            : currentStepIndex === index
+                            ? 'bg-background text-foreground border-[3px] border-primary'
                             : 'bg-background text-muted-foreground border-2 border-gray-300'
                         }`}
                       >
-                        {currentStepIndex >= index ? (
+                        {currentStepIndex > index ? (
                           <Check className="w-4 h-4" />
                         ) : (
                           step.number
