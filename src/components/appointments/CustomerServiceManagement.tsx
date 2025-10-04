@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Search, FileText, Printer, Phone, Mail, Eye } from "lucide-react";
+import { Calendar, Clock, User, Search, FileText, Printer, Phone, Mail, Eye, Save } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,9 @@ export function CustomerServiceManagement({
   const [historyAppointments, setHistoryAppointments] = useState<HistoryAppointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<HistoryAppointment | null>(null);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [editableTip, setEditableTip] = useState(0);
+  const [isSavingTip, setIsSavingTip] = useState(false);
   const { appointments: demoAppointments, customers: demoCustomers } = useSalonStore();
   const { isDemoMode } = useDemoMode();
 
@@ -187,6 +190,71 @@ export function CustomerServiceManagement({
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);
     loadCustomerHistory(customer);
+  };
+
+  const loadInvoiceData = async (appointmentId: string) => {
+    if (isDemoMode) {
+      setInvoiceData(null);
+      setEditableTip(0);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('appointment_id', appointmentId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading invoice:', error);
+        setInvoiceData(null);
+        setEditableTip(0);
+        return;
+      }
+
+      setInvoiceData(data);
+      setEditableTip(data?.services?.[0]?.tip || 0);
+    } catch (error) {
+      console.error('Error loading invoice data:', error);
+      setInvoiceData(null);
+      setEditableTip(0);
+    }
+  };
+
+  const handleSaveTip = async () => {
+    if (!invoiceData || isDemoMode) {
+      toast.error("Không thể cập nhật tip trong chế độ demo");
+      return;
+    }
+
+    setIsSavingTip(true);
+    try {
+      const updatedServices = invoiceData.services.map((service: any, index: number) => {
+        if (index === 0) {
+          return { ...service, tip: editableTip };
+        }
+        return service;
+      });
+
+      const { error } = await supabase
+        .from('invoices')
+        .update({ 
+          services: updatedServices,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invoiceData.id);
+
+      if (error) throw error;
+
+      toast.success("Đã cập nhật tip thành công");
+      setInvoiceData({ ...invoiceData, services: updatedServices });
+    } catch (error) {
+      console.error('Error updating tip:', error);
+      toast.error("Không thể cập nhật tip");
+    } finally {
+      setIsSavingTip(false);
+    }
   };
 
   const handlePrintInvoice = (appointment: HistoryAppointment) => {
@@ -421,7 +489,10 @@ export function CustomerServiceManagement({
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => setSelectedInvoice(appointment)}
+                                onClick={() => {
+                                  setSelectedInvoice(appointment);
+                                  loadInvoiceData(appointment.id);
+                                }}
                                 className="h-7 w-7 p-0"
                               >
                                 <Eye className="w-4 h-4" />
@@ -524,13 +595,22 @@ export function CustomerServiceManagement({
                     <span className="text-muted-foreground">VAT (8%):</span>
                     <span>{Math.round(selectedInvoice.price * 0.08).toLocaleString('vi-VN')}đ</span>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm items-center">
                     <span className="text-muted-foreground">Tip:</span>
-                    <span>0đ</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        value={editableTip}
+                        onChange={(e) => setEditableTip(Number(e.target.value))}
+                        className="w-28 h-7 text-right"
+                        min="0"
+                      />
+                      <span>đ</span>
+                    </div>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
-                    <span>{Math.round(selectedInvoice.price * 1.08).toLocaleString('vi-VN')}đ</span>
+                    <span>{(Math.round(selectedInvoice.price * 1.08) + editableTip).toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
               </div>
@@ -552,6 +632,16 @@ export function CustomerServiceManagement({
                   <Printer className="w-4 h-4 mr-2" />
                   In hóa đơn
                 </Button>
+                {!isDemoMode && invoiceData && (
+                  <Button
+                    onClick={handleSaveTip}
+                    disabled={isSavingTip}
+                    className="flex-1"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {isSavingTip ? "Đang lưu..." : "Lưu tip"}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setSelectedInvoice(null)}
