@@ -49,7 +49,7 @@ export function CustomerServiceManagement({
   const [loading, setLoading] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<HistoryAppointment | null>(null);
   const [invoiceData, setInvoiceData] = useState<any>(null);
-  const [editableTip, setEditableTip] = useState(0);
+  const [staffTips, setStaffTips] = useState<{ [key: string]: number }>({});
   const [isSavingTip, setIsSavingTip] = useState(false);
   const { appointments: demoAppointments, customers: demoCustomers } = useSalonStore();
   const { isDemoMode } = useDemoMode();
@@ -195,7 +195,7 @@ export function CustomerServiceManagement({
   const loadInvoiceData = async (appointmentId: string) => {
     if (isDemoMode) {
       setInvoiceData(null);
-      setEditableTip(0);
+      setStaffTips({});
       return;
     }
 
@@ -209,16 +209,22 @@ export function CustomerServiceManagement({
       if (error) {
         console.error('Error loading invoice:', error);
         setInvoiceData(null);
-        setEditableTip(0);
+        setStaffTips({});
         return;
       }
 
       setInvoiceData(data);
-      setEditableTip(data?.services?.[0]?.tip || 0);
+      
+      // Load tip distribution from invoice services
+      if (data?.services?.[0]?.staffTips) {
+        setStaffTips(data.services[0].staffTips);
+      } else {
+        setStaffTips({});
+      }
     } catch (error) {
       console.error('Error loading invoice data:', error);
       setInvoiceData(null);
-      setEditableTip(0);
+      setStaffTips({});
     }
   };
 
@@ -230,9 +236,11 @@ export function CustomerServiceManagement({
 
     setIsSavingTip(true);
     try {
+      const totalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
+      
       const updatedServices = invoiceData.services.map((service: any, index: number) => {
         if (index === 0) {
-          return { ...service, tip: editableTip };
+          return { ...service, tip: totalTip, staffTips };
         }
         return service;
       });
@@ -579,6 +587,52 @@ export function CustomerServiceManagement({
                 </div>
               </div>
 
+              {/* Staff Tips Section */}
+              {invoiceData && (
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
+                  <div className="space-y-3">
+                    {invoiceData.services?.map((service: any, idx: number) => {
+                      if (!service.staff || service.staff.length === 0) return null;
+                      
+                      return service.staff.map((staffMember: any) => {
+                        const staffKey = `${staffMember.name}-${idx}`;
+                        return (
+                          <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                            <div>
+                              <div className="font-medium">{staffMember.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Dịch vụ: {service.name}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={staffTips[staffKey] || 0}
+                                onChange={(e) => {
+                                  const newValue = Number(e.target.value);
+                                  setStaffTips(prev => ({
+                                    ...prev,
+                                    [staffKey]: newValue >= 0 ? newValue : 0
+                                  }));
+                                }}
+                                className="w-28 h-8 text-right"
+                                min="0"
+                              />
+                              <span className="text-sm">đ</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })}
+                    <div className="flex justify-between text-sm font-medium pt-2 border-t">
+                      <span>Tổng tip:</span>
+                      <span>{Object.values(staffTips).reduce((sum, tip) => sum + tip, 0).toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Payment Summary */}
               <div className="border-t pt-4">
                 <h3 className="font-semibold mb-3">Tổng kết thanh toán</h3>
@@ -595,22 +649,13 @@ export function CustomerServiceManagement({
                     <span className="text-muted-foreground">VAT (8%):</span>
                     <span>{Math.round(selectedInvoice.price * 0.08).toLocaleString('vi-VN')}đ</span>
                   </div>
-                  <div className="flex justify-between text-sm items-center">
+                  <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tip:</span>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={editableTip}
-                        onChange={(e) => setEditableTip(Number(e.target.value))}
-                        className="w-28 h-7 text-right"
-                        min="0"
-                      />
-                      <span>đ</span>
-                    </div>
+                    <span>{Object.values(staffTips).reduce((sum, tip) => sum + tip, 0).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
-                    <span>{(Math.round(selectedInvoice.price * 1.08) + editableTip).toLocaleString('vi-VN')}đ</span>
+                    <span>{(Math.round(selectedInvoice.price * 1.08) + Object.values(staffTips).reduce((sum, tip) => sum + tip, 0)).toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
               </div>
