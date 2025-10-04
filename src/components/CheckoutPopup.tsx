@@ -240,13 +240,14 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         }
       }, 3000);
     } else {
+      // Close the payment dialog first
+      setSelectedPayment(null);
+      setShowCustomInput(null);
+      setCustomAmountInput('');
+      
       if (newRemaining <= 0) {
         setPaymentCompleted(true);
         setCurrentStep('receipt');
-      } else {
-        setSelectedPayment(null);
-        setShowCustomInput(null);
-        setCustomAmountInput('');
       }
     }
   };
