@@ -26,17 +26,18 @@ interface Customer {
   lastVisit?: string;
 }
 
-interface HistoryAppointment {
+interface HistoryInvoice {
   id: string;
-  appointment_date: string;
-  appointment_time: string;
-  service_name: string;
-  employee_name: string;
-  status: string;
-  duration_minutes: number;
-  price: number;
+  invoice_number: string;
+  created_at: string;
+  total: number;
+  subtotal: number;
+  discount: number;
+  payment_status: string;
+  payment_method: string;
+  services: any[];
   notes?: string;
-  tip?: number;
+  appointment_id?: string;
 }
 
 export function CustomerServiceManagement({
@@ -46,9 +47,9 @@ export function CustomerServiceManagement({
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [historyAppointments, setHistoryAppointments] = useState<HistoryAppointment[]>([]);
+  const [historyInvoices, setHistoryInvoices] = useState<HistoryInvoice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<HistoryAppointment | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<HistoryInvoice | null>(null);
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [staffTips, setStaffTips] = useState<{ [key: string]: number }>({});
   const [isSavingTip, setIsSavingTip] = useState(false);
@@ -138,72 +139,73 @@ export function CustomerServiceManagement({
     setLoading(true);
     try {
       if (isDemoMode) {
-        const history = demoAppointments
+        // Group demo appointments by invoice
+        const invoiceMap = new Map<string, HistoryInvoice>();
+        
+        demoAppointments
           .filter(apt => 
             apt.customer.toLowerCase() === customer.name.toLowerCase() ||
             (customer.phone && apt.phone === customer.phone)
           )
-          .map(apt => {
-            // Get tip from invoiceData if available
+          .forEach(apt => {
             const invoiceData = (apt as any).invoiceData;
-            const tip = invoiceData?.services?.[0]?.tip || 0;
+            if (!invoiceData) return;
             
-            return {
-              id: apt.id.toString(),
-              appointment_date: apt.date,
-              appointment_time: apt.time,
-              service_name: apt.service,
-              employee_name: apt.staff || "Chưa phân công",
-              status: apt.status,
-              duration_minutes: parseInt(apt.duration.match(/(\d+)/)?.[1] || "60"),
-              price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
-              notes: apt.notes,
-              tip
-            };
-          })
-          .sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
+            const invoiceId = apt.id.toString();
+            if (!invoiceMap.has(invoiceId)) {
+              const services = invoiceData.services || [{
+                name: apt.service,
+                price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
+                staff: apt.staff ? [{ name: apt.staff }] : [],
+                tip: invoiceData.tip || 0,
+                staffTips: invoiceData.staffTips || {}
+              }];
+              
+              const subtotal = services.reduce((sum: number, s: any) => sum + (s.price || 0), 0);
+              const totalTip = services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+              
+              invoiceMap.set(invoiceId, {
+                id: invoiceId,
+                invoice_number: `#${invoiceId.slice(0, 3)}`,
+                created_at: `${apt.date}T${apt.time}:00`,
+                total: Math.round(subtotal * 1.08) + totalTip,
+                subtotal,
+                discount: 0,
+                payment_status: apt.status === 'completed' ? 'paid' : 'pending',
+                payment_method: 'cash',
+                services,
+                notes: apt.notes,
+                appointment_id: invoiceId
+              });
+            }
+          });
         
-        setHistoryAppointments(history);
+        const invoices = Array.from(invoiceMap.values())
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        setHistoryInvoices(invoices);
       } else {
+        // Load invoices from Supabase
         let query = supabase
-          .from('appointments')
+          .from('invoices')
           .select('*')
-          .order('appointment_date', { ascending: false })
-          .order('appointment_time', { ascending: false });
+          .order('created_at', { ascending: false });
 
         if (customer.phone) {
-          query = query.or(`customer_name.ilike.%${customer.name}%,customer_phone.eq.${customer.phone}`);
+          query = query.or(`customer_name.ilike.%${customer.name}%,customer_id.in.(select id from customers where phone.eq.${customer.phone})`);
         } else {
           query = query.ilike('customer_name', `%${customer.name}%`);
         }
 
-        const { data: appointmentsData, error } = await query;
+        const { data: invoicesData, error } = await query;
 
         if (error) {
-          console.error('Error loading customer history:', error);
-          toast.error("Không thể tải lịch sử khách hàng");
+          console.error('Error loading customer invoices:', error);
+          toast.error("Không thể tải lịch sử hóa đơn");
           return;
         }
 
-        // Load invoice data for each appointment to get tip information
-        const appointmentsWithTips = await Promise.all(
-          (appointmentsData || []).map(async (apt) => {
-            const { data: invoiceData } = await supabase
-              .from('invoices')
-              .select('services')
-              .eq('appointment_id', apt.id)
-              .maybeSingle();
-            
-            const tip = invoiceData?.services?.[0]?.tip || 0;
-            
-            return {
-              ...apt,
-              tip
-            };
-          })
-        );
-
-        setHistoryAppointments(appointmentsWithTips);
+        setHistoryInvoices((invoicesData || []) as HistoryInvoice[]);
       }
     } catch (error) {
       console.error('Error loading customer history:', error);
@@ -218,17 +220,16 @@ export function CustomerServiceManagement({
     loadCustomerHistory(customer);
   };
 
-  const loadInvoiceData = async (appointmentId: string) => {
+  const loadInvoiceData = async (invoiceId: string) => {
     if (isDemoMode) {
-      // In demo mode, find the appointment and use its invoiceData
-      const appointment = demoAppointments.find(apt => apt.id.toString() === appointmentId);
-      if (appointment && (appointment as any).invoiceData) {
-        const invoiceData = (appointment as any).invoiceData;
-        setInvoiceData(invoiceData);
+      // In demo mode, find the invoice from historyInvoices
+      const invoice = historyInvoices.find(inv => inv.id === invoiceId);
+      if (invoice) {
+        setInvoiceData(invoice);
         
         // Load tip distribution from invoice services
-        if (invoiceData?.services?.[0]?.staffTips) {
-          setStaffTips(invoiceData.services[0].staffTips);
+        if (invoice.services?.[0]?.staffTips) {
+          setStaffTips(invoice.services[0].staffTips);
         } else {
           setStaffTips({});
         }
@@ -243,7 +244,7 @@ export function CustomerServiceManagement({
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
-        .eq('appointment_id', appointmentId)
+        .eq('id', invoiceId)
         .maybeSingle();
 
       if (error) {
@@ -305,26 +306,35 @@ export function CustomerServiceManagement({
     }
   };
 
-  const handlePrintInvoice = (appointment: HistoryAppointment) => {
-    // Create a printable invoice
+  const handlePrintInvoice = (invoice: HistoryInvoice) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       toast.error("Không thể mở cửa sổ in");
       return;
     }
 
+    const totalTip = invoice.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+    const servicesHTML = invoice.services.map((service: any) => `
+      <tr>
+        <td>${service.name}</td>
+        <td>${service.staff?.map((s: any) => s.name).join(', ') || 'N/A'}</td>
+        <td style="text-align: right;">${(service.price || 0).toLocaleString('vi-VN')}đ</td>
+      </tr>
+    `).join('');
+
     const invoiceHTML = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Hóa đơn - ${appointment.id}</title>
+        <title>Hóa đơn - ${invoice.invoice_number}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
           .header { text-align: center; margin-bottom: 30px; }
           .invoice-details { margin-bottom: 20px; }
           .invoice-details table { width: 100%; border-collapse: collapse; }
-          .invoice-details td { padding: 8px; border-bottom: 1px solid #ddd; }
+          .invoice-details td, .invoice-details th { padding: 8px; border-bottom: 1px solid #ddd; }
+          .invoice-details th { text-align: left; background-color: #f5f5f5; }
           .total { font-size: 18px; font-weight: bold; margin-top: 20px; text-align: right; }
           @media print {
             body { padding: 0; }
@@ -334,7 +344,7 @@ export function CustomerServiceManagement({
       <body>
         <div class="header">
           <h1>HÓA ĐƠN DỊCH VỤ</h1>
-          <p>Mã hóa đơn: ${appointment.id}</p>
+          <p>Mã hóa đơn: ${invoice.invoice_number}</p>
         </div>
         
         <div class="invoice-details">
@@ -349,44 +359,53 @@ export function CustomerServiceManagement({
             </tr>
             <tr>
               <td><strong>Ngày:</strong></td>
-              <td>${format(new Date(appointment.appointment_date), "dd/MM/yyyy", { locale: vi })}</td>
+              <td>${format(new Date(invoice.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}</td>
             </tr>
-            <tr>
-              <td><strong>Giờ:</strong></td>
-              <td>${appointment.appointment_time}</td>
-            </tr>
-            <tr>
-              <td><strong>Dịch vụ:</strong></td>
-              <td>${appointment.service_name}</td>
-            </tr>
-            <tr>
-              <td><strong>Thời gian:</strong></td>
-              <td>${appointment.duration_minutes} phút</td>
-            </tr>
-            <tr>
-              <td><strong>Nhân viên:</strong></td>
-              <td>${appointment.employee_name}</td>
-            </tr>
-            ${appointment.notes ? `
-            <tr>
-              <td><strong>Ghi chú:</strong></td>
-              <td>${appointment.notes}</td>
-            </tr>
-            ` : ''}
           </table>
-        </div>
-        
-        <div class="total">
-          Tổng tiền: ${appointment.price.toLocaleString('vi-VN')}đ
+
+          <h3 style="margin-top: 20px;">Dịch vụ:</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Dịch vụ</th>
+                <th>Nhân viên</th>
+                <th style="text-align: right;">Giá</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${servicesHTML}
+            </tbody>
+          </table>
+
+          <div style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #333;">
+            <table style="width: 100%;">
+              <tr>
+                <td style="text-align: right; padding: 4px;"><strong>Subtotal:</strong></td>
+                <td style="text-align: right; padding: 4px; width: 150px;">${invoice.subtotal.toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr>
+                <td style="text-align: right; padding: 4px;"><strong>Discount:</strong></td>
+                <td style="text-align: right; padding: 4px;">${invoice.discount.toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr>
+                <td style="text-align: right; padding: 4px;"><strong>VAT (8%):</strong></td>
+                <td style="text-align: right; padding: 4px;">${Math.round(invoice.subtotal * 0.08).toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr>
+                <td style="text-align: right; padding: 4px;"><strong>Tip:</strong></td>
+                <td style="text-align: right; padding: 4px;">${totalTip.toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr style="font-size: 20px;">
+                <td style="text-align: right; padding: 8px; border-top: 2px solid #333;"><strong>Tổng cộng:</strong></td>
+                <td style="text-align: right; padding: 8px; border-top: 2px solid #333;"><strong>${invoice.total.toLocaleString('vi-VN')}đ</strong></td>
+              </tr>
+            </table>
+          </div>
         </div>
         
         <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() {
-              window.close();
-            };
-          };
+          window.print();
+          window.onafterprint = function() { window.close(); }
         </script>
       </body>
       </html>
@@ -394,7 +413,6 @@ export function CustomerServiceManagement({
 
     printWindow.document.write(invoiceHTML);
     printWindow.document.close();
-    toast.success("Đang in hóa đơn...");
   };
 
   const getStatusBadge = (status: string) => {
@@ -511,72 +529,74 @@ export function CustomerServiceManagement({
 
                 {/* History List */}
                 <div>
-                  <h4 className="font-semibold mb-3">Lịch sử dịch vụ ({historyAppointments.length})</h4>
+                  <h4 className="font-semibold mb-3">Lịch sử hóa đơn ({historyInvoices.length})</h4>
                   {loading ? (
                     <div className="text-center py-8 text-gray-500">Đang tải...</div>
-                  ) : historyAppointments.length === 0 ? (
+                  ) : historyInvoices.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                      Chưa có lịch sử
+                      Chưa có hóa đơn
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[calc(90vh-400px)] overflow-y-auto">
-                      {historyAppointments.map((appointment) => (
-                        <div 
-                          key={appointment.id} 
-                          className="border rounded-lg p-3 hover:bg-gray-50"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{appointment.service_name}</span>
-                              {getStatusBadge(appointment.status)}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-right">
-                                <div className="font-medium text-green-600 text-sm">
-                                  {appointment.price.toLocaleString('vi-VN')}đ
-                                </div>
-                                {appointment.tip && appointment.tip > 0 && (
-                                  <div className="text-xs text-muted-foreground">
-                                    Tip: {appointment.tip.toLocaleString('vi-VN')}đ
-                                  </div>
-                                )}
+                      {historyInvoices.map((invoice) => {
+                        const totalTip = invoice.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+                        const serviceCount = invoice.services.length;
+                        const serviceNames = invoice.services.map((s: any) => s.name).join(', ');
+                        
+                        return (
+                          <div 
+                            key={invoice.id} 
+                            className="border rounded-lg p-3 hover:bg-gray-50"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm">{invoice.invoice_number}</span>
+                                <Badge variant={invoice.payment_status === 'paid' ? 'default' : 'secondary'}>
+                                  {invoice.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                                </Badge>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setSelectedInvoice(appointment);
-                                  loadInvoiceData(appointment.id);
-                                }}
-                                className="h-7 w-7 p-0"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <div className="font-medium text-green-600 text-sm">
+                                    {invoice.total.toLocaleString('vi-VN')}đ
+                                  </div>
+                                  {totalTip > 0 && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Tip: {totalTip.toLocaleString('vi-VN')}đ
+                                    </div>
+                                  )}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedInvoice(invoice);
+                                    loadInvoiceData(invoice.id);
+                                  }}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                            <div className="flex items-center gap-1">
+                            
+                            <div className="text-xs text-gray-600 mb-1">
+                              {serviceCount} dịch vụ: {serviceNames}
+                            </div>
+                            
+                            <div className="flex items-center gap-1 text-xs text-gray-600">
                               <Calendar className="w-3 h-3" />
-                              {format(new Date(appointment.appointment_date), "dd/MM/yyyy")}
+                              {format(new Date(invoice.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {appointment.appointment_time}
-                            </div>
-                            <div className="flex items-center gap-1 col-span-2">
-                              <User className="w-3 h-3" />
-                              {appointment.employee_name}
-                            </div>
+
+                            {invoice.notes && (
+                              <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
+                                {invoice.notes}
+                              </div>
+                            )}
                           </div>
-                          
-                          {appointment.notes && (
-                            <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-100 rounded">
-                              {appointment.notes}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -603,34 +623,35 @@ export function CustomerServiceManagement({
             <div className="space-y-6">
               {/* Customer Info */}
               <div className="text-center pb-4 border-b">
-                <div className="text-3xl font-bold mb-2">#{selectedInvoice.id.slice(0, 8)}</div>
+                <div className="text-3xl font-bold mb-2">{selectedInvoice.invoice_number}</div>
                 <div className="text-xl font-semibold mb-1">{selectedCustomer?.name}</div>
                 {selectedCustomer?.phone && (
                   <div className="text-sm text-muted-foreground">{selectedCustomer.phone}</div>
                 )}
                 <div className="text-sm text-muted-foreground mt-1">
-                  {format(new Date(selectedInvoice.appointment_date), "dd/MM/yyyy HH:mm", { locale: vi })}
+                  {format(new Date(selectedInvoice.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
                 </div>
               </div>
 
               {/* Services Section */}
               <div>
                 <h3 className="font-semibold mb-3">Dịch vụ đã sử dụng</h3>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{selectedInvoice.service_name}</div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Nhân viên: {selectedInvoice.employee_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Thời gian: {selectedInvoice.duration_minutes} phút
+                <div className="space-y-2">
+                  {selectedInvoice.services.map((service: any, idx: number) => (
+                    <div key={idx} className="bg-muted/50 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{service.name}</div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            Nhân viên: {service.staff?.map((s: any) => s.name).join(', ') || 'Chưa phân công'}
+                          </div>
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {(service.price || 0).toLocaleString('vi-VN')}đ
+                        </div>
                       </div>
                     </div>
-                    <div className="text-lg font-semibold">
-                      {selectedInvoice.price.toLocaleString('vi-VN')}đ
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -686,15 +707,15 @@ export function CustomerServiceManagement({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal:</span>
-                    <span>{selectedInvoice.price.toLocaleString('vi-VN')}đ</span>
+                    <span>{selectedInvoice.subtotal.toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Discount:</span>
-                    <span>0đ</span>
+                    <span>{selectedInvoice.discount.toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">VAT (8%):</span>
-                    <span>{Math.round(selectedInvoice.price * 0.08).toLocaleString('vi-VN')}đ</span>
+                    <span>{Math.round(selectedInvoice.subtotal * 0.08).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tip:</span>
@@ -702,7 +723,7 @@ export function CustomerServiceManagement({
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
-                    <span>{(Math.round(selectedInvoice.price * 1.08) + Object.values(staffTips).reduce((sum, tip) => sum + tip, 0)).toLocaleString('vi-VN')}đ</span>
+                    <span>{selectedInvoice.total.toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
               </div>
