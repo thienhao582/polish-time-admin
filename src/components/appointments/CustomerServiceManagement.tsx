@@ -36,6 +36,7 @@ interface HistoryAppointment {
   duration_minutes: number;
   price: number;
   notes?: string;
+  tip?: number;
 }
 
 export function CustomerServiceManagement({
@@ -142,17 +143,24 @@ export function CustomerServiceManagement({
             apt.customer.toLowerCase() === customer.name.toLowerCase() ||
             (customer.phone && apt.phone === customer.phone)
           )
-          .map(apt => ({
-            id: apt.id.toString(),
-            appointment_date: apt.date,
-            appointment_time: apt.time,
-            service_name: apt.service,
-            employee_name: apt.staff || "Chưa phân công",
-            status: apt.status,
-            duration_minutes: parseInt(apt.duration.match(/(\d+)/)?.[1] || "60"),
-            price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
-            notes: apt.notes
-          }))
+          .map(apt => {
+            // Get tip from invoiceData if available
+            const invoiceData = (apt as any).invoiceData;
+            const tip = invoiceData?.services?.[0]?.tip || 0;
+            
+            return {
+              id: apt.id.toString(),
+              appointment_date: apt.date,
+              appointment_time: apt.time,
+              service_name: apt.service,
+              employee_name: apt.staff || "Chưa phân công",
+              status: apt.status,
+              duration_minutes: parseInt(apt.duration.match(/(\d+)/)?.[1] || "60"),
+              price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
+              notes: apt.notes,
+              tip
+            };
+          })
           .sort((a, b) => new Date(b.appointment_date).getTime() - new Date(a.appointment_date).getTime());
         
         setHistoryAppointments(history);
@@ -169,7 +177,7 @@ export function CustomerServiceManagement({
           query = query.ilike('customer_name', `%${customer.name}%`);
         }
 
-        const { data, error } = await query;
+        const { data: appointmentsData, error } = await query;
 
         if (error) {
           console.error('Error loading customer history:', error);
@@ -177,7 +185,25 @@ export function CustomerServiceManagement({
           return;
         }
 
-        setHistoryAppointments(data || []);
+        // Load invoice data for each appointment to get tip information
+        const appointmentsWithTips = await Promise.all(
+          (appointmentsData || []).map(async (apt) => {
+            const { data: invoiceData } = await supabase
+              .from('invoices')
+              .select('services')
+              .eq('appointment_id', apt.id)
+              .maybeSingle();
+            
+            const tip = invoiceData?.services?.[0]?.tip || 0;
+            
+            return {
+              ...apt,
+              tip
+            };
+          })
+        );
+
+        setHistoryAppointments(appointmentsWithTips);
       }
     } catch (error) {
       console.error('Error loading customer history:', error);
@@ -491,9 +517,16 @@ export function CustomerServiceManagement({
                               {getStatusBadge(appointment.status)}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-green-600 text-sm">
-                                {appointment.price.toLocaleString('vi-VN')}đ
-                              </span>
+                              <div className="text-right">
+                                <div className="font-medium text-green-600 text-sm">
+                                  {appointment.price.toLocaleString('vi-VN')}đ
+                                </div>
+                                {appointment.tip && appointment.tip > 0 && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Tip: {appointment.tip.toLocaleString('vi-VN')}đ
+                                  </div>
+                                )}
+                              </div>
                               <Button
                                 size="sm"
                                 variant="ghost"
