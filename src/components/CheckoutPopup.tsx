@@ -99,7 +99,22 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setDisabledMethods(new Set());
       setCustomAmountInput('');
       setShowCustomInput(null);
-      setSelectedServiceItems([]);
+      
+      // Initialize selected services from checkInItem
+      if (checkInItem.services && checkInItem.services.length > 0) {
+        const initialServices: ServiceStaffItem[] = checkInItem.services.map((serviceName, index) => ({
+          id: `initial-${index}`,
+          serviceId: `service-${index}`,
+          serviceName: serviceName,
+          staffIds: [],
+          staffNames: [],
+          price: 50000, // Default price
+          duration: 60, // Default duration
+        }));
+        setSelectedServiceItems(initialServices);
+      } else {
+        setSelectedServiceItems([]);
+      }
       
       // Prevent body scroll when popup is open
       document.body.style.overflow = 'hidden';
@@ -112,7 +127,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, checkInItem.services]);
 
   if (!isOpen) return null;
 
