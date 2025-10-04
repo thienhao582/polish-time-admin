@@ -64,7 +64,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [editableDiscount, setEditableDiscount] = useState(0); // percentage - default 0%
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountAmount, setDiscountAmount] = useState(0); // specific amount in VND
-  const [editableTip, setEditableTip] = useState(0); // amount - default 0
+  const [editableTip, setEditableTip] = useState(0); // default 0
+  const [tipType, setTipType] = useState<'percentage' | 'amount'>('amount');
+  const [tipAmount, setTipAmount] = useState(0); // specific amount in VND
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [disabledMethods, setDisabledMethods] = useState<Set<PaymentMethod>>(new Set());
   const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
@@ -82,7 +84,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const discount = discountType === 'percentage' 
     ? Math.floor(serviceTotal * (editableDiscount / 100))
     : discountAmount;
-  const tip = editableTip; // Direct amount, no percentage calculation
+  const tip = tipType === 'percentage'
+    ? Math.floor(serviceTotal * (editableTip / 100))
+    : tipAmount;
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
   const totalDue = subtotal - discount + tip + tax;
@@ -100,6 +104,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setDiscountType('percentage');
       setDiscountAmount(0);
       setEditableTip(0);
+      setTipType('amount');
+      setTipAmount(0);
       setPaymentRecords([]);
       setDisabledMethods(new Set());
       setCustomAmountInput('');
@@ -469,14 +475,43 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                   <div className="flex items-center gap-2">
                     <span>Tip:</span>
                     <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        value={editableTip}
-                        onChange={(e) => setEditableTip(Number(e.target.value) || 0)}
-                        className="w-20 h-6 text-xs text-center"
-                        min="0"
-                        placeholder="₫"
-                      />
+                      {tipType === 'percentage' ? (
+                        <>
+                          <Input
+                            type="number"
+                            value={editableTip}
+                            onChange={(e) => setEditableTip(Number(e.target.value) || 0)}
+                            className="w-12 h-6 text-xs text-center"
+                            min="0"
+                            max="100"
+                          />
+                          <span className="text-xs">%</span>
+                        </>
+                      ) : (
+                        <Input
+                          type="number"
+                          value={tipAmount}
+                          onChange={(e) => setTipAmount(Number(e.target.value) || 0)}
+                          className="w-20 h-6 text-xs text-center"
+                          min="0"
+                          placeholder="₫"
+                        />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setTipType(tipType === 'percentage' ? 'amount' : 'percentage');
+                          if (tipType === 'percentage') {
+                            setTipAmount(tip);
+                          } else {
+                            setEditableTip(0);
+                          }
+                        }}
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                   <span>{tip.toLocaleString('vi-VN')}₫</span>
