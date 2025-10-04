@@ -373,12 +373,27 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
               ))
             ) : checkInItem.services && checkInItem.services.length > 0 ? (
-              checkInItem.services.map((service, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-background rounded-lg">
-                  <span className="text-sm font-medium">{service}</span>
-                  <span className="text-sm font-semibold">50,000₫</span>
-                </div>
-              ))
+              checkInItem.services.map((service, index) => {
+                // Find staff for this service
+                const staffForService = checkInItem.staffAssignments?.filter(
+                  assignment => assignment.serviceName === service
+                ) || [];
+                
+                return (
+                  <div key={index} className="flex justify-between items-start p-3 bg-background rounded-lg">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{service}</div>
+                      {staffForService.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          NV: {staffForService.map(s => s.staffName).join(", ")}
+                        </div>
+                      )}
+                      <div className="text-xs text-muted-foreground">60 phút</div>
+                    </div>
+                    <span className="text-sm font-semibold">50,000₫</span>
+                  </div>
+                );
+              })
             ) : (
               <p className="text-sm text-muted-foreground">Chưa chọn dịch vụ</p>
             )}
