@@ -393,7 +393,8 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         status = Math.random() > 0.9 ? "cancelled" : "confirmed";
       }
       
-      // Create staff salary data
+      // Create staff salary data with staff tips for completed appointments
+      const totalTip = status === "completed" ? Math.floor(Math.random() * 100000) + 20000 : 0; // 20k-120k tip for completed
       const staffSalaryData = [{
         staffId: employee.id,
         staffName: employee.name,
@@ -415,7 +416,7 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         assignmentType = 'anyone';
       }
 
-      appointments.push({
+      const appointmentData: Appointment = {
         id: currentId++,
         date,
         time,
@@ -432,8 +433,41 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         notes: Math.random() < 0.2 ? "Khách hàng VIP" : undefined,
         staffSalaryData,
         assignmentType
-      });
-      
+      };
+
+      // Add invoice data for completed appointments
+      if (status === "completed" && appointmentData.id) {
+        (appointmentData as any).invoiceData = {
+          id: `invoice-${appointmentData.id}`,
+          invoice_number: `INV-${String(appointmentData.id).padStart(6, '0')}`,
+          customer_name: customer.name,
+          customer_id: customerIndex.toString(),
+          appointment_id: appointmentData.id.toString(),
+          services: [{
+            name: serviceNames[serviceIndex],
+            price: servicePrices[serviceIndex],
+            quantity: 1,
+            staffAssignments: [{
+              staffId: employee.id,
+              staffName: employee.name,
+              revenuePercentage: 100
+            }],
+            tip: totalTip,
+            staffTips: {
+              [`${employee.id}-${employee.name}`]: totalTip
+            }
+          }],
+          subtotal: servicePrices[serviceIndex],
+          discount: 0,
+          total: servicePrices[serviceIndex] + totalTip,
+          payment_method: Math.random() > 0.5 ? 'cash' : 'card',
+          payment_status: 'paid',
+          created_at: new Date(year, month - 1, day).toISOString(),
+          updated_at: new Date(year, month - 1, day).toISOString()
+        };
+      }
+
+      appointments.push(appointmentData);
       appointmentsCreated++;
     }
   }
