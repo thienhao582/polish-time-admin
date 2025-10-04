@@ -98,10 +98,10 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Dịch vụ</label>
+          <label className="block text-sm font-medium mb-2">Chỉnh sửa dịch vụ đã sử dụng</label>
           <Select value={currentServiceId} onValueChange={setCurrentServiceId}>
             <SelectTrigger>
-              <SelectValue placeholder="Chọn dịch vụ" />
+              <SelectValue placeholder="Thêm hoặc chỉnh sửa dịch vụ" />
             </SelectTrigger>
             <SelectContent className="bg-background z-[9999] max-h-[300px]">
               {services.map((service) => (
@@ -165,7 +165,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
       {selectedItems.length > 0 && (
         <Card>
           <CardContent className="p-4">
-            <h4 className="font-medium mb-3">Dịch vụ đã chọn:</h4>
+            <h4 className="font-medium mb-3">Dịch vụ đã sử dụng:</h4>
             <div className="space-y-2">
               {selectedItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
