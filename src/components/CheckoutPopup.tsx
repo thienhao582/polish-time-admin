@@ -8,6 +8,23 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
+import { ServiceStaffSelector } from "@/components/appointments/ServiceStaffSelector";
+
+interface ServiceStaffItem {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  staffIds: string[];
+  staffNames: string[];
+  price: number;
+  duration: number;
+  staffSalaryInfo?: Array<{
+    staffId: string;
+    staffName: string;
+    commissionRate?: number;
+    fixedAmount?: number;
+  }>;
+}
 
 interface CheckoutPopupProps {
   isOpen: boolean;
@@ -47,12 +64,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [disabledMethods, setDisabledMethods] = useState<Set<PaymentMethod>>(new Set());
   const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
   const [showCustomInput, setShowCustomInput] = useState<PaymentMethod | null>(null);
+  const [selectedServiceItems, setSelectedServiceItems] = useState<ServiceStaffItem[]>([]);
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
   
-  // Calculate pricing
-  const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+  // Calculate pricing - use selectedServiceItems if available, otherwise fall back to checkInItem
+  const serviceTotal = selectedServiceItems.length > 0
+    ? selectedServiceItems.reduce((sum, item) => sum + item.price, 0)
+    : (checkInItem.services?.length ? checkInItem.services.length * 50000 : 0);
+  
   const discount = discountType === 'percentage' 
     ? Math.floor(serviceTotal * (editableDiscount / 100))
     : discountAmount;
@@ -78,6 +99,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setDisabledMethods(new Set());
       setCustomAmountInput('');
       setShowCustomInput(null);
+      setSelectedServiceItems([]);
       
       // Prevent body scroll when popup is open
       document.body.style.overflow = 'hidden';
@@ -261,7 +283,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   };
 
   const canGoNext = () => {
-    return currentStep === 'overview';
+    if (currentStep === 'overview') {
+      return selectedServiceItems.length > 0;
+    }
+    return false;
   };
 
   const canGoBack = () => {
@@ -305,7 +330,22 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         <div>
           <h4 className="text-lg font-semibold mb-3">Dịch vụ đã sử dụng</h4>
           <div className="space-y-2">
-            {checkInItem.services && checkInItem.services.length > 0 ? (
+            {selectedServiceItems.length > 0 ? (
+              selectedServiceItems.map((item, index) => (
+                <div key={index} className="flex justify-between items-start p-3 bg-background rounded-lg">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{item.serviceName}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      NV: {item.staffNames.join(", ")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {item.duration} phút
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold">{item.price.toLocaleString('vi-VN')}₫</span>
+                </div>
+              ))
+            ) : checkInItem.services && checkInItem.services.length > 0 ? (
               checkInItem.services.map((service, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-background rounded-lg">
                   <span className="text-sm font-medium">{service}</span>
@@ -313,7 +353,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">Không có dịch vụ</p>
+              <p className="text-sm text-muted-foreground">Chưa chọn dịch vụ</p>
             )}
           </div>
         </div>
@@ -452,9 +492,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-semibold mb-4">Xác nhận thông tin hóa đơn</h3>
+              <h3 className="text-2xl font-semibold mb-4">Chọn dịch vụ và nhân viên</h3>
               <p className="text-muted-foreground">
-                Vui lòng kiểm tra lại thông tin trước khi tiến hành thanh toán
+                Vui lòng chọn chính xác dịch vụ khách hàng đã sử dụng và nhân viên thực hiện
               </p>
             </div>
             
@@ -488,6 +528,15 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <p className="text-sm text-muted-foreground">{checkInItem.notes}</p>
               </Card>
             )}
+
+            {/* Service and Staff Selection */}
+            <Card className="p-6">
+              <h4 className="font-semibold mb-4">Chọn dịch vụ và nhân viên</h4>
+              <ServiceStaffSelector
+                selectedItems={selectedServiceItems}
+                onItemsChange={setSelectedServiceItems}
+              />
+            </Card>
           </div>
         );
 
