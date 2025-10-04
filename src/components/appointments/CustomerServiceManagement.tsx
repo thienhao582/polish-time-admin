@@ -153,13 +153,28 @@ export function CustomerServiceManagement({
             
             const invoiceId = apt.id.toString();
             if (!invoiceMap.has(invoiceId)) {
-              const services = invoiceData.services || [{
-                name: apt.service,
-                price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
-                staff: apt.staff ? [{ name: apt.staff }] : [],
-                tip: invoiceData.tip || 0,
-                staffTips: invoiceData.staffTips || {}
-              }];
+              // Get staff name from apt.staff or apt.employee_name
+              const staffName = apt.staff || (apt as any).employee_name;
+              
+              // If invoiceData.services exists, enrich it with staff info
+              let services;
+              if (invoiceData.services && Array.isArray(invoiceData.services)) {
+                services = invoiceData.services.map((service: any) => ({
+                  ...service,
+                  staff: service.staff && service.staff.length > 0 
+                    ? service.staff 
+                    : (staffName ? [{ name: staffName }] : [])
+                }));
+              } else {
+                // Create service from appointment data
+                services = [{
+                  name: apt.service,
+                  price: parseFloat(apt.price.replace(/[^\d]/g, '')) || 0,
+                  staff: staffName ? [{ name: staffName }] : [],
+                  tip: invoiceData.tip || 0,
+                  staffTips: invoiceData.staffTips || {}
+                }];
+              }
               
               const subtotal = services.reduce((sum: number, s: any) => sum + (s.price || 0), 0);
               const totalTip = services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
@@ -215,10 +230,12 @@ export function CustomerServiceManagement({
               .maybeSingle();
 
             if (appointment && appointment.employee_name) {
-              // Update services with staff information
+              // Update services with staff information if not already present
               const enrichedServices = (invoice.services as any[]).map((service: any) => ({
                 ...service,
-                staff: service.staff || [{ name: appointment.employee_name }]
+                staff: (service.staff && service.staff.length > 0) 
+                  ? service.staff 
+                  : [{ name: appointment.employee_name }]
               }));
               
               return {
