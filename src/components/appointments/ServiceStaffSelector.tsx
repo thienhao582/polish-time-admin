@@ -116,7 +116,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
         {currentServiceId && (
           <div>
             <label className="block text-sm font-medium mb-2">Nhân viên (chọn nhiều)</label>
-            <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-gray-50 max-h-32 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 p-3 border rounded-md bg-muted max-h-32 overflow-y-auto">
               {/* Anyone option */}
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -151,11 +151,10 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
         )}
 
         <div className="flex justify-end">
-          <Button 
+            <Button 
             type="button" 
             onClick={addServiceStaffItem}
             disabled={!currentServiceId || selectedStaffIds.length === 0}
-            className="bg-pink-600 hover:bg-pink-700"
           >
             <Plus className="w-4 h-4 mr-2" />
             Thêm
@@ -169,14 +168,14 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
             <h4 className="font-medium mb-3">Dịch vụ đã chọn:</h4>
             <div className="space-y-2">
               {selectedItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={item.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex-1">
                     <div className="font-medium">{item.serviceName}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       Nhân viên: {item.staffNames.join(", ")} • {item.duration} phút • {item.price.toLocaleString('vi-VN')}đ
                     </div>
                     {item.staffSalaryInfo && item.staffSalaryInfo.length > 1 && (
-                      <div className="text-xs text-blue-600 mt-1">
+                      <div className="text-xs text-primary mt-1">
                         Chia cho {item.staffSalaryInfo.length} nhân viên (mỗi người: {Math.round(item.price * 0.3 / item.staffSalaryInfo.length).toLocaleString('vi-VN')}đ)
                       </div>
                     )}
@@ -186,7 +185,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
                     variant="ghost"
                     size="sm"
                     onClick={() => removeItem(item.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -194,10 +193,10 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
               ))}
             </div>
             
-            <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded-lg">
+            <div className="mt-4 pt-4 border-t bg-primary/5 p-3 rounded-lg">
               <div className="flex justify-between items-center font-medium">
                 <span>Tổng thời gian: {totalDuration} phút</span>
-                <span className="text-lg text-blue-600">
+                <span className="text-lg text-primary">
                   Tổng tiền: {totalPrice.toLocaleString('vi-VN')}đ
                 </span>
               </div>
