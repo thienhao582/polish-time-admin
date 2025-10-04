@@ -730,18 +730,29 @@ export function CustomerServiceManagement({
                                     type="number"
                                     value={currentStaffTip}
                                     onChange={(e) => {
-                                      const newValue = Number(e.target.value);
+                                      const inputValue = e.target.value;
                                       
-                                      // Validate: must be >= 0
-                                      if (newValue < 0) {
+                                      // Allow empty input for editing
+                                      if (inputValue === '') {
+                                        setStaffTips(prev => ({
+                                          ...prev,
+                                          [staffKey]: 0
+                                        }));
                                         return;
                                       }
                                       
-                                      // Calculate what the new total would be
-                                      const otherTips = Object.entries(staffTips)
+                                      const newValue = Number(inputValue);
+                                      
+                                      // Validate: must be >= 0
+                                      if (newValue < 0 || isNaN(newValue)) {
+                                        return;
+                                      }
+                                      
+                                      // Calculate what the new total would be (excluding current staff's old tip)
+                                      const otherStaffTips = Object.entries(staffTips)
                                         .filter(([key]) => key !== staffKey)
                                         .reduce((sum, [, tip]) => sum + tip, 0);
-                                      const newTotal = otherTips + newValue;
+                                      const newTotal = otherStaffTips + newValue;
                                       
                                       // Validate: total cannot exceed original total tip
                                       if (newTotal > originalTotalTip) {
@@ -754,9 +765,19 @@ export function CustomerServiceManagement({
                                         [staffKey]: newValue
                                       }));
                                     }}
+                                    onBlur={(e) => {
+                                      // Ensure value is a valid number on blur
+                                      if (e.target.value === '' || isNaN(Number(e.target.value))) {
+                                        setStaffTips(prev => ({
+                                          ...prev,
+                                          [staffKey]: 0
+                                        }));
+                                      }
+                                    }}
                                     className="w-28 h-8 text-right"
                                     min="0"
                                     max={originalTotalTip}
+                                    step="0.001"
                                   />
                                   <span className="text-sm">đ</span>
                                 </div>
