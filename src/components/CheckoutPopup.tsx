@@ -722,12 +722,22 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       case 'payment':
         return (
           <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold mb-2">Chọn phương thức thanh toán</h3>
-              <p className="text-2xl font-bold text-primary">{remainingDue.toLocaleString('vi-VN')}₫</p>
+            <div className="text-center space-y-2">
+              <div className="flex justify-between items-center px-4">
+                <span className="text-sm font-medium">Tổng cộng:</span>
+                <span className="text-lg font-bold">{totalDue.toLocaleString('vi-VN')}₫</span>
+              </div>
+              <div className="flex justify-between items-center px-4">
+                <span className="text-sm font-medium">Tiền cần thanh toán:</span>
+                <span className="text-2xl font-bold text-primary">{remainingDue.toLocaleString('vi-VN')}₫</span>
+              </div>
               {totalPaid > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">Đã thanh toán: {totalPaid.toLocaleString('vi-VN')}₫</p>
+                <div className="flex justify-between items-center px-4">
+                  <span className="text-sm font-medium">Đã thanh toán:</span>
+                  <span className="text-lg font-semibold text-green-600">{totalPaid.toLocaleString('vi-VN')}₫</span>
+                </div>
               )}
+              <h3 className="text-xl font-semibold pt-4">Chọn phương thức thanh toán</h3>
             </div>
 
             <div className="grid gap-4">
@@ -775,7 +785,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('card')}
                           >
-                            {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay {remainingDue.toLocaleString('vi-VN')}₫
                           </Button>
                           <Button 
                             variant="outline" 
@@ -865,7 +875,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('cash')}
                           >
-                            {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay {remainingDue.toLocaleString('vi-VN')}₫
                           </Button>
                           <Button 
                             variant="outline" 
