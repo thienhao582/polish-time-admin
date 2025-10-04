@@ -269,11 +269,21 @@ export function CustomerServiceManagement({
       if (invoice) {
         setInvoiceData(invoice);
         
-        // Load tip distribution from invoice services
+        // Initialize staff tips with existing values or 0
         if (invoice.services?.[0]?.staffTips) {
           setStaffTips(invoice.services[0].staffTips);
         } else {
-          setStaffTips({});
+          // Initialize all staff tips to 0 if not exists
+          const initialTips: { [key: string]: number } = {};
+          const services = Array.isArray(invoice.services) ? invoice.services : [];
+          services.forEach((service: any, idx: number) => {
+            const staff = Array.isArray(service?.staff) ? service.staff : [];
+            staff.forEach((staffMember: any) => {
+              const staffKey = `${staffMember.name}-${idx}`;
+              initialTips[staffKey] = staffMember.tip || 0;
+            });
+          });
+          setStaffTips(initialTips);
         }
       } else {
         setInvoiceData(null);
@@ -298,11 +308,21 @@ export function CustomerServiceManagement({
 
       setInvoiceData(data);
       
-      // Load tip distribution from invoice services
+      // Initialize staff tips with existing values or 0
       if (data?.services?.[0]?.staffTips) {
         setStaffTips(data.services[0].staffTips);
       } else {
-        setStaffTips({});
+        // Initialize all staff tips to 0 if not exists
+        const initialTips: { [key: string]: number } = {};
+        const services = Array.isArray(data?.services) ? data.services : [];
+        services.forEach((service: any, idx: number) => {
+          const staff = Array.isArray(service?.staff) ? service.staff : [];
+          staff.forEach((staffMember: any) => {
+            const staffKey = `${staffMember.name}-${idx}`;
+            initialTips[staffKey] = staffMember.tip || 0;
+          });
+        });
+        setStaffTips(initialTips);
       }
     } catch (error) {
       console.error('Error loading invoice data:', error);
