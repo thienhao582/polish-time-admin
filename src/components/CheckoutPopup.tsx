@@ -210,7 +210,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     if (method === 'card') {
       setCurrentStep('processing');
       setIsProcessing(true);
-      // Simulate POS connection and processing
+      setSelectedPayment('card');
+      // Simulate POS connection and processing with the actual amount
       setTimeout(() => {
         setIsProcessing(false);
         if (newRemaining <= 0) {
@@ -1013,6 +1014,11 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         );
 
       case 'processing':
+        // Get the most recent card payment amount for POS simulation
+        const currentCardPayment = paymentRecords.length > 0 
+          ? paymentRecords[paymentRecords.length - 1].amount 
+          : remainingDue;
+        
         return (
           <div className="flex flex-col items-center justify-center py-12 space-y-6">
             <div className="p-6 bg-blue-100 rounded-full">
@@ -1027,8 +1033,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               <span className="text-sm">Đang xử lý thanh toán...</span>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">{totalDue.toLocaleString('vi-VN')}₫</p>
-              <p className="text-sm text-muted-foreground">Số tiền cần thanh toán</p>
+              <p className="text-2xl font-bold text-primary">{currentCardPayment.toLocaleString('vi-VN')}₫</p>
+              <p className="text-sm text-muted-foreground">Số tiền đang thanh toán</p>
             </div>
           </div>
         );
@@ -1169,12 +1175,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       title={step.label}
                     >
                       <div 
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 border-2 ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 ${
                           currentStep === step.key 
-                            ? 'bg-background text-foreground border-primary border-2' 
+                            ? 'bg-background text-foreground border-primary border-[3px]' 
                             : currentStepIndex > index 
-                            ? 'bg-green-500 text-white border-green-500' 
-                            : 'bg-background text-muted-foreground border-gray-300'
+                            ? 'bg-green-500 text-white border-2 border-green-500' 
+                            : 'bg-background text-muted-foreground border-2 border-gray-300'
                         } ${step.key === 'processing' ? 'cursor-not-allowed' : ''}`}
                       >
                         {currentStepIndex > index ? (
