@@ -220,8 +220,22 @@ export function CustomerServiceManagement({
 
   const loadInvoiceData = async (appointmentId: string) => {
     if (isDemoMode) {
-      setInvoiceData(null);
-      setStaffTips({});
+      // In demo mode, find the appointment and use its invoiceData
+      const appointment = demoAppointments.find(apt => apt.id.toString() === appointmentId);
+      if (appointment && (appointment as any).invoiceData) {
+        const invoiceData = (appointment as any).invoiceData;
+        setInvoiceData(invoiceData);
+        
+        // Load tip distribution from invoice services
+        if (invoiceData?.services?.[0]?.staffTips) {
+          setStaffTips(invoiceData.services[0].staffTips);
+        } else {
+          setStaffTips({});
+        }
+      } else {
+        setInvoiceData(null);
+        setStaffTips({});
+      }
       return;
     }
 
