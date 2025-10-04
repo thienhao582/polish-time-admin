@@ -723,10 +723,8 @@ export function CustomerServiceManagement({
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
                   {(() => {
-                    // Calculate original total tip - use the total from the initial load
-                    const originalTotalTip = invoiceData.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+                    // Calculate total tip being distributed to staff
                     const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
-                    const remainingTip = originalTotalTip - currentTotalTip;
                     
                     return (
                       <div className="space-y-3">
@@ -795,18 +793,10 @@ export function CustomerServiceManagement({
                         <div className="space-y-1">
                           <div className="flex justify-between text-sm font-medium pt-2 border-t">
                             <span>Tổng tip:</span>
-                            <span className={currentTotalTip > originalTotalTip ? 'text-red-600' : ''}>
+                            <span>
                               {currentTotalTip.toLocaleString('vi-VN')}đ
                             </span>
                           </div>
-                          {remainingTip !== 0 && (
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>Còn lại:</span>
-                              <span className={remainingTip < 0 ? 'text-red-600' : 'text-green-600'}>
-                                {remainingTip.toLocaleString('vi-VN')}đ
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
