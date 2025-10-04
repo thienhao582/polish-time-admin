@@ -1,4 +1,4 @@
-import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Gift, ArrowRightLeft, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight, Check } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, CreditCard, Banknote, Gift, ArrowRightLeft, Clock, Printer, CheckCircle, Loader2, Edit3, ChevronRight, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -73,6 +73,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [showCustomInput, setShowCustomInput] = useState<PaymentMethod | null>(null);
   const [selectedServiceItems, setSelectedServiceItems] = useState<ServiceStaffItem[]>([]);
   const [customStaffTips, setCustomStaffTips] = useState<Map<string, number>>(new Map());
+  const [showCardHistory, setShowCardHistory] = useState(false);
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -158,6 +159,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setCustomAmountInput('');
       setShowCustomInput(null);
       setCustomStaffTips(new Map());
+      setShowCardHistory(false);
       
       // Initialize selected services from checkInItem with staff information
       if (checkInItem.services && checkInItem.services.length > 0) {
@@ -245,10 +247,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const handleCustomPayment = (method: PaymentMethod) => {
     const amount = typeof customAmountInput === 'number' ? customAmountInput : 0;
     if (amount > 0 && amount <= remainingDue) {
-      setDisabledMethods(new Set([...disabledMethods, method]));
+      // Only disable non-card methods after custom payment
+      if (method !== 'card') {
+        setDisabledMethods(new Set([...disabledMethods, method]));
+      }
       handlePaymentSelect(method, amount);
     }
   };
+
+  // Get card payment history
+  const cardPayments = paymentRecords.filter(record => record.method === 'card');
 
   const handlePrint = () => {
     // Create a hidden iframe for printing
@@ -720,22 +728,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
             <div className="grid gap-4">
               {/* Card Payment */}
-              <Card 
-                className={`p-6 border-2 transition-all ${
-                  disabledMethods.has('card') 
-                    ? 'opacity-50 cursor-not-allowed border-border' 
-                    : 'hover:shadow-md border-border cursor-pointer'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <CreditCard className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold">Credit/Debit Card</h4>
-                    <p className="text-sm text-muted-foreground">Visa, Mastercard, Credit/Debit</p>
-                  </div>
-                  {!disabledMethods.has('card') && (
+              <Card className="border-2 border-border">
+                <div className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      <CreditCard className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold">Credit/Debit Card</h4>
+                      <p className="text-sm text-muted-foreground">Visa, Mastercard, Credit/Debit</p>
+                    </div>
                     <div className="flex gap-2">
                       {showCustomInput === 'card' ? (
                         <div className="flex gap-2 items-center">
@@ -779,6 +781,30 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             Custom
                           </Button>
                         </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Card Payment History */}
+                  {cardPayments.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <button
+                        onClick={() => setShowCardHistory(!showCardHistory)}
+                        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showCardHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                        <span>Lịch sử thanh toán thẻ ({cardPayments.length})</span>
+                      </button>
+                      
+                      {showCardHistory && (
+                        <div className="mt-2 space-y-1">
+                          {cardPayments.map((payment, index) => (
+                            <div key={index} className="flex justify-between items-center text-xs text-muted-foreground">
+                              <span>Charged lần {index + 1}</span>
+                              <span className="font-medium">{payment.amount.toLocaleString('vi-VN')}₫</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}
