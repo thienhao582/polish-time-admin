@@ -67,6 +67,7 @@ const Appointments = () => {
   const [appointmentStatus, setAppointmentStatus] = useState("all");
   const [initialFormData, setInitialFormData] = useState<any>(null);
   const [isCustomerServiceOpen, setIsCustomerServiceOpen] = useState(false);
+  const [showCancelled, setShowCancelled] = useState(false);
 
   // Prevent heavy reload after optimistic updates (drag/drop etc.)
   const skipNextLoadRef = useRef(false);
@@ -211,6 +212,11 @@ const Appointments = () => {
   // Filter appointments based on search query, staff filter, and date range
   const getFilteredAppointments = () => {
     let filtered = appointments;
+
+    // Hide cancelled appointments by default
+    if (!showCancelled) {
+      filtered = filtered.filter(apt => apt.status !== "cancelled");
+    }
 
     // Apply search filter
     if (searchQuery) {
@@ -415,6 +421,14 @@ const Appointments = () => {
             Reset Demo Data
           </Button>
           
+          <Button 
+            variant="outline" 
+            onClick={() => setShowCancelled(!showCancelled)}
+            className={showCancelled ? "border-red-600 text-red-600 hover:bg-red-50" : "border-gray-600 text-gray-600 hover:bg-gray-50"}
+          >
+            {showCancelled ? "Ẩn lịch đã huỷ" : "Xem lịch đã huỷ"}
+          </Button>
+
           <Button 
             variant="outline" 
             onClick={() => setIsCustomerServiceOpen(true)}
