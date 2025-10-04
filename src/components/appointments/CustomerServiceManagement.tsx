@@ -656,11 +656,12 @@ export function CustomerServiceManagement({
 
       {/* Invoice Detail Dialog */}
       <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Hóa đơn thanh toán</DialogTitle>
           </DialogHeader>
           
+          <div className="overflow-y-auto flex-1 pr-2">
           {selectedInvoice && (
             <div className="space-y-6">
               {/* Customer Info */}
@@ -807,6 +808,7 @@ export function CustomerServiceManagement({
               </div>
             </div>
           )}
+          </div>
         </DialogContent>
       </Dialog>
     </Dialog>
