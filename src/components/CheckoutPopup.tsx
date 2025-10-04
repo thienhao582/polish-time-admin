@@ -35,6 +35,11 @@ interface CheckoutPopupProps {
     customerName: string;
     checkInTime: string;
     services?: string[];
+    staffAssignments?: Array<{
+      serviceName: string;
+      staffId: string;
+      staffName: string;
+    }>;
     tags: string[];
     waitTime?: number;
     phone?: string;
@@ -100,17 +105,24 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setCustomAmountInput('');
       setShowCustomInput(null);
       
-      // Initialize selected services from checkInItem
+      // Initialize selected services from checkInItem with staff information
       if (checkInItem.services && checkInItem.services.length > 0) {
-        const initialServices: ServiceStaffItem[] = checkInItem.services.map((serviceName, index) => ({
-          id: `initial-${index}`,
-          serviceId: `service-${index}`,
-          serviceName: serviceName,
-          staffIds: [],
-          staffNames: [],
-          price: 50000, // Default price
-          duration: 60, // Default duration
-        }));
+        const initialServices: ServiceStaffItem[] = checkInItem.services.map((serviceName, index) => {
+          // Find staff assignments for this service
+          const staffForService = checkInItem.staffAssignments?.filter(
+            assignment => assignment.serviceName === serviceName
+          ) || [];
+          
+          return {
+            id: `initial-${index}`,
+            serviceId: `service-${index}`,
+            serviceName: serviceName,
+            staffIds: staffForService.map(s => s.staffId),
+            staffNames: staffForService.map(s => s.staffName),
+            price: 50000, // Default price
+            duration: 60, // Default duration
+          };
+        });
         setSelectedServiceItems(initialServices);
       } else {
         setSelectedServiceItems([]);
@@ -127,7 +139,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, checkInItem.services]);
+  }, [isOpen, checkInItem.services, checkInItem.staffAssignments]);
 
   if (!isOpen) return null;
 
