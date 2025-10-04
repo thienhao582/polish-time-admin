@@ -772,7 +772,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('card')}
                           >
-                            Charge {remainingDue.toLocaleString('vi-VN')}₫
+                            {remainingDue.toLocaleString('vi-VN')}₫
                           </Button>
                           <Button 
                             variant="outline" 
