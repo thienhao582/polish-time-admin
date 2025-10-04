@@ -410,10 +410,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     <div className="bg-muted/30 h-full overflow-y-auto">
       <div className="p-6 space-y-6">
         {/* Customer Info */}
-        <div className="text-center space-y-2">
-          <h3 className="text-3xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
-          <p className="text-xl font-medium">{checkInItem.customerName}</p>
-          {checkInItem.phone && <p className="text-sm text-muted-foreground">{checkInItem.phone}</p>}
+        <div className="text-center space-y-1">
+          <h3 className="text-2xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
+          <p className="text-base font-medium">{checkInItem.customerName}</p>
+          {checkInItem.phone && <p className="text-xs text-muted-foreground">{checkInItem.phone}</p>}
           <p className="text-xs text-muted-foreground">{currentDate} {currentTime}</p>
         </div>
 
@@ -421,21 +421,18 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
 
         {/* Services */}
         <div>
-          <h4 className="text-lg font-semibold mb-3">Dịch vụ đã sử dụng</h4>
-          <div className="space-y-2">
+          <h4 className="text-sm font-semibold mb-2">Dịch vụ đã sử dụng</h4>
+          <div className="space-y-1.5">
             {selectedServiceItems.length > 0 ? (
               selectedServiceItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-start p-3 bg-background rounded-lg">
+                <div key={index} className="flex justify-between items-start p-2 bg-background rounded-lg">
                   <div className="flex-1">
-                    <div className="text-sm font-medium">{item.serviceName}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      NV: {item.staffNames.join(", ")}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.duration} phút
+                    <div className="text-xs font-medium">{item.serviceName}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      NV: {item.staffNames.join(", ")} • {item.duration} phút
                     </div>
                   </div>
-                  <span className="text-sm font-semibold">{item.price.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-xs font-semibold">{item.price.toLocaleString('vi-VN')}₫</span>
                 </div>
               ))
             ) : checkInItem.services && checkInItem.services.length > 0 ? (
@@ -446,22 +443,21 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 ) || [];
                 
                 return (
-                  <div key={index} className="flex justify-between items-start p-3 bg-background rounded-lg">
+                  <div key={index} className="flex justify-between items-start p-2 bg-background rounded-lg">
                     <div className="flex-1">
-                      <div className="text-sm font-medium">{service}</div>
+                      <div className="text-xs font-medium">{service}</div>
                       {staffForService.length > 0 && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          NV: {staffForService.map(s => s.staffName).join(", ")}
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          NV: {staffForService.map(s => s.staffName).join(", ")} • 60 phút
                         </div>
                       )}
-                      <div className="text-xs text-muted-foreground">60 phút</div>
                     </div>
-                    <span className="text-sm font-semibold">50,000₫</span>
+                    <span className="text-xs font-semibold">50,000₫</span>
                   </div>
                 );
               })
             ) : (
-              <p className="text-sm text-muted-foreground">Chưa chọn dịch vụ</p>
+              <p className="text-xs text-muted-foreground">Chưa chọn dịch vụ</p>
             )}
           </div>
         </div>
@@ -671,46 +667,46 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-2xl font-semibold mb-4">Chọn dịch vụ và nhân viên</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-lg font-semibold mb-2">Chọn dịch vụ và nhân viên</h3>
+              <p className="text-xs text-muted-foreground">
                 Vui lòng chọn chính xác dịch vụ khách hàng đã sử dụng và nhân viên thực hiện
               </p>
             </div>
             
-            <Card className="p-6">
-              <h4 className="font-semibold mb-4">Thông tin khách hàng</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <Card className="p-3">
+              <h4 className="text-sm font-semibold mb-2">Thông tin khách hàng</h4>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                 <div>
-                  <Label className="text-muted-foreground">Tên khách hàng</Label>
+                  <Label className="text-[10px] text-muted-foreground">Tên khách hàng</Label>
                   <p className="font-medium">{checkInItem.customerName}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Số thứ tự</Label>
+                  <Label className="text-[10px] text-muted-foreground">Số thứ tự</Label>
                   <p className="font-medium">#{checkInItem.customerNumber}</p>
                 </div>
                 {checkInItem.phone && (
                   <div>
-                    <Label className="text-muted-foreground">Số điện thoại</Label>
+                    <Label className="text-[10px] text-muted-foreground">Số điện thoại</Label>
                     <p className="font-medium">{checkInItem.phone}</p>
                   </div>
                 )}
                 <div>
-                  <Label className="text-muted-foreground">Thời gian check-in</Label>
+                  <Label className="text-[10px] text-muted-foreground">Thời gian check-in</Label>
                   <p className="font-medium">{checkInItem.checkInTime}</p>
                 </div>
               </div>
             </Card>
 
             {checkInItem.notes && (
-              <Card className="p-6">
-                <h4 className="font-semibold mb-2">Ghi chú</h4>
-                <p className="text-sm text-muted-foreground">{checkInItem.notes}</p>
+              <Card className="p-3">
+                <h4 className="text-sm font-semibold mb-1">Ghi chú</h4>
+                <p className="text-xs text-muted-foreground">{checkInItem.notes}</p>
               </Card>
             )}
 
             {/* Service and Staff Selection */}
-            <Card className="p-6">
-              <h4 className="font-semibold mb-4">Chọn dịch vụ và nhân viên</h4>
+            <Card className="p-3">
+              <h4 className="text-sm font-semibold mb-2">Chọn dịch vụ và nhân viên</h4>
               <ServiceStaffSelector
                 selectedItems={selectedServiceItems}
                 onItemsChange={setSelectedServiceItems}
