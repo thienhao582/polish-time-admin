@@ -703,7 +703,7 @@ export function CustomerServiceManagement({
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
                   {(() => {
-                    // Calculate original total tip from invoice data
+                    // Calculate original total tip - use the total from the initial load
                     const originalTotalTip = invoiceData.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
                     const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
                     const remainingTip = originalTotalTip - currentTotalTip;
@@ -748,14 +748,14 @@ export function CustomerServiceManagement({
                                         return;
                                       }
                                       
-                                      // Calculate what the new total would be (excluding current staff's old tip)
+                                      // Calculate what the new total would be
                                       const otherStaffTips = Object.entries(staffTips)
                                         .filter(([key]) => key !== staffKey)
                                         .reduce((sum, [, tip]) => sum + tip, 0);
                                       const newTotal = otherStaffTips + newValue;
                                       
-                                      // Validate: total cannot exceed original total tip
-                                      if (newTotal > originalTotalTip) {
+                                      // Validate: total cannot exceed original total tip with small tolerance for rounding
+                                      if (newTotal > originalTotalTip + 0.01) {
                                         toast.error(`Tổng tip không được vượt quá ${originalTotalTip.toLocaleString('vi-VN')}đ`);
                                         return;
                                       }
