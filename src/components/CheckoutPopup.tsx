@@ -73,7 +73,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [showCustomInput, setShowCustomInput] = useState<PaymentMethod | null>(null);
   const [selectedServiceItems, setSelectedServiceItems] = useState<ServiceStaffItem[]>([]);
   const [customStaffTips, setCustomStaffTips] = useState<Map<string, number>>(new Map());
-  const [showCardHistory, setShowCardHistory] = useState(false);
+  const [showCardHistory, setShowCardHistory] = useState(true);
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -159,7 +159,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setCustomAmountInput('');
       setShowCustomInput(null);
       setCustomStaffTips(new Map());
-      setShowCardHistory(false);
+      setShowCardHistory(true);
       
       // Initialize selected services from checkInItem with staff information
       if (checkInItem.services && checkInItem.services.length > 0) {
@@ -220,6 +220,9 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
         } else {
           setCurrentStep('payment');
           setSelectedPayment(null);
+          setShowCustomInput(null);
+          setCustomAmountInput('');
+          setShowCardHistory(true);
         }
       }, 3000);
     } else {
