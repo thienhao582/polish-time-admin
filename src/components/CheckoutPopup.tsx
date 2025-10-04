@@ -64,7 +64,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [editableDiscount, setEditableDiscount] = useState(0); // percentage - default 0%
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [discountAmount, setDiscountAmount] = useState(0); // specific amount in VND
-  const [editableTip, setEditableTip] = useState(5); // percentage - default 5%
+  const [editableTip, setEditableTip] = useState(0); // amount - default 0
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [disabledMethods, setDisabledMethods] = useState<Set<PaymentMethod>>(new Set());
   const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
@@ -82,7 +82,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const discount = discountType === 'percentage' 
     ? Math.floor(serviceTotal * (editableDiscount / 100))
     : discountAmount;
-  const tip = Math.floor(serviceTotal * (editableTip / 100));
+  const tip = editableTip; // Direct amount, no percentage calculation
   const tax = Math.floor(serviceTotal * 0.08); // 8% VAT
   const subtotal = serviceTotal;
   const totalDue = subtotal - discount + tip + tax;
@@ -99,7 +99,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setEditableDiscount(0);
       setDiscountType('percentage');
       setDiscountAmount(0);
-      setEditableTip(5);
+      setEditableTip(0);
       setPaymentRecords([]);
       setDisabledMethods(new Set());
       setCustomAmountInput('');
@@ -473,11 +473,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         type="number"
                         value={editableTip}
                         onChange={(e) => setEditableTip(Number(e.target.value) || 0)}
-                        className="w-10 h-6 text-xs text-center"
+                        className="w-20 h-6 text-xs text-center"
                         min="0"
-                        max="100"
+                        placeholder="₫"
                       />
-                      <span className="text-xs">%</span>
                     </div>
                   </div>
                   <span>{tip.toLocaleString('vi-VN')}₫</span>
