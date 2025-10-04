@@ -723,9 +723,11 @@ export function CustomerServiceManagement({
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
                   {(() => {
-                    // Get original total tip from invoice (before any staff distribution)
-                    // The tip in invoice.total is the actual tip amount from the original invoice
-                    const invoiceTotalTip = Math.round(selectedInvoice.total - selectedInvoice.subtotal - selectedInvoice.discount - Math.round(selectedInvoice.subtotal * 0.08));
+                    // Get original total tip from invoice
+                    // Formula: total = subtotal - discount + VAT + tip
+                    // So: tip = total - (subtotal - discount + VAT)
+                    const vat = Math.round(selectedInvoice.subtotal * 0.08);
+                    const invoiceTotalTip = Math.round(selectedInvoice.total - (selectedInvoice.subtotal - selectedInvoice.discount + vat));
                     // Calculate total tip being distributed to staff
                     const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
                     const remainingTip = invoiceTotalTip - currentTotalTip;
@@ -832,7 +834,7 @@ export function CustomerServiceManagement({
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tip:</span>
-                    <span>{Math.round(selectedInvoice.total - selectedInvoice.subtotal - selectedInvoice.discount - Math.round(selectedInvoice.subtotal * 0.08)).toLocaleString('vi-VN')}đ</span>
+                    <span>{Math.round(selectedInvoice.total - (selectedInvoice.subtotal - selectedInvoice.discount + Math.round(selectedInvoice.subtotal * 0.08))).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
