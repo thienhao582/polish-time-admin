@@ -906,12 +906,13 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           </Button>
                         </div>
                       ) : (
-                        <>
+                          <>
                           <Button 
                             variant="outline" 
                             size="sm"
                             onClick={() => {
-                              setCashPaymentAmount(remainingDue);
+                              setCashPaymentAmount(totalDue);
+                              setCashReceived(totalDue);
                               setShowCashDialog(true);
                             }}
                           >
@@ -1230,21 +1231,21 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       onClick={() => handleStepClick(step.key)}
                       title={step.label}
                     >
-                      <div 
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 ${
-                          currentStepIndex > index 
-                            ? 'bg-green-500 text-white border-2 border-green-500' 
-                            : currentStepIndex === index
-                            ? 'bg-background text-foreground border-[3px] border-primary'
-                            : 'bg-background text-muted-foreground border-2 border-gray-300'
-                        }`}
-                      >
-                        {currentStepIndex > index ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          step.number
-                        )}
-                      </div>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors mb-2 ${
+                      currentStepIndex > index || (step.key === 'receipt' && currentStep === 'receipt')
+                        ? 'bg-green-500 text-white border-2 border-green-500'
+                        : currentStepIndex === index
+                        ? 'bg-background text-foreground border-[3px] border-primary'
+                        : 'bg-background text-muted-foreground border-2 border-gray-300'
+                    }`}
+                  >
+                    {currentStepIndex > index || (step.key === 'receipt' && currentStep === 'receipt') ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      step.number
+                    )}
+                  </div>
                       <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">{step.label}</span>
                     </div>
                     
