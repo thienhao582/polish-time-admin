@@ -748,18 +748,6 @@ export function CustomerServiceManagement({
                                         return;
                                       }
                                       
-                                      // Calculate what the new total would be
-                                      const otherStaffTips = Object.entries(staffTips)
-                                        .filter(([key]) => key !== staffKey)
-                                        .reduce((sum, [, tip]) => sum + tip, 0);
-                                      const newTotal = otherStaffTips + newValue;
-                                      
-                                      // Validate: total cannot exceed original total tip with small tolerance for rounding
-                                      if (newTotal > originalTotalTip + 0.01) {
-                                        toast.error(`Tổng tip không được vượt quá ${originalTotalTip.toLocaleString('vi-VN')}đ`);
-                                        return;
-                                      }
-                                      
                                       setStaffTips(prev => ({
                                         ...prev,
                                         [staffKey]: newValue
@@ -776,7 +764,6 @@ export function CustomerServiceManagement({
                                     }}
                                     className="w-28 h-8 text-right"
                                     min="0"
-                                    max={originalTotalTip}
                                     step="0.001"
                                   />
                                   <span className="text-sm">đ</span>
