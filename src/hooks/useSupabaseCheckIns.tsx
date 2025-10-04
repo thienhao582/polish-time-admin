@@ -13,6 +13,11 @@ export interface CheckInItem {
   date: string;
   tags: string[];
   services: string[];
+  staffAssignments?: Array<{
+    serviceName: string;
+    staffId: string;
+    staffName: string;
+  }>;
   waitTime?: number;
   notes?: string;
   appointmentId?: string; // Link to appointment when converted

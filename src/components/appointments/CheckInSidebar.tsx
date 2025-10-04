@@ -87,7 +87,28 @@ export function CheckInSidebar({ isOpen, onClose, selectedDate, onAppointmentCre
   };
 
   const handleCheckOut = (checkInItem: any) => {
-    setReceiptItem(checkInItem);
+    // If check-in has an appointment ID, fetch staff assignment from the appointment
+    if (checkInItem.appointmentId) {
+      const relatedAppointment = appointments.find(apt => apt.id === checkInItem.appointmentId);
+      
+      if (relatedAppointment && relatedAppointment.services) {
+        // Build staff assignments from appointment services
+        const staffAssignments = relatedAppointment.services.flatMap((service: any) => 
+          service.staffNames.map((staffName: string, index: number) => ({
+            serviceName: service.serviceName,
+            staffId: service.staffIds[index] || '',
+            staffName: staffName
+          }))
+        );
+        
+        // Add staff assignments to check-in item
+        setReceiptItem({ ...checkInItem, staffAssignments });
+      } else {
+        setReceiptItem(checkInItem);
+      }
+    } else {
+      setReceiptItem(checkInItem);
+    }
   };
 
   const handleConfirmCheckOut = async () => {
