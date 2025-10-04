@@ -410,11 +410,25 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     <div className="bg-muted/30 h-full overflow-y-auto">
       <div className="p-6 space-y-6">
         {/* Customer Info */}
-        <div className="text-center space-y-1">
-          <h3 className="text-2xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
-          <p className="text-base font-medium">{checkInItem.customerName}</p>
-          {checkInItem.phone && <p className="text-xs text-muted-foreground">{checkInItem.phone}</p>}
-          <p className="text-xs text-muted-foreground">{currentDate} {currentTime}</p>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <Label className="text-xs text-muted-foreground">Số thứ tự</Label>
+            <h3 className="text-xl font-bold text-primary">#{checkInItem.customerNumber}</h3>
+          </div>
+          <div className="flex justify-between items-center">
+            <Label className="text-xs text-muted-foreground">Tên khách hàng</Label>
+            <p className="text-sm font-medium">{checkInItem.customerName}</p>
+          </div>
+          {checkInItem.phone && (
+            <div className="flex justify-between items-center">
+              <Label className="text-xs text-muted-foreground">Số điện thoại</Label>
+              <p className="text-sm">{checkInItem.phone}</p>
+            </div>
+          )}
+          <div className="flex justify-between items-center">
+            <Label className="text-xs text-muted-foreground">Ngày giờ</Label>
+            <p className="text-sm">{currentDate} {currentTime}</p>
+          </div>
         </div>
 
         <Separator />
@@ -673,29 +687,6 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               </p>
             </div>
             
-            <Card className="p-3">
-              <h4 className="text-sm font-semibold mb-2">Thông tin khách hàng</h4>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Tên khách hàng</Label>
-                  <p className="font-medium">{checkInItem.customerName}</p>
-                </div>
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Số thứ tự</Label>
-                  <p className="font-medium">#{checkInItem.customerNumber}</p>
-                </div>
-                {checkInItem.phone && (
-                  <div>
-                    <Label className="text-[10px] text-muted-foreground">Số điện thoại</Label>
-                    <p className="font-medium">{checkInItem.phone}</p>
-                  </div>
-                )}
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">Thời gian check-in</Label>
-                  <p className="font-medium">{checkInItem.checkInTime}</p>
-                </div>
-              </div>
-            </Card>
 
             {checkInItem.notes && (
               <Card className="p-3">
