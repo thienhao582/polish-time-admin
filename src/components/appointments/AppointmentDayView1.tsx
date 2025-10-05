@@ -247,12 +247,20 @@ export function AppointmentDayView1({
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinutes = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
+    
+    // Only auto-scroll if current time is within working hours (7:00 - 23:45)
+    const workStartMinutes = 7 * 60; // 7:00
+    const workEndMinutes = 23 * 60 + 45; // 23:45
+    
+    if (currentTimeInMinutes < workStartMinutes || currentTimeInMinutes > workEndMinutes) {
+      return; // Don't scroll if outside working hours
+    }
     
     // Find the nearest time slot
-    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
     const nearestSlotIndex = calculatedData.timeSlots.findIndex(slot => {
       const slotMinutes = timeToMinutes(slot);
-      return slotMinutes >= currentTimeInMinutes - 30; // Within 30 minutes
+      return slotMinutes >= currentTimeInMinutes - 15; // Within current or next 15-min slot
     });
     
     if (nearestSlotIndex !== -1) {
