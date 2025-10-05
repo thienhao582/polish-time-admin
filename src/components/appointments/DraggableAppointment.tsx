@@ -22,23 +22,26 @@ export const DraggableAppointment = memo(({
     id,
   });
 
-  const dragStyle = {
+  const dragStyle: React.CSSProperties = {
     ...style,
-    transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.5 : undefined,
   };
 
   return (
     <div
       ref={setNodeRef}
-      className={cn(className, isDragging && "z-50")}
+      className={cn(
+        className, 
+        isDragging && "z-50 opacity-50",
+        "cursor-grab active:cursor-grabbing"
+      )}
       style={dragStyle}
-      {...listeners}
       {...attributes}
+      {...listeners}
       onClick={(e) => {
-        // Only trigger click if not dragging
-        if (!isDragging && onClick) {
+        e.stopPropagation();
+        if (onClick) {
           onClick(e);
         }
       }}

@@ -859,10 +859,10 @@ export function AppointmentDayView1({
                                  <DraggableAppointment
                                    key={`${apt.id}-${aptIndex}`}
                                    id={apt.id}
-                                   className={cn(
-                                       "absolute border rounded-md p-1 cursor-grab transition-colors text-xs overflow-hidden select-none",
-                                       getAppointmentColor()
-                                     )}
+                                    className={cn(
+                                        "absolute border rounded-md p-1 transition-colors text-xs overflow-hidden",
+                                        getAppointmentColor()
+                                      )}
                                      style={{
                                        top: `${topOffset}px`,
                                        height: `${height}px`,
