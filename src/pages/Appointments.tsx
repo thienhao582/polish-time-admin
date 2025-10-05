@@ -95,6 +95,12 @@ const Appointments = () => {
       const appointment = appointments.find(apt => apt.id === appointmentId);
       if (!appointment) return;
 
+      console.log('=== APPOINTMENT DROP DEBUG ===');
+      console.log('Appointment ID:', appointmentId);
+      console.log('Current staff:', appointment.staff);
+      console.log('New staff:', newStaff);
+      console.log('New time:', newTime);
+
       // Parse duration including extra time
       const durationMatch = appointment.duration.match(/(\d+)/);
       const baseDuration = durationMatch ? parseInt(durationMatch[1]) : 60;
@@ -121,13 +127,13 @@ const Appointments = () => {
       const endTimeMinutes = snappedMinutes + totalDuration;
       const endTime = minutesToTime(endTimeMinutes);
 
-      // Update appointment data
+      // Update appointment data - use newStaff if provided, otherwise keep current staff
       const updateData = {
         time: snappedTime,
-        staff: newStaff || '',
-        // Add calculated end time if your appointment model supports it
-        endTime: endTime
+        staff: newStaff !== undefined ? newStaff : appointment.staff,
       };
+
+      console.log('Update data:', updateData);
 
       // Optimistic update (no reload) for smooth UX
       setAppointments(prev => prev.map(apt => 
