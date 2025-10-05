@@ -4,8 +4,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
 import { isEmployeeAvailableAtTime, getEmployeeScheduleStatus } from "@/utils/scheduleUtils";
 import { cn } from "@/lib/utils";
-import { useState, useRef, useMemo, useCallback, useEffect } from "react";
-import { useDragStore } from "@/stores/useDragStore";
+import { useState, useRef, useMemo, useCallback, useEffect, memo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserCheck, ClipboardList, Clock, Ban, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,10 @@ import { CheckInSidebar } from "./CheckInSidebar";
 import { EmployeeScheduleDialog } from "./EmployeeScheduleDialog";
 import { QuickScheduleDialog } from "./QuickScheduleDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { toast } from "@/hooks/use-toast";
+import { DroppableTimeSlot } from "./DroppableTimeSlot";
+import { DraggableAppointment } from "./DraggableAppointment";
 
 interface Appointment {
   id: number;
@@ -80,6 +83,9 @@ export function AppointmentDayView1({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isCalculatingAvailability, setIsCalculatingAvailability] = useState(false);
   
+  // Drag and drop state
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
+  
   // Calculated data states
   const [calculatedData, setCalculatedData] = useState<{
     workingEmployees: any[];
@@ -100,13 +106,17 @@ export function AppointmentDayView1({
     onScheduleUpdate?.();
   }, [onScheduleUpdate]);
   
-  // Drag highlight ref to avoid rerenders during dragover
-  const lastHighlightRef = useRef<HTMLElement | null>(null);
-  // Global drag state via zustand (no prop drilling, minimal re-renders)
-  const draggedAppointmentId = useDragStore(s => s.draggedAppointmentId);
-  const startDrag = useDragStore(s => s.startDrag);
-  const endDrag = useDragStore(s => s.endDrag);
-  const isDragEnabled = useDragStore(s => s.isDragEnabled);
+  // Configure drag sensors - require minimum movement to start drag
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required to start drag
+      },
+    })
+  );
+  
+  // Get updateAppointment from store
+  const updateAppointment = useSalonStore(s => s.updateAppointment);
 
   // Helper functions - defined early to avoid initialization errors
   const timeToMinutes = (timeStr: string): number => {
@@ -181,6 +191,56 @@ export function AppointmentDayView1({
   const handleTimeSlotClick = useCallback((dateString, timeSlot, employeeName) => {
     if (onTimeSlotClick) onTimeSlotClick(dateString, timeSlot, employeeName);
   }, [onTimeSlotClick]);
+  
+  // Drag handlers
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const appointmentId = event.active.id as number;
+    const appointment = calculatedData?.allDayAppointments.find(apt => apt.id === appointmentId);
+    if (appointment) {
+      setActiveAppointment(appointment);
+    }
+  }, [calculatedData]);
+  
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveAppointment(null);
+    
+    if (!over) return;
+    
+    const appointmentId = active.id as number;
+    const appointment = calculatedData?.allDayAppointments.find(apt => apt.id === appointmentId);
+    
+    if (!appointment) return;
+    
+    // Parse drop target data
+    const dropData = over.id as string;
+    const [timeSlot, employeeName] = dropData.split('||');
+    
+    // Check if anything changed
+    const timeChanged = appointment.time !== timeSlot;
+    const staffChanged = appointment.staff !== employeeName;
+    
+    if (!timeChanged && !staffChanged) return;
+    
+    // Optimistic UI update
+    const updates: any = {};
+    if (timeChanged) updates.time = timeSlot;
+    if (staffChanged) updates.staff = employeeName;
+    
+    // Update in store
+    updateAppointment(appointmentId, updates);
+    
+    // Call API callback if provided
+    if (onAppointmentDrop) {
+      onAppointmentDrop(appointmentId, timeSlot, employeeName);
+    }
+    
+    // Show success toast
+    toast({
+      title: "Đã cập nhật lịch hẹn",
+      description: `${appointment.customer} - ${timeChanged ? `Thời gian mới: ${timeSlot}` : ''} ${staffChanged ? `Nhân viên mới: ${employeeName}` : ''}`.trim(),
+    });
+  }, [calculatedData, updateAppointment, onAppointmentDrop]);
 
   // Get appointments for a specific employee and time slot
   const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
@@ -490,63 +550,13 @@ export function AppointmentDayView1({
     );
   }
 
-  // Optimized drag and drop handlers (minimal DOM operations)
-  const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', appointment.id.toString());
-    
-    // Start drag via zustand (lightweight)
-    startDrag(appointment.id);
-  };
-
-  const clearHighlight = () => {
-    if (lastHighlightRef.current) {
-      lastHighlightRef.current.classList.remove('bg-blue-100', 'border-blue-300');
-      lastHighlightRef.current = null;
-    }
-  };
-
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    
-    const target = e.currentTarget as HTMLElement;
-    if (target !== lastHighlightRef.current) {
-      clearHighlight();
-      target.classList.add('bg-blue-100', 'border-blue-300');
-      lastHighlightRef.current = target;
-    }
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    // Only clear if we're actually leaving the drop zone
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      clearHighlight();
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, targetTime: string, targetStaff?: string) => {
-    e.preventDefault();
-    clearHighlight();
-    
-    const appointmentId = parseInt(e.dataTransfer.getData('text/plain'));
-    if (onAppointmentDrop && appointmentId) {
-      onAppointmentDrop(appointmentId, targetTime, targetStaff);
-    }
-    
-    endDrag();
-  };
-
-  const handleDragEnd = (e?: React.DragEvent) => {
-    // Clean up visuals
-    clearHighlight();
-    endDrag();
-  };
 
   return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-blue-200 flex-shrink-0">
@@ -798,8 +808,9 @@ export function AppointmentDayView1({
                     const availability = calculatedData.employeeAvailability.get(key) || { available: true };
 
                       return (
-                        <div 
+                        <DroppableTimeSlot
                           key={`${employee.id}-${timeSlot}-${scheduleUpdateCounter}`}
+                          id={`${timeSlot}||${employee.name}`}
                           className={cn(
                             "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
                             !availability.available 
@@ -808,11 +819,8 @@ export function AppointmentDayView1({
                                 ? "bg-white hover:bg-blue-50 cursor-pointer" 
                                 : "bg-white"
                           )}
-                          onDragEnter={isDragEnabled && availability.available ? handleDragEnter : undefined}
-                          onDragOver={isDragEnabled && availability.available ? handleDragOver : undefined}
-                          onDragLeave={isDragEnabled && availability.available ? handleDragLeave : undefined}
-                          onDrop={isDragEnabled && availability.available ? (e) => handleDrop(e, timeSlot, employee.name) : undefined}
                           onClick={availability.available ? () => handleTimeSlotClick(dateString, timeSlot, employee.name) : undefined}
+                          disabled={!availability.available}
                           title={!availability.available ? availability.reason : undefined}
                         >
                           {/* Show appointments that start at this time slot */}
@@ -846,31 +854,27 @@ export function AppointmentDayView1({
                                   return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
                               }
                              };
-                            
-                             return (
-                                <div
-                                  key={`${apt.id}-${aptIndex}`}
-                                    className={cn(
-                                      "absolute border rounded-md p-1 cursor-pointer transition-colors text-xs overflow-hidden select-none",
-                                      getAppointmentColor(),
-                                      // TEMPORARILY DISABLED - Drag visual feedback
-                                      // draggedAppointmentId === apt.id && "opacity-90 transform scale-105 shadow-2xl"
-                                    )}
-                                    style={{
-                                      top: `${topOffset}px`,
-                                      height: `${height}px`,
-                                      left: '4px',
-                                      right: '4px',
-                                      zIndex: 10
-                                    }}
-                                    draggable={isDragEnabled}
-                                    onDragStart={isDragEnabled ? (e) => handleDragStart(e, apt) : undefined}
-                                    onDragEnd={isDragEnabled ? handleDragEnd : undefined}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAppointmentClick(apt, e);
-                                    }}
-                                >
+                             
+                              return (
+                                 <DraggableAppointment
+                                   key={`${apt.id}-${aptIndex}`}
+                                   id={apt.id}
+                                   className={cn(
+                                       "absolute border rounded-md p-1 cursor-grab transition-colors text-xs overflow-hidden select-none",
+                                       getAppointmentColor()
+                                     )}
+                                     style={{
+                                       top: `${topOffset}px`,
+                                       height: `${height}px`,
+                                       left: '4px',
+                                       right: '4px',
+                                       zIndex: 10
+                                     }}
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleAppointmentClick(apt, e);
+                                     }}
+                                 >
                                   <div className="font-semibold leading-tight truncate text-xs">
                                     {apt.customer}
                                   </div>
@@ -882,13 +886,13 @@ export function AppointmentDayView1({
                                   </div>
                                   {(apt as any).extraTime && (apt as any).extraTime > 0 && (
                                     <div className="text-xs leading-tight truncate font-medium text-red-600">
-                                      +{(apt as any).extraTime} phút
-                                    </div>
-                                  )}
-                                </div>
-                              );
+                                       +{(apt as any).extraTime} phút
+                                     </div>
+                                   )}
+                                 </DraggableAppointment>
+                               );
                           })}
-                        </div>
+                        </DroppableTimeSlot>
                       );
                   })}
                 </div>
@@ -963,6 +967,18 @@ export function AppointmentDayView1({
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Drag Overlay - Shows appointment card while dragging */}
+      <DragOverlay>
+        {activeAppointment ? (
+          <div className="bg-blue-100 border-2 border-blue-500 rounded-md p-2 shadow-lg opacity-90">
+            <div className="font-semibold text-sm">{activeAppointment.customer}</div>
+            <div className="text-xs">{formatTimeRange(activeAppointment.time, activeAppointment.duration)}</div>
+            <div className="text-xs">{activeAppointment.service}</div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </div>
+    </DndContext>
   );
 }
