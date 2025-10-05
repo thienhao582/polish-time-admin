@@ -83,10 +83,14 @@ export function AppointmentDayView1({
   // Custom drag state
   const [isDragging, setIsDragging] = useState(false);
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
-  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
-  const [dragTimer, setDragTimer] = useState<NodeJS.Timeout | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<{ time: string; staff: string } | null>(null);
+  
+  // Use refs for drag position to avoid re-renders
+  const dragPositionRef = useRef({ x: 0, y: 0 });
+  const dragCloneRef = useRef<HTMLDivElement>(null);
+  const dragTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   
   // Calculated data states
   const [calculatedData, setCalculatedData] = useState<{
@@ -111,6 +115,13 @@ export function AppointmentDayView1({
   // Get updateAppointment from store
   const updateAppointment = useSalonStore(s => s.updateAppointment);
   
+  // Update clone position using requestAnimationFrame for smooth movement
+  const updateClonePosition = useCallback((x: number, y: number) => {
+    if (dragCloneRef.current) {
+      dragCloneRef.current.style.transform = `translate(${x - 80}px, ${y - 30}px)`;
+    }
+  }, []);
+  
   // Custom drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent, appointment: Appointment) => {
     e.preventDefault();
@@ -118,14 +129,14 @@ export function AppointmentDayView1({
     
     setDraggedAppointment(appointment);
     setDragStartPos({ x: e.clientX, y: e.clientY });
-    setDragPosition({ x: e.clientX, y: e.clientY });
+    dragPositionRef.current = { x: e.clientX, y: e.clientY };
     
     // Start drag timer - only activate drag mode after holding for 300ms
     const timer = setTimeout(() => {
       setIsDragging(true);
-    }, 300); // 300ms hold to start drag
+    }, 300);
     
-    setDragTimer(timer);
+    dragTimerRef.current = timer;
   }, []);
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -135,24 +146,36 @@ export function AppointmentDayView1({
       
       // If mouse moved more than 5px, activate drag immediately
       if (!isDragging && (deltaX > 5 || deltaY > 5)) {
-        if (dragTimer) {
-          clearTimeout(dragTimer);
+        if (dragTimerRef.current) {
+          clearTimeout(dragTimerRef.current);
         }
         setIsDragging(true);
       }
       
-      // Update drag position
-      if (isDragging || deltaX > 5 || deltaY > 5) {
-        setDragPosition({ x: e.clientX, y: e.clientY });
+      // Update drag position with RAF for smooth animation
+      dragPositionRef.current = { x: e.clientX, y: e.clientY };
+      
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
+      
+      animationFrameRef.current = requestAnimationFrame(() => {
+        updateClonePosition(e.clientX, e.clientY);
+      });
     }
-  }, [isDragging, draggedAppointment, dragStartPos, dragTimer]);
+  }, [isDragging, draggedAppointment, dragStartPos, updateClonePosition]);
   
   const handleMouseUp = useCallback((e: MouseEvent) => {
     // Clear timer if still running
-    if (dragTimer) {
-      clearTimeout(dragTimer);
-      setDragTimer(null);
+    if (dragTimerRef.current) {
+      clearTimeout(dragTimerRef.current);
+      dragTimerRef.current = null;
+    }
+    
+    // Cancel any pending animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     
     // Only update if we were actually dragging
@@ -182,7 +205,7 @@ export function AppointmentDayView1({
     setIsDragging(false);
     setDraggedAppointment(null);
     setHoveredSlot(null);
-  }, [isDragging, draggedAppointment, hoveredSlot, dragTimer, updateAppointment, onAppointmentDrop]);
+  }, [isDragging, draggedAppointment, hoveredSlot, updateAppointment, onAppointmentDrop]);
   
   // Add/remove mouse listeners
   useEffect(() => {
@@ -192,6 +215,14 @@ export function AppointmentDayView1({
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        
+        // Cleanup
+        if (dragTimerRef.current) {
+          clearTimeout(dragTimerRef.current);
+        }
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
       };
     }
   }, [draggedAppointment, handleMouseMove, handleMouseUp]);
@@ -1009,11 +1040,13 @@ export function AppointmentDayView1({
       {/* Custom Drag Overlay - Shows cloned appointment card while dragging */}
       {isDragging && draggedAppointment && (
         <div
-          className="fixed pointer-events-none z-[9999]"
+          ref={dragCloneRef}
+          className="fixed pointer-events-none z-[9999] will-change-transform"
           style={{
-            left: dragPosition.x - 80,
-            top: dragPosition.y - 30,
+            left: 0,
+            top: 0,
             width: '160px',
+            transform: `translate(${dragPositionRef.current.x - 80}px, ${dragPositionRef.current.y - 30}px)`,
           }}
         >
           <div className="bg-primary/20 border-2 border-primary rounded-md p-2 shadow-2xl backdrop-blur-sm">
