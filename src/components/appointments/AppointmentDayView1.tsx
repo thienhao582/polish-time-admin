@@ -116,30 +116,47 @@ export function AppointmentDayView1({
     e.preventDefault();
     e.stopPropagation();
     
+    setDraggedAppointment(appointment);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setDragPosition({ x: e.clientX, y: e.clientY });
+    
+    // Start drag timer - only activate drag mode after holding for 300ms
     const timer = setTimeout(() => {
-      setDraggedAppointment(appointment);
-      setDragStartPos({ x: e.clientX, y: e.clientY });
-      setDragPosition({ x: e.clientX, y: e.clientY });
       setIsDragging(true);
-    }, 200); // 200ms hold to start drag
+    }, 300); // 300ms hold to start drag
     
     setDragTimer(timer);
   }, []);
   
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isDragging && draggedAppointment) {
-      setDragPosition({ x: e.clientX, y: e.clientY });
+    if (draggedAppointment) {
+      const deltaX = Math.abs(e.clientX - dragStartPos.x);
+      const deltaY = Math.abs(e.clientY - dragStartPos.y);
+      
+      // If mouse moved more than 5px, activate drag immediately
+      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
+        if (dragTimer) {
+          clearTimeout(dragTimer);
+        }
+        setIsDragging(true);
+      }
+      
+      // Update drag position
+      if (isDragging || deltaX > 5 || deltaY > 5) {
+        setDragPosition({ x: e.clientX, y: e.clientY });
+      }
     }
-  }, [isDragging, draggedAppointment]);
+  }, [isDragging, draggedAppointment, dragStartPos, dragTimer]);
   
   const handleMouseUp = useCallback((e: MouseEvent) => {
+    // Clear timer if still running
     if (dragTimer) {
       clearTimeout(dragTimer);
       setDragTimer(null);
     }
     
+    // Only update if we were actually dragging
     if (isDragging && draggedAppointment && hoveredSlot) {
-      // Update appointment
       const timeChanged = draggedAppointment.time !== hoveredSlot.time;
       const staffChanged = draggedAppointment.staff !== hoveredSlot.staff;
       
@@ -161,6 +178,7 @@ export function AppointmentDayView1({
       }
     }
     
+    // Reset all drag states
     setIsDragging(false);
     setDraggedAppointment(null);
     setHoveredSlot(null);
@@ -168,7 +186,7 @@ export function AppointmentDayView1({
   
   // Add/remove mouse listeners
   useEffect(() => {
-    if (isDragging) {
+    if (draggedAppointment) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -176,7 +194,7 @@ export function AppointmentDayView1({
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [draggedAppointment, handleMouseMove, handleMouseUp]);
 
   // Helper functions - defined early to avoid initialization errors
   const timeToMinutes = (timeStr: string): number => {
