@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { formatTimeRange } from "@/utils/timeUtils";
@@ -86,11 +86,17 @@ export function AppointmentDayView1({
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   const [hoveredSlot, setHoveredSlot] = useState<{ time: string; staff: string } | null>(null);
   
+  // Current time indicator
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const isTodaySelected = isToday(selectedDate);
+  
   // Use refs for drag position to avoid re-renders
   const dragPositionRef = useRef({ x: 0, y: 0 });
   const dragCloneRef = useRef<HTMLDivElement>(null);
   const dragTimerRef = useRef<NodeJS.Timeout | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToCurrentTime = useRef(false);
   
   // Calculated data states
   const [calculatedData, setCalculatedData] = useState<{
@@ -222,6 +228,66 @@ export function AppointmentDayView1({
       };
     }
   }, [draggedAppointment, handleMouseMove, handleMouseUp]);
+  
+  // Update current time every minute
+  useEffect(() => {
+    if (!isTodaySelected) return;
+    
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timer);
+  }, [isTodaySelected]);
+  
+  // Auto-scroll to current time on mount
+  useEffect(() => {
+    if (!isTodaySelected || hasScrolledToCurrentTime.current || !contentScrollRef.current || !calculatedData) return;
+    
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    
+    // Find the nearest time slot
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
+    const nearestSlotIndex = calculatedData.timeSlots.findIndex(slot => {
+      const slotMinutes = timeToMinutes(slot);
+      return slotMinutes >= currentTimeInMinutes - 30; // Within 30 minutes
+    });
+    
+    if (nearestSlotIndex !== -1) {
+      // Scroll to that slot (each slot is 56px = 14px * 4 slots per hour)
+      const scrollTop = nearestSlotIndex * 56;
+      setTimeout(() => {
+        if (contentScrollRef.current) {
+          contentScrollRef.current.scrollTop = scrollTop - 100; // Offset to show context
+          hasScrolledToCurrentTime.current = true;
+        }
+      }, 100);
+    }
+  }, [isTodaySelected, calculatedData]);
+  
+  // Calculate current time line position
+  const getCurrentTimePosition = (): number | null => {
+    if (!isTodaySelected || !calculatedData) return null;
+    
+    const now = currentTime;
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    
+    // Check if current time is within our display range (7:00 - 23:45)
+    if (totalMinutes < 7 * 60 || totalMinutes > 23 * 60 + 45) return null;
+    
+    // Calculate position: each 15-minute slot = 56px height
+    const startMinutes = 7 * 60; // 7:00
+    const minutesFromStart = totalMinutes - startMinutes;
+    const pixelsPerMinute = 56 / 15; // 56px per 15-minute slot
+    
+    return minutesFromStart * pixelsPerMinute;
+  };
+  
+  const currentTimeLinePosition = getCurrentTimePosition();
 
   // Helper functions - defined early to avoid initialization errors
   const timeToMinutes = (timeStr: string): number => {
@@ -727,6 +793,7 @@ export function AppointmentDayView1({
 
           {/* Main scrollable content area - Both horizontal and vertical scroll */}
           <div 
+            ref={contentScrollRef}
             id="content-scroll"
             className="flex-1 overflow-auto relative"
             style={{ 
@@ -963,6 +1030,23 @@ export function AppointmentDayView1({
                 </div>
               ))}
             </div>
+            
+            {/* Current time indicator - red line like Google Calendar */}
+            {isTodaySelected && currentTimeLinePosition !== null && (
+              <div
+                className="absolute left-0 right-0 z-50 pointer-events-none"
+                style={{
+                  top: `${currentTimeLinePosition}px`,
+                }}
+              >
+                <div className="relative">
+                  {/* Red dot on the left */}
+                  <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                  {/* Red line */}
+                  <div className="h-0.5 bg-red-500 w-full" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
