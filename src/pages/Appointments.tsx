@@ -458,7 +458,20 @@ const Appointments = () => {
             </DialogContent>
           </Dialog>
           
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <Dialog 
+            open={isFormOpen} 
+            onOpenChange={(open) => {
+              setIsFormOpen(open);
+              // When dialog closes, trigger restoration of scroll position in Day1 view
+              if (!open && viewMode === 'day1') {
+                // Use a small delay to ensure dialog closing animation doesn't interfere
+                setTimeout(() => {
+                  const event = new CustomEvent('restoreScrollPosition');
+                  window.dispatchEvent(event);
+                }, 50);
+              }
+            }}
+          >
             <DialogTrigger asChild>
               <Button className="bg-pink-600 hover:bg-pink-700">
                 <Plus className="w-4 h-4 mr-2" />
