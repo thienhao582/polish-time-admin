@@ -98,18 +98,8 @@ const Appointments = () => {
       console.log('New time:', newTime);
 
       const appointment = appointments.find(apt => apt.id === appointmentId);
-      
-      // Check if this is a test appointment (ID >= 9000)
-      const isTestData = appointmentId >= 9000;
-      
-      if (!appointment && !isTestData) {
-        console.warn('Appointment not found and not test data:', appointmentId);
-        return;
-      }
-
-      if (isTestData) {
-        console.log('Test data detected - showing toast only, no actual update');
-        toast.success(`Test data: Đã di chuyển lịch hẹn sang ${newStaff || 'thời gian mới'}!`);
+      if (!appointment) {
+        console.warn('Appointment not found:', appointmentId);
         return;
       }
 
