@@ -97,7 +97,7 @@ export function AppointmentDayView1({
   const animationFrameRef = useRef<number | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const hasScrolledToCurrentTime = useRef(false);
-  const savedScrollPositionRef = useRef<{ left: number; top: number } | null>(null);
+  
   
   // Calculated data states
   const [calculatedData, setCalculatedData] = useState<{
@@ -276,18 +276,6 @@ export function AppointmentDayView1({
     }
   }, [isTodaySelected, calculatedData]);
   
-  // Listen for scroll restoration event from parent (when dialog closes)
-  useEffect(() => {
-    const handleRestoreScroll = () => {
-      if (savedScrollPositionRef.current && contentScrollRef.current) {
-        contentScrollRef.current.scrollLeft = savedScrollPositionRef.current.left;
-        contentScrollRef.current.scrollTop = savedScrollPositionRef.current.top;
-      }
-    };
-    
-    window.addEventListener('restoreScrollPosition', handleRestoreScroll);
-    return () => window.removeEventListener('restoreScrollPosition', handleRestoreScroll);
-  }, []);
   
   // Calculate current time line position
   const getCurrentTimePosition = (): number | null => {
@@ -383,15 +371,6 @@ export function AppointmentDayView1({
 
   const handleTimeSlotClick = useCallback((dateString, timeSlot, employeeName) => {
     if (isDragging) return; // Don't handle clicks during drag
-    
-    // Save current scroll position before opening dialog
-    if (contentScrollRef.current) {
-      savedScrollPositionRef.current = {
-        left: contentScrollRef.current.scrollLeft,
-        top: contentScrollRef.current.scrollTop
-      };
-    }
-    
     if (onTimeSlotClick) onTimeSlotClick(dateString, timeSlot, employeeName);
   }, [onTimeSlotClick, isDragging]);
 
