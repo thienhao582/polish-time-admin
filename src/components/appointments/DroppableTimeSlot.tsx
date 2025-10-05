@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 
 interface DroppableTimeSlotProps {
   id: string;
@@ -11,7 +11,7 @@ interface DroppableTimeSlotProps {
   title?: string;
 }
 
-export function DroppableTimeSlot({ 
+export const DroppableTimeSlot = memo(function DroppableTimeSlot({ 
   id, 
   children, 
   className, 
@@ -29,7 +29,7 @@ export function DroppableTimeSlot({
       ref={setNodeRef}
       className={cn(
         className,
-        isOver && !disabled && "bg-blue-100 border-blue-300"
+        isOver && !disabled && "bg-primary/10 border-primary"
       )}
       onClick={onClick}
       title={title}
@@ -37,4 +37,4 @@ export function DroppableTimeSlot({
       {children}
     </div>
   );
-}
+});

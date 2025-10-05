@@ -106,11 +106,12 @@ export function AppointmentDayView1({
     onScheduleUpdate?.();
   }, [onScheduleUpdate]);
   
-  // Configure drag sensors - require minimum movement to start drag
+  // Configure drag sensors - use delay instead of distance for better performance
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px movement required to start drag
+        delay: 100, // 100ms delay before drag starts
+        tolerance: 5,
       },
     })
   );
