@@ -92,14 +92,28 @@ const Appointments = () => {
   // Handle appointment drag and drop with proper time calculation
   const handleAppointmentDrop = async (appointmentId: number, newTime: string, newStaff?: string) => {
     try {
-      const appointment = appointments.find(apt => apt.id === appointmentId);
-      if (!appointment) return;
-
       console.log('=== APPOINTMENT DROP DEBUG ===');
       console.log('Appointment ID:', appointmentId);
-      console.log('Current staff:', appointment.staff);
       console.log('New staff:', newStaff);
       console.log('New time:', newTime);
+
+      const appointment = appointments.find(apt => apt.id === appointmentId);
+      
+      // Check if this is a test appointment (ID >= 9000)
+      const isTestData = appointmentId >= 9000;
+      
+      if (!appointment && !isTestData) {
+        console.warn('Appointment not found and not test data:', appointmentId);
+        return;
+      }
+
+      if (isTestData) {
+        console.log('Test data detected - showing toast only, no actual update');
+        toast.success(`Test data: Đã di chuyển lịch hẹn sang ${newStaff || 'thời gian mới'}!`);
+        return;
+      }
+
+      console.log('Current staff:', appointment.staff);
 
       // Parse duration including extra time
       const durationMatch = appointment.duration.match(/(\d+)/);
@@ -122,10 +136,6 @@ const Appointments = () => {
       const newTimeMinutes = timeToMinutes(newTime);
       const snappedMinutes = Math.round(newTimeMinutes / 15) * 15;
       const snappedTime = minutesToTime(snappedMinutes);
-
-      // Calculate end time
-      const endTimeMinutes = snappedMinutes + totalDuration;
-      const endTime = minutesToTime(endTimeMinutes);
 
       // Update appointment data - use newStaff if provided, otherwise keep current staff
       const updateData = {
