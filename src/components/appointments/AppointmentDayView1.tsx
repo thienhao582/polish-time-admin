@@ -851,23 +851,22 @@ export function AppointmentDayView1({
                     setIsAnyonePopupOpen(true);
                   };
 
+                   // Check if this is a single appointment (can be dragged)
+                   const isSingleAppointment = remainingCount === 0;
+
                    return (
                      <div 
                        key={`anyone-hour-${hourSlot}`} 
                        className={cn(
                          "h-14 border-b border-gray-200 bg-white relative p-1 transition-colors duration-75 select-none hover:bg-orange-50"
                         )}
-                        // TEMPORARILY DISABLED - Drag and drop
-                        // onDragEnter={isDragEnabled ? handleDragEnter : undefined}
-                        // onDragOver={isDragEnabled ? handleDragOver : undefined}
-                        // onDragLeave={isDragEnabled ? handleDragLeave : undefined}
-                        // onDrop={isDragEnabled ? (e) => handleDrop(e, hourSlot, "anyone") : undefined}
                         onClick={() => handleTimeSlotClick(dateString, hourSlot, "Bất kì")}
                       >
                          {displayAppointment && (
                            <div
                              className={cn(
-                               "absolute inset-1 border rounded-md p-1 cursor-pointer transition-colors text-xs overflow-hidden select-none",
+                               "absolute inset-1 border rounded-md p-1 transition-colors text-xs overflow-hidden select-none",
+                               isSingleAppointment ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
                                (() => {
                                  const status = displayAppointment.status?.toLowerCase() || 'confirmed';
                                  switch (status) {
@@ -884,20 +883,24 @@ export function AppointmentDayView1({
                                    default:
                                      return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
                                  }
-                               })()
+                               })(),
+                               isDragging && draggedAppointment?.id === displayAppointment.id && "opacity-30"
                              )}
+                             onMouseDown={isSingleAppointment ? (e) => handleMouseDown(e, displayAppointment) : undefined}
                              onClick={(e) => {
                                e.stopPropagation();
-                               handleAppointmentClick(displayAppointment, e);
+                               if (!isDragging) {
+                                 handleAppointmentClick(displayAppointment, e);
+                               }
                              }}
                            >
-                            <div className="font-semibold leading-tight truncate">
+                            <div className="font-semibold leading-tight truncate pointer-events-none">
                               {displayAppointment.customer}
                             </div>
-                            <div className="text-xs leading-tight truncate">
+                            <div className="text-xs leading-tight truncate pointer-events-none">
                               {formatTimeRange(displayAppointment.time, displayAppointment.duration)}
                             </div>
-                            <div className="text-xs leading-tight truncate">
+                            <div className="text-xs leading-tight truncate pointer-events-none">
                               {displayAppointment.service}
                             </div>
                           </div>
