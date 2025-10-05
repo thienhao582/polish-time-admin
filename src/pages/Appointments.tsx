@@ -13,6 +13,7 @@ import { AppointmentFilters } from "@/components/appointments/AppointmentFilters
 import { AppointmentMonthView } from "@/components/appointments/AppointmentMonthView";
 import { AppointmentWeekView } from "@/components/appointments/AppointmentWeekView";
 import { AppointmentDayView } from "@/components/appointments/AppointmentDayView";
+import { AppointmentDayView1 } from "@/components/appointments/AppointmentDayView1";
 import { AppointmentDetailDialog } from "@/components/appointments/AppointmentDetailDialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
@@ -50,7 +51,7 @@ interface LegacyAppointment {
 const Appointments = () => {
   const { t } = useLanguage();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week" | "day" | "day1">("month");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isStaffManagerOpen, setIsStaffManagerOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<LegacyAppointment | null>(null);
@@ -252,8 +253,11 @@ const Appointments = () => {
     } else if (viewMode === "week") {
       startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
       endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
-    } else {
+    } else if (viewMode === "day" || viewMode === "day1") {
       // day view
+      startDate = currentDate;
+      endDate = currentDate;
+    } else {
       startDate = currentDate;
       endDate = currentDate;
     }
@@ -343,7 +347,7 @@ const Appointments = () => {
       newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
     } else if (viewMode === "week") {
       newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
-    } else {
+    } else if (viewMode === "day" || viewMode === "day1") {
       newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
     }
     setSelectedDate(newDate);
@@ -355,7 +359,7 @@ const Appointments = () => {
 
   // Auto open sidebar when switching to day view
   useEffect(() => {
-    if (viewMode === "day") {
+    if (viewMode === "day" || viewMode === "day1") {
       setShowAvailableStaffSidebar(true);
     } else {
       setShowAvailableStaffSidebar(false);
@@ -537,7 +541,7 @@ const Appointments = () => {
       {/* Main Content with Sidebar - Full Height Container */}
       <div className={`flex-1 flex gap-4 min-h-0 overflow-hidden ${isMaximized ? 'h-full' : ''}`}>
         {/* Calendar View - Calculate max width based on available space */}
-        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${showAvailableStaffSidebar && viewMode === "day" ? 'flex-1 max-w-[calc(100vw-320px)]' : 'flex-1'}`}>
+        <div className={`transition-all duration-300 min-w-0 overflow-hidden ${showAvailableStaffSidebar && (viewMode === "day" || viewMode === "day1") ? 'flex-1 max-w-[calc(100vw-320px)]' : 'flex-1'}`}>
           <Card className="h-full overflow-hidden">
             <CardContent className="p-0 h-full overflow-hidden">
               {viewMode === "month" && (
@@ -572,12 +576,25 @@ const Appointments = () => {
                   onAppointmentDrop={handleAppointmentDrop}
                 />
               )}
+              {viewMode === "day1" && (
+                <AppointmentDayView1
+                  selectedDate={selectedDate}
+                  filteredAppointments={filteredAppointments}
+                  handleAppointmentClick={handleAppointmentClick}
+                  displayMode={displayMode}
+                  showFullView={showFullView || !hasActiveFilters}
+                  onTimeSlotClick={handleTimeSlotClick}
+                  searchQuery={searchQuery}
+                  onAppointmentCreated={loadAppointments}
+                  onAppointmentDrop={handleAppointmentDrop}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Available Staff Sidebar */}
-        {viewMode === "day" && showAvailableStaffSidebar && (
+        {(viewMode === "day" || viewMode === "day1") && showAvailableStaffSidebar && (
           <div className="w-64 flex-shrink-0 overflow-hidden">
             <Card className="h-full overflow-hidden">
               <CardContent className="p-3 h-full">

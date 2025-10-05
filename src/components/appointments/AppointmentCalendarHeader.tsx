@@ -5,8 +5,8 @@ import { vi } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppointmentCalendarHeaderProps {
-  viewMode: "month" | "week" | "day";
-  setViewMode: (mode: "month" | "week" | "day") => void;
+  viewMode: "month" | "week" | "day" | "day1";
+  setViewMode: (mode: "month" | "week" | "day" | "day1") => void;
   selectedDate: Date;
   handleDateNavigation: (direction: "prev" | "next") => void;
   setSelectedDate: (date: Date) => void;
@@ -45,6 +45,13 @@ export function AppointmentCalendarHeader({
         >
           {t('appointments.day')}
         </Button>
+        <Button
+          variant={viewMode === "day1" ? "default" : "outline"}
+          onClick={() => setViewMode("day1")}
+          className={viewMode === "day1" ? "bg-pink-600 hover:bg-pink-700" : ""}
+        >
+          Day 1
+        </Button>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -55,7 +62,7 @@ export function AppointmentCalendarHeader({
           <span className="text-lg font-medium min-w-[200px] text-center">
             {viewMode === "month" && format(selectedDate, "MMMM yyyy", { locale: vi })}
             {viewMode === "week" && `Tuần ${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "dd/MM")} - ${format(endOfWeek(selectedDate, { weekStartsOn: 1 }), "dd/MM/yyyy")}`}
-            {viewMode === "day" && format(selectedDate, "dd MMMM yyyy", { locale: vi })}
+            {(viewMode === "day" || viewMode === "day1") && format(selectedDate, "dd MMMM yyyy", { locale: vi })}
           </span>
           <Button variant="outline" size="sm" onClick={() => handleDateNavigation("next")}>
             <ChevronRight className="w-4 h-4" />
