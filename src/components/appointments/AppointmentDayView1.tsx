@@ -188,15 +188,17 @@ export function AppointmentDayView1({
         if (timeChanged) updates.time = hoveredSlot.time;
         if (staffChanged) updates.staff = hoveredSlot.staff;
         
+        // Calculate endTime based on duration
+        const durationMinutes = parseDuration(draggedAppointment.duration, (draggedAppointment as any).extraTime);
+        updates.endTime = timeToEndTime(hoveredSlot.time, durationMinutes);
+        
+        // Single update with all changes
         updateAppointment(draggedAppointment.id, updates);
         
-        if (onAppointmentDrop) {
-          onAppointmentDrop(draggedAppointment.id, hoveredSlot.time, hoveredSlot.staff);
-        }
-        
+        // Show success toast
         toast({
           title: "Đã cập nhật lịch hẹn",
-          description: `${draggedAppointment.customer} - ${timeChanged ? `Thời gian mới: ${hoveredSlot.time}` : ''} ${staffChanged ? `Nhân viên mới: ${hoveredSlot.staff}` : ''}`.trim(),
+          description: `${draggedAppointment.customer} - ${timeChanged ? `Thời gian: ${hoveredSlot.time}` : ''} ${staffChanged ? `Nhân viên: ${hoveredSlot.staff}` : ''}`.trim(),
         });
       }
     }
@@ -205,7 +207,7 @@ export function AppointmentDayView1({
     setIsDragging(false);
     setDraggedAppointment(null);
     setHoveredSlot(null);
-  }, [isDragging, draggedAppointment, hoveredSlot, updateAppointment, onAppointmentDrop]);
+  }, [isDragging, draggedAppointment, hoveredSlot, updateAppointment]);
   
   // Add/remove mouse listeners
   useEffect(() => {
