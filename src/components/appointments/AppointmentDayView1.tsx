@@ -184,22 +184,16 @@ export function AppointmentDayView1({
       const staffChanged = draggedAppointment.staff !== hoveredSlot.staff;
       
       if (timeChanged || staffChanged) {
-        const updates: any = {};
-        if (timeChanged) updates.time = hoveredSlot.time;
-        if (staffChanged) updates.staff = hoveredSlot.staff;
+        // Only call the callback - it will handle the update
+        if (onAppointmentDrop) {
+          onAppointmentDrop(draggedAppointment.id, hoveredSlot.time, hoveredSlot.staff);
+        }
         
-        // Calculate endTime based on duration
-        const durationMinutes = parseDuration(draggedAppointment.duration, (draggedAppointment as any).extraTime);
-        updates.endTime = timeToEndTime(hoveredSlot.time, durationMinutes);
-        
-        // Single update with all changes
-        updateAppointment(draggedAppointment.id, updates);
-        
-        // Show success toast
-        toast({
-          title: "Đã cập nhật lịch hẹn",
-          description: `${draggedAppointment.customer} - ${timeChanged ? `Thời gian: ${hoveredSlot.time}` : ''} ${staffChanged ? `Nhân viên: ${hoveredSlot.staff}` : ''}`.trim(),
-        });
+        // Show success toast is now handled in the callback
+        // toast({
+        //   title: "Đã cập nhật lịch hẹn",
+        //   description: `${draggedAppointment.customer} - ${timeChanged ? `Thời gian mới: ${hoveredSlot.time}` : ''} ${staffChanged ? `Nhân viên mới: ${hoveredSlot.staff}` : ''}`.trim(),
+        // });
       }
     }
     
@@ -207,7 +201,7 @@ export function AppointmentDayView1({
     setIsDragging(false);
     setDraggedAppointment(null);
     setHoveredSlot(null);
-  }, [isDragging, draggedAppointment, hoveredSlot, updateAppointment]);
+  }, [isDragging, draggedAppointment, hoveredSlot, onAppointmentDrop]);
   
   // Add/remove mouse listeners
   useEffect(() => {
