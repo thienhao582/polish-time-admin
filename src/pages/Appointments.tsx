@@ -485,6 +485,7 @@ const Appointments = () => {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </div>
 
