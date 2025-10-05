@@ -12,10 +12,7 @@ import { CheckInSidebar } from "./CheckInSidebar";
 import { EmployeeScheduleDialog } from "./EmployeeScheduleDialog";
 import { QuickScheduleDialog } from "./QuickScheduleDialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent, DragEndEvent } from "@dnd-kit/core";
 import { toast } from "@/hooks/use-toast";
-import { DroppableTimeSlot } from "./DroppableTimeSlot";
-import { DraggableAppointment } from "./DraggableAppointment";
 
 interface Appointment {
   id: number;
@@ -83,8 +80,13 @@ export function AppointmentDayView1({
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isCalculatingAvailability, setIsCalculatingAvailability] = useState(false);
   
-  // Drag and drop state
-  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null);
+  // Custom drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [dragTimer, setDragTimer] = useState<NodeJS.Timeout | null>(null);
+  const [hoveredSlot, setHoveredSlot] = useState<{ time: string; staff: string } | null>(null);
   
   // Calculated data states
   const [calculatedData, setCalculatedData] = useState<{
@@ -106,18 +108,75 @@ export function AppointmentDayView1({
     onScheduleUpdate?.();
   }, [onScheduleUpdate]);
   
-  // Configure drag sensors - use delay instead of distance for better performance
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        delay: 100, // 100ms delay before drag starts
-        tolerance: 5,
-      },
-    })
-  );
-  
   // Get updateAppointment from store
   const updateAppointment = useSalonStore(s => s.updateAppointment);
+  
+  // Custom drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent, appointment: Appointment) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const timer = setTimeout(() => {
+      setDraggedAppointment(appointment);
+      setDragStartPos({ x: e.clientX, y: e.clientY });
+      setDragPosition({ x: e.clientX, y: e.clientY });
+      setIsDragging(true);
+    }, 200); // 200ms hold to start drag
+    
+    setDragTimer(timer);
+  }, []);
+  
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging && draggedAppointment) {
+      setDragPosition({ x: e.clientX, y: e.clientY });
+    }
+  }, [isDragging, draggedAppointment]);
+  
+  const handleMouseUp = useCallback((e: MouseEvent) => {
+    if (dragTimer) {
+      clearTimeout(dragTimer);
+      setDragTimer(null);
+    }
+    
+    if (isDragging && draggedAppointment && hoveredSlot) {
+      // Update appointment
+      const timeChanged = draggedAppointment.time !== hoveredSlot.time;
+      const staffChanged = draggedAppointment.staff !== hoveredSlot.staff;
+      
+      if (timeChanged || staffChanged) {
+        const updates: any = {};
+        if (timeChanged) updates.time = hoveredSlot.time;
+        if (staffChanged) updates.staff = hoveredSlot.staff;
+        
+        updateAppointment(draggedAppointment.id, updates);
+        
+        if (onAppointmentDrop) {
+          onAppointmentDrop(draggedAppointment.id, hoveredSlot.time, hoveredSlot.staff);
+        }
+        
+        toast({
+          title: "Đã cập nhật lịch hẹn",
+          description: `${draggedAppointment.customer} - ${timeChanged ? `Thời gian mới: ${hoveredSlot.time}` : ''} ${staffChanged ? `Nhân viên mới: ${hoveredSlot.staff}` : ''}`.trim(),
+        });
+      }
+    }
+    
+    setIsDragging(false);
+    setDraggedAppointment(null);
+    setHoveredSlot(null);
+  }, [isDragging, draggedAppointment, hoveredSlot, dragTimer, updateAppointment, onAppointmentDrop]);
+  
+  // Add/remove mouse listeners
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Helper functions - defined early to avoid initialization errors
   const timeToMinutes = (timeStr: string): number => {
@@ -190,58 +249,9 @@ export function AppointmentDayView1({
   };
 
   const handleTimeSlotClick = useCallback((dateString, timeSlot, employeeName) => {
+    if (isDragging) return; // Don't handle clicks during drag
     if (onTimeSlotClick) onTimeSlotClick(dateString, timeSlot, employeeName);
-  }, [onTimeSlotClick]);
-  
-  // Drag handlers
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const appointmentId = event.active.id as number;
-    const appointment = calculatedData?.allDayAppointments.find(apt => apt.id === appointmentId);
-    if (appointment) {
-      setActiveAppointment(appointment);
-    }
-  }, [calculatedData]);
-  
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveAppointment(null);
-    
-    if (!over) return;
-    
-    const appointmentId = active.id as number;
-    const appointment = calculatedData?.allDayAppointments.find(apt => apt.id === appointmentId);
-    
-    if (!appointment) return;
-    
-    // Parse drop target data
-    const dropData = over.id as string;
-    const [timeSlot, employeeName] = dropData.split('||');
-    
-    // Check if anything changed
-    const timeChanged = appointment.time !== timeSlot;
-    const staffChanged = appointment.staff !== employeeName;
-    
-    if (!timeChanged && !staffChanged) return;
-    
-    // Optimistic UI update
-    const updates: any = {};
-    if (timeChanged) updates.time = timeSlot;
-    if (staffChanged) updates.staff = employeeName;
-    
-    // Update in store
-    updateAppointment(appointmentId, updates);
-    
-    // Call API callback if provided
-    if (onAppointmentDrop) {
-      onAppointmentDrop(appointmentId, timeSlot, employeeName);
-    }
-    
-    // Show success toast
-    toast({
-      title: "Đã cập nhật lịch hẹn",
-      description: `${appointment.customer} - ${timeChanged ? `Thời gian mới: ${timeSlot}` : ''} ${staffChanged ? `Nhân viên mới: ${employeeName}` : ''}`.trim(),
-    });
-  }, [calculatedData, updateAppointment, onAppointmentDrop]);
+  }, [onTimeSlotClick, isDragging]);
 
   // Get appointments for a specific employee and time slot
   const getEmployeeAppointmentsForTimeSlot = (employee: any, timeSlot: string) => {
@@ -553,12 +563,7 @@ export function AppointmentDayView1({
 
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden relative">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border-b border-blue-200 flex-shrink-0">
         <div className="flex items-start justify-between">
@@ -809,20 +814,29 @@ export function AppointmentDayView1({
                     const availability = calculatedData.employeeAvailability.get(key) || { available: true };
 
                       return (
-                        <DroppableTimeSlot
+                        <div
                           key={`${employee.id}-${timeSlot}-${scheduleUpdateCounter}`}
-                          id={`${timeSlot}||${employee.name}`}
                           className={cn(
                             "h-14 border-b border-gray-200 relative p-1 transition-colors duration-75 select-none",
                             !availability.available 
                               ? "bg-gray-200 cursor-not-allowed opacity-60" 
                               : startingAppointments.length === 0 
                                 ? "bg-white hover:bg-blue-50 cursor-pointer" 
-                                : "bg-white"
+                                : "bg-white",
+                            hoveredSlot?.time === timeSlot && hoveredSlot?.staff === employee.name && isDragging && "bg-primary/20 border-2 border-primary"
                           )}
                           onClick={availability.available ? () => handleTimeSlotClick(dateString, timeSlot, employee.name) : undefined}
-                          disabled={!availability.available}
                           title={!availability.available ? availability.reason : undefined}
+                          onMouseEnter={() => {
+                            if (isDragging && availability.available) {
+                              setHoveredSlot({ time: timeSlot, staff: employee.name });
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (isDragging) {
+                              setHoveredSlot(null);
+                            }
+                          }}
                         >
                           {/* Show appointments that start at this time slot */}
                           {startingAppointments.map((apt, aptIndex) => {
@@ -854,46 +868,51 @@ export function AppointmentDayView1({
                                 default:
                                   return 'bg-[hsl(var(--status-confirmed-bg))] border-[hsl(var(--status-confirmed-border))] text-[hsl(var(--status-confirmed))]';
                               }
-                             };
+                            };
+                            
+                            const isBeingDragged = isDragging && draggedAppointment?.id === apt.id;
                              
-                              return (
-                                 <DraggableAppointment
-                                   key={`${apt.id}-${aptIndex}`}
-                                   id={apt.id}
-                                    className={cn(
-                                        "absolute border rounded-md p-1 transition-colors text-xs overflow-hidden",
-                                        getAppointmentColor()
-                                      )}
-                                     style={{
-                                       top: `${topOffset}px`,
-                                       height: `${height}px`,
-                                       left: '4px',
-                                       right: '4px',
-                                       zIndex: 10
-                                     }}
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleAppointmentClick(apt, e);
-                                     }}
-                                 >
-                                  <div className="font-semibold leading-tight truncate text-xs">
-                                    {apt.customer}
+                            return (
+                              <div
+                                key={`${apt.id}-${aptIndex}`}
+                                className={cn(
+                                  "absolute border rounded-md p-1 text-xs overflow-hidden cursor-grab active:cursor-grabbing select-none",
+                                  getAppointmentColor(),
+                                  isBeingDragged && "opacity-30"
+                                )}
+                                style={{
+                                  top: `${topOffset}px`,
+                                  height: `${height}px`,
+                                  left: '4px',
+                                  right: '4px',
+                                  zIndex: 10
+                                }}
+                                onMouseDown={(e) => handleMouseDown(e, apt)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isDragging) {
+                                    handleAppointmentClick(apt, e);
+                                  }
+                                }}
+                              >
+                                <div className="font-semibold leading-tight truncate text-xs pointer-events-none">
+                                  {apt.customer}
+                                </div>
+                                <div className="text-xs leading-tight truncate pointer-events-none">
+                                  {formatTimeRange(apt.time, getDisplayDuration(apt))}
+                                </div>
+                                <div className="text-xs leading-tight truncate pointer-events-none">
+                                  {apt.service}
+                                </div>
+                                {(apt as any).extraTime && (apt as any).extraTime > 0 && (
+                                  <div className="text-xs leading-tight truncate font-medium text-red-600 pointer-events-none">
+                                    +{(apt as any).extraTime} phút
                                   </div>
-                                  <div className="text-xs leading-tight truncate">
-                                    {formatTimeRange(apt.time, getDisplayDuration(apt))}
-                                  </div>
-                                  <div className="text-xs leading-tight truncate">
-                                    {apt.service}
-                                  </div>
-                                  {(apt as any).extraTime && (apt as any).extraTime > 0 && (
-                                    <div className="text-xs leading-tight truncate font-medium text-red-600">
-                                       +{(apt as any).extraTime} phút
-                                     </div>
-                                   )}
-                                 </DraggableAppointment>
-                               );
+                                )}
+                              </div>
+                            );
                           })}
-                        </DroppableTimeSlot>
+                        </div>
                       );
                   })}
                 </div>
@@ -969,17 +988,23 @@ export function AppointmentDayView1({
         </DialogContent>
       </Dialog>
       
-      {/* Drag Overlay - Shows appointment card while dragging */}
-      <DragOverlay>
-        {activeAppointment ? (
-          <div className="bg-blue-100 border-2 border-blue-500 rounded-md p-2 shadow-lg opacity-90">
-            <div className="font-semibold text-sm">{activeAppointment.customer}</div>
-            <div className="text-xs">{formatTimeRange(activeAppointment.time, activeAppointment.duration)}</div>
-            <div className="text-xs">{activeAppointment.service}</div>
+      {/* Custom Drag Overlay - Shows cloned appointment card while dragging */}
+      {isDragging && draggedAppointment && (
+        <div
+          className="fixed pointer-events-none z-[9999]"
+          style={{
+            left: dragPosition.x - 80,
+            top: dragPosition.y - 30,
+            width: '160px',
+          }}
+        >
+          <div className="bg-primary/20 border-2 border-primary rounded-md p-2 shadow-2xl backdrop-blur-sm">
+            <div className="font-semibold text-sm">{draggedAppointment.customer}</div>
+            <div className="text-xs">{formatTimeRange(draggedAppointment.time, draggedAppointment.duration)}</div>
+            <div className="text-xs truncate">{draggedAppointment.service}</div>
           </div>
-        ) : null}
-      </DragOverlay>
+        </div>
+      )}
     </div>
-    </DndContext>
   );
 }
