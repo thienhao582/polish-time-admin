@@ -56,9 +56,6 @@ export function AppointmentDayView1({
   const dateString = format(selectedDate, "yyyy-MM-dd");
   const { employees, timeRecords } = useSalonStore();
   const { appointmentColors } = useSettingsStore();
-
-  // Real appointment ids (to avoid dragging demo/test items)
-  const realAppointmentIds = useMemo(() => new Set(filteredAppointments.map(a => a.id)), [filteredAppointments]);
   
   // State for anyone appointments popup
   const [isAnyonePopupOpen, setIsAnyonePopupOpen] = useState(false);
@@ -853,8 +850,6 @@ export function AppointmentDayView1({
 
                   // Check if this is a single appointment (can be dragged)
                    const isSingleAppointment = remainingCount === 0;
-                   const isFromRealData = displayAppointment ? realAppointmentIds.has(displayAppointment.id) : false;
-                   const isDraggable = isSingleAppointment && isFromRealData;
 
                    return (
                      <div 
@@ -868,7 +863,7 @@ export function AppointmentDayView1({
                            <div
                              className={cn(
                                "absolute inset-1 border rounded-md p-1 transition-colors text-xs overflow-hidden select-none",
-                               isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+                               isSingleAppointment ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
                                (() => {
                                  const status = displayAppointment.status?.toLowerCase() || 'confirmed';
                                  switch (status) {
@@ -888,7 +883,7 @@ export function AppointmentDayView1({
                                })(),
                                isDragging && draggedAppointment?.id === displayAppointment.id && "opacity-30"
                               )}
-                              onMouseDown={isDraggable ? (e) => handleMouseDown(e, displayAppointment) : undefined}
+                              onMouseDown={isSingleAppointment ? (e) => handleMouseDown(e, displayAppointment) : undefined}
                               onClick={(e) => {
                                e.stopPropagation();
                                if (!isDragging) {
