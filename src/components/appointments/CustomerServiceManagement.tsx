@@ -880,7 +880,7 @@ export function CustomerServiceManagement({
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex gap-2 pt-4 pb-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => handlePrintInvoice(selectedInvoice)}
