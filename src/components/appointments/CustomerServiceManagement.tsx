@@ -751,7 +751,10 @@ export function CustomerServiceManagement({
                           
                           return service.staff.map((staffMember: any) => {
                             const staffKey = `${staffMember.name}-${idx}`;
-                            const currentStaffTip = staffTips[staffKey] || 0;
+                            // Check if tip is already saved in the service's staffTips object
+                            const savedStaffTipKey = Object.keys(service.staffTips || {}).find(key => key.includes(staffMember.name));
+                            const savedTip = savedStaffTipKey ? service.staffTips[savedStaffTipKey] : 0;
+                            const currentStaffTip = staffTips[staffKey] || savedTip;
                             
                             return (
                               <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
