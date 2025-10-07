@@ -728,9 +728,10 @@ export function CustomerServiceManagement({
                     // So: tip = total - subtotal - VAT + discount
                     const vat = Math.round(selectedInvoice.subtotal * 0.08);
                     const invoiceTotalTip = selectedInvoice.total - selectedInvoice.subtotal - vat + selectedInvoice.discount;
-                    // Calculate total tip being distributed to staff
-                    const currentTotalTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
-                    const remainingTip = invoiceTotalTip - currentTotalTip;
+                    // Calculate total tip already distributed to staff
+                    const distributedTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
+                    // Remaining tip = Total tip - Distributed tip
+                    const remainingTip = invoiceTotalTip - distributedTip;
                     
                     return (
                       <div className="space-y-3">
