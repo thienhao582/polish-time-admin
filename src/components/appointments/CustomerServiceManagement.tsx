@@ -723,8 +723,10 @@ export function CustomerServiceManagement({
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
                   {(() => {
-                    // Get total tip from invoice services (already saved)
-                    const invoiceTotalTip = selectedInvoice.services.reduce((sum: number, s: any) => sum + (s.tip || 0), 0);
+                    // Get total tip from invoice (saved in first service or calculate from total)
+                    // Tip is stored in services[0].tip when saved
+                    const invoiceTotalTip = selectedInvoice.services[0]?.tip || 
+                      (selectedInvoice.total - selectedInvoice.subtotal + selectedInvoice.discount - Math.round(selectedInvoice.subtotal * 0.08));
                     // Calculate total tip already distributed to staff
                     const distributedTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
                     // Remaining tip = Total tip - Distributed tip
