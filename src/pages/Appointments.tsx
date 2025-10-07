@@ -227,10 +227,20 @@ const Appointments = () => {
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(apt => 
-        apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        apt.staff.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(apt => {
+        const nameMatch = apt.customer.toLowerCase().includes(query);
+        const staffMatch = apt.staff.toLowerCase().includes(query);
+        
+        // Check if searching by last 4 digits of phone or full phone
+        if (apt.phone) {
+          const last4Digits = apt.phone.slice(-4);
+          const phoneMatch = last4Digits.includes(query) || apt.phone.includes(query);
+          return nameMatch || staffMatch || phoneMatch;
+        }
+        
+        return nameMatch || staffMatch;
+      });
     }
 
     // Apply staff filter
