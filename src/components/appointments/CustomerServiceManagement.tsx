@@ -53,6 +53,7 @@ export function CustomerServiceManagement({
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [staffTips, setStaffTips] = useState<{ [key: string]: number }>({});
   const [isSavingTip, setIsSavingTip] = useState(false);
+  const [hasTipChanges, setHasTipChanges] = useState(false);
   const { appointments: demoAppointments, customers: demoCustomers } = useSalonStore();
   const { isDemoMode } = useDemoMode();
 
@@ -263,6 +264,8 @@ export function CustomerServiceManagement({
   };
 
   const loadInvoiceData = async (invoiceId: string) => {
+    setHasTipChanges(false);
+    
     if (isDemoMode) {
       // In demo mode, find the invoice from historyInvoices
       const invoice = historyInvoices.find(inv => inv.id === invoiceId);
@@ -362,6 +365,7 @@ export function CustomerServiceManagement({
 
       toast.success("Đã cập nhật tip thành công");
       setInvoiceData({ ...invoiceData, services: updatedServices });
+      setHasTipChanges(false);
     } catch (error) {
       console.error('Error updating tip:', error);
       toast.error("Không thể cập nhật tip");
@@ -773,7 +777,7 @@ export function CustomerServiceManagement({
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Input
+                                   <Input
                                     type="number"
                                     value={currentStaffTip}
                                     onChange={(e) => {
@@ -785,6 +789,7 @@ export function CustomerServiceManagement({
                                           ...prev,
                                           [staffKey]: 0
                                         }));
+                                        setHasTipChanges(true);
                                         return;
                                       }
                                       
@@ -799,6 +804,7 @@ export function CustomerServiceManagement({
                                         ...prev,
                                         [staffKey]: newValue
                                       }));
+                                      setHasTipChanges(true);
                                     }}
                                     onBlur={(e) => {
                                       // Ensure value is a valid number on blur
@@ -883,7 +889,7 @@ export function CustomerServiceManagement({
                   <Printer className="w-4 h-4 mr-2" />
                   In hóa đơn
                 </Button>
-                {!isDemoMode && invoiceData && (
+                {!isDemoMode && invoiceData && hasTipChanges && (
                   <Button
                     onClick={handleSaveTip}
                     disabled={isSavingTip}
@@ -895,7 +901,10 @@ export function CustomerServiceManagement({
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedInvoice(null)}
+                  onClick={() => {
+                    setSelectedInvoice(null);
+                    setHasTipChanges(false);
+                  }}
                   className="flex-1"
                 >
                   Đóng
