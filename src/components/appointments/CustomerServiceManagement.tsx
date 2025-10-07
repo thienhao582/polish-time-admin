@@ -498,10 +498,19 @@ export function CustomerServiceManagement({
     );
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.phone?.includes(searchQuery)
-  );
+  const filteredCustomers = customers.filter(customer => {
+    const query = searchQuery.toLowerCase().trim();
+    const nameMatch = customer.name.toLowerCase().includes(query);
+    
+    // Check if searching by last 4 digits of phone or full phone
+    if (customer.phone) {
+      const last4Digits = customer.phone.slice(-4);
+      const phoneMatch = last4Digits.includes(query) || customer.phone.includes(query);
+      return nameMatch || phoneMatch;
+    }
+    
+    return nameMatch;
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
