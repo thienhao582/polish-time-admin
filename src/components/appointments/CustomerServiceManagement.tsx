@@ -725,8 +725,20 @@ export function CustomerServiceManagement({
                   {(() => {
                     // Get total tip from invoice (saved in first service or calculate from total)
                     // Tip is stored in services[0].tip when saved
-                    const invoiceTotalTip = selectedInvoice.services[0]?.tip || 
-                      (selectedInvoice.total - selectedInvoice.subtotal + selectedInvoice.discount - Math.round(selectedInvoice.subtotal * 0.08));
+                    const tipFromService = selectedInvoice.services[0]?.tip || 0;
+                    const calculatedTip = selectedInvoice.total - selectedInvoice.subtotal + selectedInvoice.discount - Math.round(selectedInvoice.subtotal * 0.08);
+                    const invoiceTotalTip = tipFromService > 0 ? tipFromService : calculatedTip;
+                    
+                    console.log('Debug tip calculation:', {
+                      tipFromService,
+                      calculatedTip,
+                      invoiceTotalTip,
+                      total: selectedInvoice.total,
+                      subtotal: selectedInvoice.subtotal,
+                      discount: selectedInvoice.discount,
+                      services: selectedInvoice.services
+                    });
+                    
                     // Calculate total tip already distributed to staff
                     const distributedTip = Object.values(staffTips).reduce((sum, tip) => sum + tip, 0);
                     // Remaining tip = Total tip - Distributed tip
