@@ -889,7 +889,7 @@ export function CustomerServiceManagement({
                   <Printer className="w-4 h-4 mr-2" />
                   In hóa đơn
                 </Button>
-                {!isDemoMode && invoiceData && hasTipChanges && (
+                {invoiceData && hasTipChanges && (
                   <Button
                     onClick={handleSaveTip}
                     disabled={isSavingTip}
