@@ -269,22 +269,23 @@ export function CustomerServiceManagement({
       if (invoice) {
         setInvoiceData(invoice);
         
-        // Initialize staff tips with existing values or 0
-        if (invoice.services?.[0]?.staffTips) {
-          setStaffTips(invoice.services[0].staffTips);
-        } else {
-          // Initialize all staff tips to 0 if not exists
-          const initialTips: { [key: string]: number } = {};
-          const services = Array.isArray(invoice.services) ? invoice.services : [];
-          services.forEach((service: any, idx: number) => {
-            const staff = Array.isArray(service?.staff) ? service.staff : [];
-            staff.forEach((staffMember: any) => {
-              const staffKey = `${staffMember.name}-${idx}`;
-              initialTips[staffKey] = staffMember.tip || 0;
-            });
+        // Initialize staff tips with existing values from staffTips object
+        const initialTips: { [key: string]: number } = {};
+        const services = Array.isArray(invoice.services) ? invoice.services : [];
+        services.forEach((service: any, idx: number) => {
+          const staff = Array.isArray(service?.staff) ? service.staff : [];
+          staff.forEach((staffMember: any) => {
+            const staffKey = `${staffMember.name}-${idx}`;
+            // Try to find the saved tip from service.staffTips using staff name
+            if (service.staffTips) {
+              const savedTipKey = Object.keys(service.staffTips).find(key => key.includes(staffMember.name));
+              initialTips[staffKey] = savedTipKey ? service.staffTips[savedTipKey] : 0;
+            } else {
+              initialTips[staffKey] = 0;
+            }
           });
-          setStaffTips(initialTips);
-        }
+        });
+        setStaffTips(initialTips);
       } else {
         setInvoiceData(null);
         setStaffTips({});
@@ -308,22 +309,23 @@ export function CustomerServiceManagement({
 
       setInvoiceData(data);
       
-      // Initialize staff tips with existing values or 0
-      if (data?.services?.[0]?.staffTips) {
-        setStaffTips(data.services[0].staffTips);
-      } else {
-        // Initialize all staff tips to 0 if not exists
-        const initialTips: { [key: string]: number } = {};
-        const services = Array.isArray(data?.services) ? data.services : [];
-        services.forEach((service: any, idx: number) => {
-          const staff = Array.isArray(service?.staff) ? service.staff : [];
-          staff.forEach((staffMember: any) => {
-            const staffKey = `${staffMember.name}-${idx}`;
-            initialTips[staffKey] = staffMember.tip || 0;
-          });
+      // Initialize staff tips with existing values from staffTips object
+      const initialTips: { [key: string]: number } = {};
+      const services = Array.isArray(data?.services) ? data.services : [];
+      services.forEach((service: any, idx: number) => {
+        const staff = Array.isArray(service?.staff) ? service.staff : [];
+        staff.forEach((staffMember: any) => {
+          const staffKey = `${staffMember.name}-${idx}`;
+          // Try to find the saved tip from service.staffTips using staff name
+          if (service.staffTips) {
+            const savedTipKey = Object.keys(service.staffTips).find(key => key.includes(staffMember.name));
+            initialTips[staffKey] = savedTipKey ? service.staffTips[savedTipKey] : 0;
+          } else {
+            initialTips[staffKey] = 0;
+          }
         });
-        setStaffTips(initialTips);
-      }
+      });
+      setStaffTips(initialTips);
     } catch (error) {
       console.error('Error loading invoice data:', error);
       setInvoiceData(null);
@@ -751,10 +753,7 @@ export function CustomerServiceManagement({
                           
                           return service.staff.map((staffMember: any) => {
                             const staffKey = `${staffMember.name}-${idx}`;
-                            // Check if tip is already saved in the service's staffTips object
-                            const savedStaffTipKey = Object.keys(service.staffTips || {}).find(key => key.includes(staffMember.name));
-                            const savedTip = savedStaffTipKey ? service.staffTips[savedStaffTipKey] : 0;
-                            const currentStaffTip = staffTips[staffKey] || savedTip;
+                            const currentStaffTip = staffTips[staffKey] || 0;
                             
                             return (
                               <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
