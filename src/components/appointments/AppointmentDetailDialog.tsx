@@ -213,7 +213,7 @@ export function AppointmentDetailDialog({
                           Nhân viên: {service.staffNames.join(", ")}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {service.duration} phút • {service.price.toLocaleString('vi-VN')}đ
+                          {service.duration} phút • ${service.price.toFixed(2)}
                         </p>
                       </div>
                     </div>

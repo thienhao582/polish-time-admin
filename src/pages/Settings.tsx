@@ -105,7 +105,7 @@ const Settings = () => {
                   className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
                 />
                 <p className="text-xs text-gray-500">
-                  Hóa đơn phải đạt tối thiểu {formData.minimumAmount.toLocaleString()} VND mới được tích điểm
+                  Hóa đơn phải đạt tối thiểu ${(formData.minimumAmount / 24000).toFixed(2)} USD mới được tích điểm
                 </p>
               </div>
             </div>
@@ -113,7 +113,7 @@ const Settings = () => {
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-800 mb-2">Ví dụ tính điểm:</h4>
               <p className="text-sm text-gray-600">
-                Hóa đơn 500.000 VND sẽ được tích: {Math.floor((500000 / 1000) * formData.pointsPerAmount)} điểm
+                Hóa đơn $20.83 USD sẽ được tích: {Math.floor((20.83 / (1000/24000)) * formData.pointsPerAmount)} điểm
               </p>
               <p className="text-sm text-gray-600">
                 Hóa đơn 1.200.000 VND sẽ được tích: {Math.floor((1200000 / 1000) * formData.pointsPerAmount)} điểm

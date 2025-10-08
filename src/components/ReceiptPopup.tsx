@@ -186,23 +186,23 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
               <div class="totals">
                 <div class="total-line">
                   <span>Subtotal:</span>
-                  <span>${subtotal.toLocaleString('vi-VN')}₫</span>
+                  <span>$${subtotal.toFixed(2)}</span>
                 </div>
                 <div class="total-line">
                   <span>Discount${discountType === 'percentage' ? ` (${discountValue}%)` : ''}:</span>
-                  <span>-${discountAmount.toLocaleString('vi-VN')}₫</span>
+                  <span>-$${discountAmount.toFixed(2)}</span>
                 </div>
                 <div class="total-line">
                   <span>VAT (8%):</span>
-                  <span>${tax.toLocaleString('vi-VN')}₫</span>
+                  <span>$${tax.toFixed(2)}</span>
                 </div>
                 <div class="total-line">
                   <span>Tip (5%):</span>
-                  <span>${tip.toLocaleString('vi-VN')}₫</span>
+                  <span>$${tip.toFixed(2)}</span>
                 </div>
                 <div class="total-line total-due">
                   <span>Total Due:</span>
-                  <span>${totalDue.toLocaleString('vi-VN')}₫</span>
+                  <span>$${totalDue.toFixed(2)}</span>
                 </div>
               </div>
             ` : ''}
@@ -354,7 +354,7 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+                      <span>${subtotal.toFixed(2)}</span>
                     </div>
                     {isEditingDiscount ? (
                       <div className="space-y-2 p-3 bg-blue-50 rounded border">
@@ -371,7 +371,7 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                             size="sm"
                             onClick={() => setDiscountType('amount')}
                           >
-                            ₫
+                            $
                           </Button>
                         </div>
                         <div className="flex gap-2 items-center">
@@ -407,21 +407,21 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
                             <Edit className="h-3 w-3" />
                           </Button>
                         </span>
-                        <span>-{discount.toLocaleString('vi-VN')}₫</span>
+                        <span>-${discount.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
                       <span>VAT (8%):</span>
-                      <span>{tax.toLocaleString('vi-VN')}₫</span>
+                      <span>${tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tip (5%):</span>
-                      <span>{tip.toLocaleString('vi-VN')}₫</span>
+                      <span>${tip.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>Tổng cộng:</span>
-                      <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
+                      <span className="text-primary">${totalDue.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

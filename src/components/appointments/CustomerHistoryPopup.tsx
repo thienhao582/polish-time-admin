@@ -160,7 +160,7 @@ export function CustomerHistoryPopup({
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {calculateTotalSpent().toLocaleString('vi-VN')}đ
+                  ${calculateTotalSpent().toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-600">Tổng chi tiêu</div>
               </div>

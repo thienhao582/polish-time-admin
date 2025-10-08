@@ -294,16 +294,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
           record.method === 'cash' ? 'Tiền mặt' : 
           record.method === 'gift-card' ? 'Gift Card' : 
           'Chuyển khoản'
-        }:</span><span>${record.amount.toLocaleString('vi-VN')}₫</span></div>`;
+        }:</span><span>$${record.amount.toFixed(2)}</span></div>`;
         
         if (record.method === 'cash' && record.cashReceived && record.change && record.change > 0) {
           html += `<div class="total-line" style="font-size: 12px; color: #666;">
             <span style="padding-left: 20px;">Khách đưa:</span>
-            <span>${record.cashReceived.toLocaleString('vi-VN')}₫</span>
+            <span>$${record.cashReceived.toFixed(2)}</span>
           </div>`;
           html += `<div class="total-line" style="font-size: 12px; color: #22c55e; font-weight: bold;">
             <span style="padding-left: 20px;">Tiền thối:</span>
-            <span>${record.change.toLocaleString('vi-VN')}₫</span>
+            <span>$${record.change.toFixed(2)}</span>
           </div>`;
         }
         return html;
@@ -368,23 +368,23 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             <hr style="border: 1px dashed #ccc; margin: 10px 0;">
             <div class="total-line">
               <span>Subtotal:</span>
-              <span>${subtotal.toLocaleString('vi-VN')}₫</span>
+              <span>$${subtotal.toFixed(2)}</span>
             </div>
             <div class="total-line">
               <span>Discount:</span>
-              <span>-${discount.toLocaleString('vi-VN')}₫</span>
+              <span>-$${discount.toFixed(2)}</span>
             </div>
             <div class="total-line">
               <span>VAT (8%):</span>
-              <span>${tax.toLocaleString('vi-VN')}₫</span>
+              <span>$${tax.toFixed(2)}</span>
             </div>
             <div class="total-line">
               <span>Tip:</span>
-              <span>${tip.toLocaleString('vi-VN')}₫</span>
+              <span>$${tip.toFixed(2)}</span>
             </div>
             <div class="total-line total-due">
               <span>Tổng cộng:</span>
-              <span>${totalDue.toLocaleString('vi-VN')}₫</span>
+              <span>$${totalDue.toFixed(2)}</span>
             </div>
             <hr style="border: 1px dashed #ccc; margin: 10px 0;">
             <h3>Thanh toán:</h3>
@@ -483,7 +483,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       NV: {item.staffNames.join(", ")} • {item.duration} phút
                     </div>
                   </div>
-                  <span className="text-xs font-semibold">{item.price.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-xs font-semibold">${item.price.toFixed(2)}</span>
                 </div>
               ))
             ) : checkInItem.services && checkInItem.services.length > 0 ? (
@@ -522,7 +522,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+                  <span>${subtotal.toFixed(2)}</span>
                 </div>
                 
                 {/* Editable Discount */}
@@ -549,7 +549,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
                           className="w-20 h-6 text-xs text-center"
                           min="0"
-                          placeholder="₫"
+                          placeholder="$"
                         />
                       )}
                       <Button
@@ -569,12 +569,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       </Button>
                     </div>
                   </div>
-                  <span className="text-green-600">-{discount.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-green-600">-${discount.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span>VAT (8%):</span>
-                  <span>{tax.toLocaleString('vi-VN')}₫</span>
+                  <span>${tax.toFixed(2)}</span>
                 </div>
                 
                 {/* Editable Tip */}
@@ -601,7 +601,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           onChange={(e) => setTipAmount(Number(e.target.value) || 0)}
                           className="w-20 h-6 text-xs text-center"
                           min="0"
-                          placeholder="₫"
+                          placeholder="$"
                         />
                       )}
                       <Button
@@ -621,7 +621,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                       </Button>
                     </div>
                   </div>
-                  <span>{tip.toLocaleString('vi-VN')}₫</span>
+                  <span>${tip.toFixed(2)}</span>
                 </div>
 
                 {/* Tip Distribution for Staff */}
@@ -630,7 +630,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <div className="flex justify-between items-center mb-2">
                       <div className="text-xs font-medium text-muted-foreground">Phân chia tip cho nhân viên:</div>
                       {totalCustomTips > tip && (
-                        <span className="text-xs text-destructive font-medium">Vượt quá {(totalCustomTips - tip).toLocaleString('vi-VN')}₫</span>
+                        <span className="text-xs text-destructive font-medium">Vượt quá ${(totalCustomTips - tip).toFixed(2)}</span>
                       )}
                     </div>
                     <div className="space-y-2">
@@ -639,7 +639,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{dist.staffName}</div>
                             <div className="text-muted-foreground text-[10px]">
-                              ({dist.percentage.toFixed(1)}% - {dist.revenue.toLocaleString('vi-VN')}₫)
+                              ({dist.percentage.toFixed(1)}% - ${dist.revenue.toFixed(2)})
                             </div>
                           </div>
                           <Input
@@ -661,7 +661,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                     <div className="flex justify-between items-center pt-2 mt-2 border-t border-border text-xs">
                       <span className="font-medium">Tổng tip phân chia:</span>
                       <span className={`font-semibold ${totalCustomTips > tip ? 'text-destructive' : 'text-green-600'}`}>
-                        {totalCustomTips.toLocaleString('vi-VN')}₫
+                        ${totalCustomTips.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -670,17 +670,17 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Tổng cộng:</span>
-                  <span className="text-primary">{totalDue.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-primary">${totalDue.toFixed(2)}</span>
                 </div>
                 {totalPaid > 0 && (
                   <>
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Đã thanh toán:</span>
-                      <span>-{totalPaid.toLocaleString('vi-VN')}₫</span>
+                      <span>-${totalPaid.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-base">
                       <span>Còn lại:</span>
-                      <span className="text-orange-600">{remainingDue.toLocaleString('vi-VN')}₫</span>
+                      <span className="text-orange-600">${remainingDue.toFixed(2)}</span>
                     </div>
                   </>
                 )}
@@ -756,16 +756,16 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             <div className="text-center space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium">Tổng cộng:</span>
-                <span className="text-sm font-bold">{totalDue.toLocaleString('vi-VN')}₫</span>
+                <span className="text-sm font-bold">${totalDue.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-medium">Tiền cần thanh toán:</span>
-                <span className="text-base font-bold text-primary">{remainingDue.toLocaleString('vi-VN')}₫</span>
+                <span className="text-base font-bold text-primary">${remainingDue.toFixed(2)}</span>
               </div>
               {totalPaid > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-medium">Đã thanh toán:</span>
-                  <span className="text-sm font-semibold text-green-600">{totalPaid.toLocaleString('vi-VN')}₫</span>
+                  <span className="text-sm font-semibold text-green-600">${totalPaid.toFixed(2)}</span>
                 </div>
               )}
               <h3 className="text-lg font-semibold pt-3">Chọn phương thức thanh toán</h3>
@@ -816,7 +816,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('card')}
                           >
-                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay ${remainingDue.toFixed(2)}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -846,7 +846,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                           {cardPayments.map((payment, index) => (
                             <div key={index} className="flex justify-between items-center text-xs text-muted-foreground">
                               <span>Charged lần {index + 1}</span>
-                              <span className="font-medium">{payment.amount.toLocaleString('vi-VN')}₫</span>
+                              <span className="font-medium">${payment.amount.toFixed(2)}</span>
                             </div>
                           ))}
                         </div>
@@ -916,7 +916,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                               setShowCashDialog(true);
                             }}
                           >
-                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay ${remainingDue.toFixed(2)}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -982,7 +982,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('gift-card')}
                           >
-                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay ${remainingDue.toFixed(2)}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -1048,7 +1048,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                             size="sm"
                             onClick={() => handlePayFullClick('other')}
                           >
-                            Pay {remainingDue.toLocaleString('vi-VN')}₫
+                            Pay ${remainingDue.toFixed(2)}
                           </Button>
                           <Button 
                             variant="outline" 
@@ -1102,7 +1102,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                 </div>
                 <div className="flex justify-between font-semibold">
                   <span>Tổng tiền:</span>
-                  <span>{totalDue.toLocaleString('vi-VN')}₫</span>
+                  <span>${totalDue.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="space-y-2">
@@ -1113,18 +1113,18 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
                         <span>
                           {record.method === 'card' ? 'Thẻ' : record.method === 'cash' ? 'Tiền mặt' : record.method === 'gift-card' ? 'Gift Card' : 'Chuyển khoản'}
                         </span>
-                        <span>{record.amount.toLocaleString('vi-VN')}₫</span>
+                        <span>${record.amount.toFixed(2)}</span>
                       </div>
                       {record.method === 'cash' && record.cashReceived && record.change && record.change > 0 && (
                         <div className="flex justify-between text-xs text-muted-foreground pl-4 mt-1">
                           <span>Khách đưa:</span>
-                          <span>{record.cashReceived.toLocaleString('vi-VN')}₫</span>
+                          <span>${record.cashReceived.toFixed(2)}</span>
                         </div>
                       )}
                       {record.method === 'cash' && record.change && record.change > 0 && (
                         <div className="flex justify-between text-xs text-green-600 pl-4 font-medium">
                           <span>Tiền thối:</span>
-                          <span>{record.change.toLocaleString('vi-VN')}₫</span>
+                          <span>${record.change.toFixed(2)}</span>
                         </div>
                       )}
                     </div>
@@ -1323,7 +1323,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             <div className="flex justify-between items-center text-sm mb-1">
               <span className="text-muted-foreground">Số tiền cần thanh toán:</span>
               <span className="text-lg font-bold text-primary">
-                {cashPaymentAmount.toLocaleString('vi-VN')}₫
+                ${cashPaymentAmount.toFixed(2)}
               </span>
             </div>
           </div>
@@ -1343,17 +1343,17 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Khách đưa:</span>
-                <span className="font-medium">{cashReceived.toLocaleString('vi-VN')}₫</span>
+                <span className="font-medium">${cashReceived.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Cần thanh toán:</span>
-                <span className="font-medium">{cashPaymentAmount.toLocaleString('vi-VN')}₫</span>
+                <span className="font-medium">${cashPaymentAmount.toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-green-700">Tiền thối lại:</span>
                 <span className="text-xl font-bold text-green-700">
-                  {(cashReceived - cashPaymentAmount).toLocaleString('vi-VN')}₫
+                  ${(cashReceived - cashPaymentAmount).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -1362,7 +1362,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
           {typeof cashReceived === 'number' && cashReceived < cashPaymentAmount && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-700">
-                Số tiền chưa đủ. Còn thiếu: {(cashPaymentAmount - cashReceived).toLocaleString('vi-VN')}₫
+                Số tiền chưa đủ. Còn thiếu: ${(cashPaymentAmount - cashReceived).toFixed(2)}
               </p>
             </div>
           )}
