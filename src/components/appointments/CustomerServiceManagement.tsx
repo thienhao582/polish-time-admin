@@ -386,7 +386,7 @@ export function CustomerServiceManagement({
       <tr>
         <td>${service.name}</td>
         <td>${service.staff?.map((s: any) => s.name).join(', ') || 'N/A'}</td>
-        <td style="text-align: right;">${(service.price || 0).toLocaleString('vi-VN')}đ</td>
+        <td style="text-align: right;">$${(service.price || 0).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -449,23 +449,23 @@ export function CustomerServiceManagement({
             <table style="width: 100%;">
               <tr>
                 <td style="text-align: right; padding: 4px;"><strong>Subtotal:</strong></td>
-                <td style="text-align: right; padding: 4px; width: 150px;">${invoice.subtotal.toLocaleString('vi-VN')}đ</td>
+                <td style="text-align: right; padding: 4px; width: 150px;">$${invoice.subtotal.toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="text-align: right; padding: 4px;"><strong>Discount:</strong></td>
-                <td style="text-align: right; padding: 4px;">${invoice.discount.toLocaleString('vi-VN')}đ</td>
+                <td style="text-align: right; padding: 4px;">$${invoice.discount.toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="text-align: right; padding: 4px;"><strong>VAT (8%):</strong></td>
-                <td style="text-align: right; padding: 4px;">${Math.round(invoice.subtotal * 0.08).toLocaleString('vi-VN')}đ</td>
+                <td style="text-align: right; padding: 4px;">$${(invoice.subtotal * 0.08).toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="text-align: right; padding: 4px;"><strong>Tip:</strong></td>
-                <td style="text-align: right; padding: 4px;">${totalTip.toLocaleString('vi-VN')}đ</td>
+                <td style="text-align: right; padding: 4px;">$${totalTip.toFixed(2)}</td>
               </tr>
               <tr style="font-size: 20px;">
                 <td style="text-align: right; padding: 8px; border-top: 2px solid #333;"><strong>Tổng cộng:</strong></td>
-                <td style="text-align: right; padding: 8px; border-top: 2px solid #333;"><strong>${invoice.total.toLocaleString('vi-VN')}đ</strong></td>
+                <td style="text-align: right; padding: 8px; border-top: 2px solid #333;"><strong>$${invoice.total.toFixed(2)}</strong></td>
               </tr>
             </table>
           </div>
@@ -563,7 +563,7 @@ export function CustomerServiceManagement({
                     <div className="flex justify-between text-xs text-gray-500 mt-2">
                       <span>{customer.totalVisits} lượt</span>
                       <span className="text-green-600 font-medium">
-                        {customer.totalSpent.toLocaleString('vi-VN')}đ
+                        ${customer.totalSpent.toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ export function CustomerServiceManagement({
                     <div>
                       <div className="text-gray-600">Tổng chi tiêu</div>
                       <div className="text-xl font-bold text-green-600">
-                        {selectedCustomer.totalSpent.toLocaleString('vi-VN')}đ
+                        ${selectedCustomer.totalSpent.toFixed(2)}
                       </div>
                     </div>
                     <div>
@@ -635,11 +635,11 @@ export function CustomerServiceManagement({
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
                                   <div className="font-medium text-green-600 text-sm">
-                                    {invoice.total.toLocaleString('vi-VN')}đ
+                                    ${invoice.total.toFixed(2)}
                                   </div>
                                   {totalTip > 0 && (
                                     <div className="text-xs text-muted-foreground">
-                                      Tip: {totalTip.toLocaleString('vi-VN')}đ
+                                      Tip: ${totalTip.toFixed(2)}
                                     </div>
                                   )}
                                 </div>
@@ -725,7 +725,7 @@ export function CustomerServiceManagement({
                           </div>
                         </div>
                         <div className="text-lg font-semibold">
-                          {(service.price || 0).toLocaleString('vi-VN')}đ
+                          ${(service.price || 0).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -819,7 +819,7 @@ export function CustomerServiceManagement({
                                     min="0"
                                     step="0.001"
                                   />
-                                  <span className="text-sm">đ</span>
+                                  <span className="text-sm">$</span>
                                 </div>
                               </div>
                             );
@@ -829,13 +829,13 @@ export function CustomerServiceManagement({
                           <div className="flex justify-between text-sm font-medium pt-2 border-t">
                             <span>Tổng tip:</span>
                             <span>
-                              {invoiceTotalTip.toLocaleString('vi-VN')}đ
+                              ${invoiceTotalTip.toFixed(2)}
                             </span>
                           </div>
                           <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Còn lại:</span>
                             <span className={remainingTip < 0 ? 'text-red-600' : 'text-green-600'}>
-                              {remainingTip.toLocaleString('vi-VN')}đ
+                              ${remainingTip.toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -851,23 +851,23 @@ export function CustomerServiceManagement({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal:</span>
-                    <span>{selectedInvoice.subtotal.toLocaleString('vi-VN')}đ</span>
+                    <span>${selectedInvoice.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Discount:</span>
-                    <span>{selectedInvoice.discount.toLocaleString('vi-VN')}đ</span>
+                    <span>${selectedInvoice.discount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">VAT (8%):</span>
-                    <span>{Math.round(selectedInvoice.subtotal * 0.08).toLocaleString('vi-VN')}đ</span>
+                    <span>${(selectedInvoice.subtotal * 0.08).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tip:</span>
-                    <span>{Math.round(selectedInvoice.total - (selectedInvoice.subtotal - selectedInvoice.discount + Math.round(selectedInvoice.subtotal * 0.08))).toLocaleString('vi-VN')}đ</span>
+                    <span>${(selectedInvoice.total - (selectedInvoice.subtotal - selectedInvoice.discount + selectedInvoice.subtotal * 0.08)).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>Tổng cộng:</span>
-                    <span>{selectedInvoice.total.toLocaleString('vi-VN')}đ</span>
+                    <span>${selectedInvoice.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
