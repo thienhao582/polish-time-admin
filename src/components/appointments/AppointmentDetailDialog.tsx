@@ -386,6 +386,21 @@ export function AppointmentDetailDialog({
             services: isMultiServiceAppointment 
               ? appointment.services?.map(s => s.serviceName) 
               : [appointment.service],
+            staffAssignments: isMultiServiceAppointment
+              ? appointment.services?.flatMap(service => 
+                  service.staffNames.map((staffName, idx) => ({
+                    serviceName: service.serviceName,
+                    staffId: service.staffIds[idx] || '',
+                    staffName: staffName
+                  }))
+                )
+              : appointment.staff && appointment.staffId
+                ? [{
+                    serviceName: appointment.service,
+                    staffId: appointment.staffId,
+                    staffName: appointment.staff
+                  }]
+                : [],
             tags: [appointment.status],
             phone: appointment.phone,
             notes: appointment.notes
