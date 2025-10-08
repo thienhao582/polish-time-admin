@@ -35,6 +35,8 @@ interface LegacyAppointment {
   price: string;
   status: string;
   staff: string;
+  staffId?: string;
+  serviceId?: string;
   extraTime?: number;
   email?: string;
   notes?: string;
@@ -178,6 +180,8 @@ const Appointments = () => {
           price: apt.price,
           status: apt.status,
           staff: apt.staff,
+          staffId: apt.staffId,
+          serviceId: apt.serviceId,
           extraTime: apt.extraTime,
           services: apt.services,
           notes: apt.notes
@@ -199,7 +203,9 @@ const Appointments = () => {
           duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
           price: apt.price ? `$${apt.price.toFixed(2)}` : "",
           status: apt.status,
-          staff: apt.employee_name || ""
+          staff: apt.employee_name || "",
+          staffId: apt.employee_id || undefined,
+          serviceId: apt.service_id || undefined
         }));
         
         setAppointments(transformedAppointments);
