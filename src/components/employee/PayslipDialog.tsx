@@ -83,13 +83,27 @@ export function PayslipDialog({
   const checkAmount = totalEarnings + totalTips;
 
   const handlePrint = () => {
+    // Always use English labels for printing
+    const printLabels = {
+      date: "Date",
+      service: "Service",
+      tip: "Tip",
+      supply: "Sply",
+      discount: "Discount",
+      workingDays: "Wks Days",
+      profit: "Profit",
+      totalProfit: "Total Profit",
+      other: "Other:",
+      check: "Check:"
+    };
+    
     // Create HTML content for thermal printer (80mm)
     const printContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>${text.payslip} - ${employeeName}</title>
+          <title>Payslip - ${employeeName}</title>
           <style>
             @page {
               size: 80mm auto;
@@ -184,11 +198,11 @@ export function PayslipDialog({
             <thead>
               <tr>
                 <th style="width: 8%">#</th>
-                <th style="width: 15%">${text.date}</th>
-                <th style="width: 35%">${text.service}</th>
-                <th class="text-right" style="width: 14%">${text.tip}</th>
-                <th class="text-right" style="width: 14%">${text.supply}</th>
-                <th class="text-right" style="width: 14%">${text.discount}</th>
+                <th style="width: 15%">${printLabels.date}</th>
+                <th style="width: 35%">${printLabels.service}</th>
+                <th class="text-right" style="width: 14%">${printLabels.tip}</th>
+                <th class="text-right" style="width: 14%">${printLabels.supply}</th>
+                <th class="text-right" style="width: 14%">${printLabels.discount}</th>
               </tr>
             </thead>
             <tbody>
@@ -209,43 +223,43 @@ export function PayslipDialog({
           
           <div class="summary">
             <div class="summary-row">
-              <span>${workingDays} ${text.workingDays}</span>
+              <span>${workingDays} ${printLabels.workingDays}</span>
               <span class="font-semibold">${formatCurrency(totalRevenue)}</span>
             </div>
             
             <div class="summary-row text-red">
-              <span>${text.supply} Cost</span>
+              <span>${printLabels.supply} Cost</span>
               <span>-${formatCurrency(totalSupply)}</span>
             </div>
             
             <div class="summary-row text-red">
-              <span>${text.discountTotal}</span>
+              <span>${printLabels.discount}</span>
               <span>-${formatCurrency(totalDiscount)}</span>
             </div>
             
             <div class="separator"></div>
             
             <div class="summary-row font-semibold">
-              <span>${text.profit}</span>
+              <span>${printLabels.profit}</span>
               <span>${formatCurrency(profit)}</span>
             </div>
             
             <div class="separator"></div>
             
             <div class="summary-row font-bold text-base">
-              <span>${text.totalProfit}</span>
+              <span>${printLabels.totalProfit}</span>
               <span>${formatCurrency(totalEarnings)}</span>
             </div>
             
             <div class="separator"></div>
             
             <div class="summary-row font-bold text-base">
-              <span>${text.other}</span>
+              <span>${printLabels.other}</span>
               <span>${formatCurrency(totalTips)}</span>
             </div>
             
             <div class="summary-row font-bold text-lg">
-              <span>${text.check}</span>
+              <span>${printLabels.check}</span>
               <span>${formatCurrency(checkAmount)}</span>
             </div>
           </div>
