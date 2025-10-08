@@ -197,7 +197,7 @@ const Appointments = () => {
           phone: apt.customer_phone || "",
           service: apt.service_name,
           duration: apt.duration_minutes ? `${apt.duration_minutes} phút` : "",
-          price: apt.price ? `${apt.price.toLocaleString()}đ` : "",
+          price: apt.price ? `$${apt.price.toFixed(2)}` : "",
           status: apt.status,
           staff: apt.employee_name || ""
         }));
