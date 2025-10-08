@@ -27,7 +27,7 @@ export const ServiceTable = ({ services, onEdit, onDelete, onToggleStatus }: Ser
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+    return '$' + price.toFixed(2);
   };
 
   return (

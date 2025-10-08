@@ -166,7 +166,7 @@ export const ServiceForm = ({ open, onOpenChange, service }: ServiceFormProps) =
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Giá tiền (VNĐ) *</Label>
+              <Label htmlFor="price">Giá tiền (USD) *</Label>
               <Input
                 id="price"
                 type="number"
