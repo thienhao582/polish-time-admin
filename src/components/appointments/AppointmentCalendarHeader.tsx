@@ -38,19 +38,20 @@ export function AppointmentCalendarHeader({
         >
           {t('appointments.week')}
         </Button>
-        <Button
+        {/* Temporarily hidden - Day 1 replaces Day view */}
+        {/* <Button
           variant={viewMode === "day" ? "default" : "outline"}
           onClick={() => setViewMode("day")}
           className={viewMode === "day" ? "bg-pink-600 hover:bg-pink-700" : ""}
         >
           {t('appointments.day')}
-        </Button>
+        </Button> */}
         <Button
           variant={viewMode === "day1" ? "default" : "outline"}
           onClick={() => setViewMode("day1")}
           className={viewMode === "day1" ? "bg-pink-600 hover:bg-pink-700" : ""}
         >
-          Day 1
+          {t('appointments.day')}
         </Button>
       </div>
 
