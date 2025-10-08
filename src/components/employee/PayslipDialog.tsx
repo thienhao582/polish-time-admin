@@ -88,15 +88,15 @@ export function PayslipDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col print:max-w-full print:max-h-full print:overflow-visible print:w-[80mm]">
-        <div className="payslip-container flex flex-col h-full">
-          <DialogHeader className="flex-shrink-0 payslip-header pb-4">
+      <DialogContent className="max-w-2xl print:max-w-full print:max-h-full print:overflow-visible print:w-[80mm]">
+        <div className="payslip-container">
+          <DialogHeader className="payslip-header">
             <DialogTitle className="text-center text-2xl font-bold print:text-[14px]">
               {employeeName}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto print:overflow-visible min-h-0">
+          <div className="space-y-4 print:space-y-0">
             <Table className="payslip-table">
               <TableHeader>
                 <TableRow className="print:border-b print:border-black">
@@ -131,7 +131,7 @@ export function PayslipDialog({
             </Table>
           </div>
 
-          <div className="flex-shrink-0 space-y-4 print:space-y-0 payslip-summary pt-4 border-t print:border-0">
+          <div className="space-y-4 print:space-y-0 payslip-summary">
             <Separator className="print:hidden" />
 
             <div className="space-y-2 text-sm print:space-y-0 print:text-[11px]">
