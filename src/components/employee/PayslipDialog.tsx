@@ -83,7 +83,192 @@ export function PayslipDialog({
   const checkAmount = totalEarnings + totalTips;
 
   const handlePrint = () => {
-    window.print();
+    // Create HTML content for thermal printer (80mm)
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${text.payslip} - ${employeeName}</title>
+          <style>
+            @page {
+              size: 80mm auto;
+              margin: 0;
+            }
+            
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              width: 80mm;
+              font-family: Arial, sans-serif;
+              font-size: 10px;
+              line-height: 1.3;
+              padding: 4mm;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            h2 {
+              text-align: center;
+              font-size: 14px;
+              font-weight: bold;
+              margin-bottom: 8px;
+            }
+            
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 9px;
+              margin-bottom: 4px;
+            }
+            
+            th, td {
+              padding: 2px 1px;
+              text-align: left;
+            }
+            
+            th {
+              font-weight: bold;
+              border-bottom: 1px solid #000;
+            }
+            
+            td.text-right, th.text-right {
+              text-align: right;
+            }
+            
+            .separator {
+              border-top: 1px dashed #000;
+              margin: 3px 0;
+            }
+            
+            .summary {
+              font-size: 10px;
+              margin-top: 4px;
+            }
+            
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 2px;
+            }
+            
+            .text-red {
+              color: #dc2626;
+            }
+            
+            .font-semibold {
+              font-weight: 600;
+            }
+            
+            .font-bold {
+              font-weight: 700;
+            }
+            
+            .text-base {
+              font-size: 11px;
+            }
+            
+            .text-lg {
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>${employeeName}</h2>
+          
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 8%">#</th>
+                <th style="width: 15%">${text.date}</th>
+                <th style="width: 35%">${text.service}</th>
+                <th class="text-right" style="width: 14%">${text.tip}</th>
+                <th class="text-right" style="width: 14%">${text.supply}</th>
+                <th class="text-right" style="width: 14%">${text.discount}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${appointments.map((apt, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${format(new Date(apt.date), "MM/dd")}</td>
+                  <td>${apt.service}</td>
+                  <td class="text-right">${apt.tip > 0 ? formatCurrency(apt.tip) : "-"}</td>
+                  <td class="text-right">${apt.supply > 0 ? formatCurrency(apt.supply) : "-"}</td>
+                  <td class="text-right">${apt.discount > 0 ? formatCurrency(apt.discount) : "-"}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="separator"></div>
+          
+          <div class="summary">
+            <div class="summary-row">
+              <span>${workingDays} ${text.workingDays}</span>
+              <span class="font-semibold">${formatCurrency(totalRevenue)}</span>
+            </div>
+            
+            <div class="summary-row text-red">
+              <span>${text.supply} Cost</span>
+              <span>-${formatCurrency(totalSupply)}</span>
+            </div>
+            
+            <div class="summary-row text-red">
+              <span>${text.discountTotal}</span>
+              <span>-${formatCurrency(totalDiscount)}</span>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="summary-row font-semibold">
+              <span>${text.profit}</span>
+              <span>${formatCurrency(profit)}</span>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="summary-row font-bold text-base">
+              <span>${text.totalProfit}</span>
+              <span>${formatCurrency(totalEarnings)}</span>
+            </div>
+            
+            <div class="separator"></div>
+            
+            <div class="summary-row font-bold text-base">
+              <span>${text.other}</span>
+              <span>${formatCurrency(totalTips)}</span>
+            </div>
+            
+            <div class="summary-row font-bold text-lg">
+              <span>${text.check}</span>
+              <span>${formatCurrency(checkAmount)}</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Open new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+        // Close window after printing (optional - user can close manually if needed)
+        setTimeout(() => {
+          printWindow.close();
+        }, 100);
+      };
+    }
   };
 
   return (
