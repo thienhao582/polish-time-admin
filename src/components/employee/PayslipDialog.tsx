@@ -88,14 +88,14 @@ export function PayslipDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto print:max-w-full">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col print:max-w-full print:max-h-full print:overflow-visible">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-center text-2xl font-bold">
             {employeeName}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 print:text-sm">
+        <div className="flex-1 overflow-y-auto print:overflow-visible space-y-4 print:text-sm">
           <Table>
             <TableHeader>
               <TableRow>
@@ -128,10 +128,12 @@ export function PayslipDialog({
               ))}
             </TableBody>
           </Table>
+        </div>
 
+        <div className="flex-shrink-0 space-y-4 print:space-y-2">
           <Separator />
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-sm print:space-y-1">
             <div className="flex justify-between">
               <span>{workingDays} {text.workingDays}</span>
               <span className="font-semibold">{formatCurrency(totalRevenue)}</span>
