@@ -9,6 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSalonStore } from "@/stores/useSalonStore";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { formatCurrency } from "@/lib/currencyUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CalendarIcon, DollarSign, TrendingUp, FileText } from "lucide-react";
@@ -29,6 +30,7 @@ export function SalaryManagement() {
   const { language, t } = useLanguage();
   const { employees } = useSalonStore();
   const { fetchAppointments } = useSupabaseData();
+  const { isDemoMode } = useDemoMode();
   const [selectedPeriod, setSelectedPeriod] = useState("this-month");
   const [salaryData, setSalaryData] = useState<SalaryCalculation[]>([]);
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
@@ -134,23 +136,36 @@ export function SalaryManagement() {
         return aptDate >= startDate && aptDate <= endDate;
       });
 
+      // Demo mode: Generate realistic salary data for employees
+      if (isDemoMode && filteredAppointments.length === 0) {
+        const demoEmployeeNames = ["Trần My", "Lý Nhung", "Võ Giang", "Đặng Hoài", "Nguyễn Mai"];
+        const salaryCalculations: SalaryCalculation[] = employees.slice(0, 10).map((employee, index) => {
+          // Generate varied data for first 5 employees
+          const isActive = index < 5;
+          const appointmentCount = isActive ? Math.floor(8 + Math.random() * 15) : 0;
+          const avgPrice = isActive ? 2.5 + Math.random() * 2 : 0; // $2.5-$4.5
+          const totalServicePrice = appointmentCount * avgPrice;
+          const commissionRate = 0.10 + Math.random() * 0.05; // 10-15%
+          const totalEarnings = totalServicePrice * commissionRate;
+
+          return {
+            employeeId: employee.id,
+            employeeName: employee.name,
+            totalEarnings: Math.round(totalEarnings * 100) / 100,
+            appointmentCount,
+            commissionRate,
+            averageServicePrice: Math.round(avgPrice * 100) / 100
+          };
+        });
+
+        setSalaryData(salaryCalculations);
+        return;
+      }
+
       const salaryCalculations: SalaryCalculation[] = employees.map(employee => {
         let employeeAppointments = filteredAppointments.filter(
           apt => apt.employee_id === employee.id
         );
-
-        // Add mock appointments for Đặng Hoài (prices in USD)
-        if (employee.name === "Đặng Hoài" && employeeAppointments.length === 0) {
-          employeeAppointments = [
-            { price: 2.71 }, // 65000 VND / 24000
-            { price: 1.88 }, // 45000 VND / 24000
-            { price: 1.46 }, // 35000 VND / 24000
-            { price: 3.54 }, // 85000 VND / 24000
-            { price: 2.29 }, // 55000 VND / 24000
-            { price: 1.67 }, // 40000 VND / 24000
-            { price: 2.08 }  // 50000 VND / 24000
-          ] as any[];
-        }
 
         const totalServicePrice = employeeAppointments.reduce(
           (sum, apt) => sum + (apt.price || 0), 0
@@ -184,6 +199,7 @@ export function SalaryManagement() {
 
   const getEmployeeAppointments = (employeeId: string) => {
     const employee = employees.find(e => e.id === employeeId);
+    const salaryCalc = salaryData.find(s => s.employeeId === employeeId);
     
     let startDate: Date;
     let endDate = new Date();
@@ -223,31 +239,41 @@ export function SalaryManagement() {
       return apt.employee_id === employeeId && aptDate >= startDate && aptDate <= endDate;
     });
 
-    // Add mock data for Đặng Hoài if no appointments exist (prices in USD)
-    if (employee?.name === "Đặng Hoài" && filteredAppointments.length === 0) {
-      const mockAppointments = [
-        { id: "mock-1", appointment_date: "2025-10-01", service_name: "Gel Nails", price: 2.71, customer_name: "Nguyễn Thị A" },
-        { id: "mock-2", appointment_date: "2025-10-01", service_name: "Pedicure", price: 1.88, customer_name: "Trần Văn B" },
-        { id: "mock-3", appointment_date: "2025-10-02", service_name: "Manicure", price: 1.46, customer_name: "Lê Thị C" },
-        { id: "mock-4", appointment_date: "2025-10-02", service_name: "Acrylic Full Set", price: 3.54, customer_name: "Phạm Thị D" },
-        { id: "mock-5", appointment_date: "2025-10-03", service_name: "Nail Art", price: 2.29, customer_name: "Hoàng Văn E" },
-        { id: "mock-6", appointment_date: "2025-10-03", service_name: "Gel Polish Change", price: 1.67, customer_name: "Đỗ Thị F" },
-        { id: "mock-7", appointment_date: "2025-10-04", service_name: "French Manicure", price: 2.08, customer_name: "Vũ Văn G" },
-      ];
+    // Demo mode: Generate mock appointment details
+    if (isDemoMode && filteredAppointments.length === 0 && salaryCalc && salaryCalc.appointmentCount > 0) {
+      const services = ["Gel Nails", "Pedicure", "Manicure", "Acrylic Full Set", "Nail Art", "Gel Polish Change", "French Manicure", "Nail Repair"];
+      const customers = ["Nguyễn Thị A", "Trần Văn B", "Lê Thị C", "Phạm Thị D", "Hoàng Văn E", "Đỗ Thị F", "Vũ Văn G", "Bùi Thị H"];
+      
+      const mockAppointments = Array.from({ length: salaryCalc.appointmentCount }, (_, i) => {
+        const daysAgo = Math.floor(Math.random() * 28);
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const price = salaryCalc.averageServicePrice + (Math.random() - 0.5) * 1;
+        const tip = Math.random() > 0.3 ? (0.21 + Math.random() * 0.62) : 0; // $0.21-$0.83 or 0
+        const supply = 0.13 + Math.random() * 0.29; // $0.13-$0.42
+        const discount = Math.random() > 0.7 ? (0.21 + Math.random() * 0.42) : 0; // $0.21-$0.63 or 0
+        
+        return {
+          id: `mock-${i}`,
+          date: dateStr,
+          service: services[Math.floor(Math.random() * services.length)],
+          tip: Math.round(tip * 100) / 100,
+          supply: Math.round(supply * 100) / 100,
+          discount: Math.round(discount * 100) / 100,
+          price: Math.round(price * 100) / 100
+        };
+      });
 
-      const uniqueDates = new Set(mockAppointments.map(apt => apt.appointment_date));
+      // Sort by date
+      mockAppointments.sort((a, b) => a.date.localeCompare(b.date));
+      
+      const uniqueDates = new Set(mockAppointments.map(apt => apt.date));
       const workingDays = uniqueDates.size;
 
       return {
-        appointments: mockAppointments.map((apt, index) => ({
-          id: apt.id,
-          date: apt.appointment_date,
-          service: apt.service_name,
-          tip: [0.42, 0.63, 0.50, 0.83, 0.33, 0.42, 0.63][index], // Tips in USD
-          supply: [0.21, 0.17, 0.13, 0.29, 0.21, 0.17, 0.21][index], // Supply costs in USD
-          discount: [0, 0.21, 0, 0.42, 0, 0, 0.21][index], // Discounts in USD
-          price: apt.price
-        })),
+        appointments: mockAppointments,
         workingDays
       };
     }
@@ -276,7 +302,7 @@ export function SalaryManagement() {
           tip,
           supply,
           discount,
-          price: Math.round(price)
+          price: Math.round(price * 100) / 100
         };
       }),
       workingDays
