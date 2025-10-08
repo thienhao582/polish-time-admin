@@ -36,7 +36,7 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
   const [discountValue, setDiscountValue] = useState(10); // Default 10%
   
   // Calculate pricing details for popup display
-  const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+  const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 2.08 : 0; // 50000 VND = 2.08 USD
   const discount = discountType === 'percentage' 
     ? Math.floor(serviceTotal * (discountValue / 100))
     : discountValue;
@@ -52,9 +52,9 @@ export function ReceiptPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut }
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
-    if (printWindow) {
+      if (printWindow) {
           // Calculate pricing (enhanced with more details)
-          const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 50000 : 0;
+          const serviceTotal = checkInItem.services?.length ? checkInItem.services.length * 2.08 : 0; // 50000 VND = 2.08 USD
           const discountAmount = discountType === 'percentage' 
             ? Math.floor(serviceTotal * (discountValue / 100))
             : discountValue;

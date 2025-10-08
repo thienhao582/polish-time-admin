@@ -32,7 +32,7 @@ const Settings = () => {
     resetToDefaults();
     setFormData({
       pointsPerAmount: 1,
-      minimumAmount: 50000,
+      minimumAmount: 2.08, // 50000 VND = 2.08 USD
     });
     setColorData({
       anyone: 'bg-orange-100 border-orange-300 text-orange-800',
@@ -75,7 +75,7 @@ const Settings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="pointsPerAmount" className="text-sm font-medium text-gray-700">
-                  Điểm tích lũy trên 1.000 VND
+                  Điểm tích lũy trên $1 USD
                 </Label>
                 <Input
                   id="pointsPerAmount"
@@ -87,25 +87,25 @@ const Settings = () => {
                   className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
                 />
                 <p className="text-xs text-gray-500">
-                  Khách hàng sẽ nhận được {formData.pointsPerAmount} điểm cho mỗi 1.000 VND chi tiêu
+                  Khách hàng sẽ nhận được {formData.pointsPerAmount} điểm cho mỗi $1 USD chi tiêu
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="minimumAmount" className="text-sm font-medium text-gray-700">
-                  Số tiền tối thiểu (VND)
+                  Số tiền tối thiểu (USD)
                 </Label>
                 <Input
                   id="minimumAmount"
                   type="number"
                   min="0"
-                  step="1000"
+                  step="0.01"
                   value={formData.minimumAmount}
-                  onChange={(e) => setFormData({ ...formData, minimumAmount: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, minimumAmount: parseFloat(e.target.value) || 0 })}
                   className="focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-200"
                 />
                 <p className="text-xs text-gray-500">
-                  Hóa đơn phải đạt tối thiểu ${(formData.minimumAmount / 24000).toFixed(2)} USD mới được tích điểm
+                  Hóa đơn phải đạt tối thiểu ${formData.minimumAmount.toFixed(2)} USD mới được tích điểm
                 </p>
               </div>
             </div>
@@ -113,10 +113,10 @@ const Settings = () => {
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium text-gray-800 mb-2">Ví dụ tính điểm:</h4>
               <p className="text-sm text-gray-600">
-                Hóa đơn $20.83 USD sẽ được tích: {Math.floor((20.83 / (1000/24000)) * formData.pointsPerAmount)} điểm
+                Hóa đơn $20.83 USD sẽ được tích: {Math.floor(20.83 * formData.pointsPerAmount)} điểm
               </p>
               <p className="text-sm text-gray-600">
-                Hóa đơn 1.200.000 VND sẽ được tích: {Math.floor((1200000 / 1000) * formData.pointsPerAmount)} điểm
+                Hóa đơn $50.00 USD sẽ được tích: {Math.floor(50 * formData.pointsPerAmount)} điểm
               </p>
             </div>
           </div>

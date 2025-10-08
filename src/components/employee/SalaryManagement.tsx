@@ -139,16 +139,16 @@ export function SalaryManagement() {
           apt => apt.employee_id === employee.id
         );
 
-        // Add mock appointments for Đặng Hoài
+        // Add mock appointments for Đặng Hoài (prices in USD)
         if (employee.name === "Đặng Hoài" && employeeAppointments.length === 0) {
           employeeAppointments = [
-            { price: 65 },
-            { price: 45 },
-            { price: 35 },
-            { price: 85 },
-            { price: 55 },
-            { price: 40 },
-            { price: 50 }
+            { price: 2.71 }, // 65000 VND / 24000
+            { price: 1.88 }, // 45000 VND / 24000
+            { price: 1.46 }, // 35000 VND / 24000
+            { price: 3.54 }, // 85000 VND / 24000
+            { price: 2.29 }, // 55000 VND / 24000
+            { price: 1.67 }, // 40000 VND / 24000
+            { price: 2.08 }  // 50000 VND / 24000
           ] as any[];
         }
 
@@ -223,16 +223,16 @@ export function SalaryManagement() {
       return apt.employee_id === employeeId && aptDate >= startDate && aptDate <= endDate;
     });
 
-    // Add mock data for Đặng Hoài if no appointments exist
+    // Add mock data for Đặng Hoài if no appointments exist (prices in USD)
     if (employee?.name === "Đặng Hoài" && filteredAppointments.length === 0) {
       const mockAppointments = [
-        { id: "mock-1", appointment_date: "2025-10-01", service_name: "Gel Nails", price: 65, customer_name: "Nguyễn Thị A" },
-        { id: "mock-2", appointment_date: "2025-10-01", service_name: "Pedicure", price: 45, customer_name: "Trần Văn B" },
-        { id: "mock-3", appointment_date: "2025-10-02", service_name: "Manicure", price: 35, customer_name: "Lê Thị C" },
-        { id: "mock-4", appointment_date: "2025-10-02", service_name: "Acrylic Full Set", price: 85, customer_name: "Phạm Thị D" },
-        { id: "mock-5", appointment_date: "2025-10-03", service_name: "Nail Art", price: 55, customer_name: "Hoàng Văn E" },
-        { id: "mock-6", appointment_date: "2025-10-03", service_name: "Gel Polish Change", price: 40, customer_name: "Đỗ Thị F" },
-        { id: "mock-7", appointment_date: "2025-10-04", service_name: "French Manicure", price: 50, customer_name: "Vũ Văn G" },
+        { id: "mock-1", appointment_date: "2025-10-01", service_name: "Gel Nails", price: 2.71, customer_name: "Nguyễn Thị A" },
+        { id: "mock-2", appointment_date: "2025-10-01", service_name: "Pedicure", price: 1.88, customer_name: "Trần Văn B" },
+        { id: "mock-3", appointment_date: "2025-10-02", service_name: "Manicure", price: 1.46, customer_name: "Lê Thị C" },
+        { id: "mock-4", appointment_date: "2025-10-02", service_name: "Acrylic Full Set", price: 3.54, customer_name: "Phạm Thị D" },
+        { id: "mock-5", appointment_date: "2025-10-03", service_name: "Nail Art", price: 2.29, customer_name: "Hoàng Văn E" },
+        { id: "mock-6", appointment_date: "2025-10-03", service_name: "Gel Polish Change", price: 1.67, customer_name: "Đỗ Thị F" },
+        { id: "mock-7", appointment_date: "2025-10-04", service_name: "French Manicure", price: 2.08, customer_name: "Vũ Văn G" },
       ];
 
       const uniqueDates = new Set(mockAppointments.map(apt => apt.appointment_date));
@@ -243,9 +243,9 @@ export function SalaryManagement() {
           id: apt.id,
           date: apt.appointment_date,
           service: apt.service_name,
-          tip: [10, 15, 12, 20, 8, 10, 15][index],
-          supply: [5, 4, 3, 7, 5, 4, 5][index],
-          discount: [0, 5, 0, 10, 0, 0, 5][index],
+          tip: [0.42, 0.63, 0.50, 0.83, 0.33, 0.42, 0.63][index], // Tips in USD
+          supply: [0.21, 0.17, 0.13, 0.29, 0.21, 0.17, 0.21][index], // Supply costs in USD
+          discount: [0, 0.21, 0, 0.42, 0, 0, 0.21][index], // Discounts in USD
           price: apt.price
         })),
         workingDays
@@ -255,19 +255,19 @@ export function SalaryManagement() {
     const uniqueDates = new Set(filteredAppointments.map(apt => apt.appointment_date));
     const workingDays = uniqueDates.size;
 
-    // Generate realistic mock data for each appointment
+    // Generate realistic mock data for each appointment (in USD)
     return {
       appointments: filteredAppointments.map((apt, index) => {
-        const price = apt.price || (40 + Math.random() * 60);
+        const price = apt.price || (1.67 + Math.random() * 2.5); // 40-100k VND in USD
         
-        const tipOptions = [5, 8, 10, 12, 15, 18, 20, 0];
+        const tipOptions = [0.21, 0.33, 0.42, 0.50, 0.63, 0.75, 0.83, 0]; // USD tips
         const tip = tipOptions[Math.floor(Math.random() * tipOptions.length)];
         
-        const supplyOptions = [3, 4, 5, 6, 7, 8, 9, 10];
+        const supplyOptions = [0.13, 0.17, 0.21, 0.25, 0.29, 0.33, 0.38, 0.42]; // USD supply costs
         const supply = supplyOptions[Math.floor(Math.random() * supplyOptions.length)];
         
         const hasDiscount = Math.random() > 0.7;
-        const discount = hasDiscount ? (5 + Math.floor(Math.random() * 10)) : 0;
+        const discount = hasDiscount ? (0.21 + Math.floor(Math.random() * 10) * 0.04) : 0; // USD discounts
         
         return {
           id: apt.id,

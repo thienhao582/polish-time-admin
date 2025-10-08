@@ -9,7 +9,7 @@ interface ServiceStatsProps {
 
 export const ServiceStats = ({ services }: ServiceStatsProps) => {
   const activeServices = services.filter(s => s.status === 'active').length;
-  const avgPrice = services.length > 0 ? Math.round(services.reduce((sum, s) => sum + s.price, 0) / services.length / 1000) : 0;
+  const avgPrice = services.length > 0 ? (services.reduce((sum, s) => sum + s.price, 0) / services.length).toFixed(2) : '0.00';
   const avgDuration = services.length > 0 ? Math.round(services.reduce((sum, s) => sum + s.duration, 0) / services.length) : 0;
 
   return (
@@ -43,7 +43,7 @@ export const ServiceStats = ({ services }: ServiceStatsProps) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Giá trung bình</p>
-              <p className="text-2xl font-bold text-green-600">{avgPrice}K</p>
+              <p className="text-2xl font-bold text-green-600">${avgPrice}</p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>

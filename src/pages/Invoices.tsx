@@ -180,7 +180,7 @@ const Invoices = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Tổng doanh thu</p>
-                <p className="text-2xl font-bold text-green-600">{Math.round(totalRevenue / 1000000)}M</p>
+                <p className="text-2xl font-bold text-green-600">${(totalRevenue / 1000).toFixed(1)}K</p>
               </div>
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                 <Receipt className="w-5 h-5 text-green-600" />

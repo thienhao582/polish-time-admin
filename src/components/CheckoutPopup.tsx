@@ -66,10 +66,10 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [editableDiscount, setEditableDiscount] = useState(0); // percentage - default 0%
   const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
-  const [discountAmount, setDiscountAmount] = useState(0); // specific amount in VND
+  const [discountAmount, setDiscountAmount] = useState(0); // specific amount in USD
   const [editableTip, setEditableTip] = useState(0); // default 0
   const [tipType, setTipType] = useState<'percentage' | 'amount'>('amount');
-  const [tipAmount, setTipAmount] = useState(0); // specific amount in VND
+  const [tipAmount, setTipAmount] = useState(0); // specific amount in USD
   const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>([]);
   const [disabledMethods, setDisabledMethods] = useState<Set<PaymentMethod>>(new Set());
   const [customAmountInput, setCustomAmountInput] = useState<number | ''>('');
@@ -87,7 +87,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   // Calculate pricing - use selectedServiceItems if available, otherwise fall back to checkInItem
   const serviceTotal = selectedServiceItems.length > 0
     ? selectedServiceItems.reduce((sum, item) => sum + item.price, 0)
-    : (checkInItem.services?.length ? checkInItem.services.length * 50000 : 0);
+    : (checkInItem.services?.length ? checkInItem.services.length * 2.08 : 0); // 50000 VND = 2.08 USD
   
   const discount = discountType === 'percentage' 
     ? Math.floor(serviceTotal * (editableDiscount / 100))
@@ -184,7 +184,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
             serviceName: serviceName,
             staffIds: staffForService.map(s => s.staffId),
             staffNames: staffForService.map(s => s.staffName),
-            price: 50000, // Default price
+            price: 2.08, // Default price in USD (50000 VND / 24000)
             duration: 60, // Default duration
           };
         });

@@ -277,7 +277,7 @@ export const ServiceHistory = () => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${((typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price) / 24000).toFixed(2)}
+                      ${(typeof appointment.price === 'string' ? parseFloat(appointment.price) : appointment.price).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
