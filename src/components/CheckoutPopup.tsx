@@ -80,6 +80,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   const [showCashDialog, setShowCashDialog] = useState(false);
   const [cashPaymentAmount, setCashPaymentAmount] = useState(0);
   const [cashReceived, setCashReceived] = useState<number | ''>('');
+  const [showPOSDialog, setShowPOSDialog] = useState(false);
+  const [cardPaymentAmount, setCardPaymentAmount] = useState(0);
 
   const currentTime = format(new Date(), "HH:mm");
   const currentDate = format(new Date(), "dd/MM/yyyy");
@@ -169,6 +171,8 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
       setShowCashDialog(false);
       setCashPaymentAmount(0);
       setCashReceived('');
+      setShowPOSDialog(false);
+      setCardPaymentAmount(0);
       
       // Initialize selected services from checkInItem with staff information
       if (checkInItem.services && checkInItem.services.length > 0) {
@@ -225,9 +229,12 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     if (method === 'card') {
       setIsProcessing(true);
       setSelectedPayment('card');
+      setShowPOSDialog(true);
+      setCardPaymentAmount(amount);
       // Simulate POS connection and processing with the actual amount
       setTimeout(() => {
         setIsProcessing(false);
+        setShowPOSDialog(false);
         if (newRemaining <= 0) {
           setPaymentCompleted(true);
           setCurrentStep('receipt');
@@ -1311,6 +1318,45 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
     document.body
   );
   
+  // Render POS payment dialog separately using portal to ensure it's on top
+  const posDialogPortal = showPOSDialog ? createPortal(
+    <Dialog open={showPOSDialog} onOpenChange={() => {}}>
+      <DialogContent className="sm:max-w-md z-[10000]" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Đang xử lý thanh toán</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="flex justify-center">
+            <div className="p-6 bg-blue-50 rounded-full">
+              <CreditCard className="h-16 w-16 text-blue-600 animate-pulse" />
+            </div>
+          </div>
+          
+          <div className="text-center space-y-2">
+            <p className="text-lg font-semibold">Đang kết nối với máy POS...</p>
+            <p className="text-3xl font-bold text-primary">${cardPaymentAmount.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">Vui lòng chờ khách hàng thực hiện thanh toán</p>
+          </div>
+
+          <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Đang xử lý giao dịch...</span>
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+              <Clock className="h-4 w-4 mt-0.5 shrink-0" />
+              <p>
+                Giao dịch sẽ được hoàn thành tự động sau khi khách hàng hoàn tất thanh toán trên máy POS
+              </p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>,
+    document.body
+  ) : null;
+
   // Render cash payment dialog separately using portal to ensure it's on top
   const cashDialogPortal = showCashDialog ? createPortal(
     <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
@@ -1404,6 +1450,7 @@ export function CheckoutPopup({ isOpen, onClose, checkInItem, onConfirmCheckOut 
   return (
     <>
       {checkoutPortal}
+      {posDialogPortal}
       {cashDialogPortal}
     </>
   );
