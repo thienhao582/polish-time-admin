@@ -106,7 +106,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
             <SelectContent className="bg-background z-[9999] max-h-[300px]">
               {services.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
-                  {service.name} - {service.price.toLocaleString('vi-VN')}đ
+                  {service.name} - ${service.price.toFixed(2)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -172,11 +172,11 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
                   <div className="flex-1">
                     <div className="font-medium">{item.serviceName}</div>
                     <div className="text-sm text-muted-foreground">
-                      Nhân viên: {item.staffNames.join(", ")} • {item.duration} phút • {item.price.toLocaleString('vi-VN')}đ
+                      Nhân viên: {item.staffNames.join(", ")} • {item.duration} phút • ${item.price.toFixed(2)}
                     </div>
                     {item.staffSalaryInfo && item.staffSalaryInfo.length > 1 && (
                       <div className="text-xs text-primary mt-1">
-                        Chia cho {item.staffSalaryInfo.length} nhân viên (mỗi người: {Math.round(item.price * 0.3 / item.staffSalaryInfo.length).toLocaleString('vi-VN')}đ)
+                        Chia cho {item.staffSalaryInfo.length} nhân viên (mỗi người: ${(item.price * 0.3 / item.staffSalaryInfo.length).toFixed(2)})
                       </div>
                     )}
                   </div>
@@ -197,7 +197,7 @@ export function ServiceStaffSelector({ selectedItems, onItemsChange, preSelected
               <div className="flex justify-between items-center font-medium">
                 <span>Tổng thời gian: {totalDuration} phút</span>
                 <span className="text-lg text-primary">
-                  Tổng tiền: {totalPrice.toLocaleString('vi-VN')}đ
+                  Tổng tiền: ${totalPrice.toFixed(2)}
                 </span>
               </div>
             </div>
