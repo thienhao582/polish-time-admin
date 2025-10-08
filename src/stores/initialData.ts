@@ -9,7 +9,7 @@ export const initialServices: Service[] = [
     description: "Sơn gel bền màu kết hợp với nail art tùy chỉnh theo yêu cầu",
     category: "Nail Art",
     duration: 90, 
-    price: 450000,
+    price: 18.75,
     status: "active",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z"
@@ -20,7 +20,7 @@ export const initialServices: Service[] = [
     description: "Chăm sóc móng tay và móng chân hoàn chỉnh bao gồm cắt, dũa, massage",
     category: "Manicure",
     duration: 120, 
-    price: 380000,
+    price: 15.83,
     status: "active",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z"
@@ -31,7 +31,7 @@ export const initialServices: Service[] = [
     description: "Nối móng acrylic hoặc gel với độ dài và hình dáng theo yêu cầu",
     category: "Nối móng",
     duration: 150, 
-    price: 650000,
+    price: 27.08,
     status: "active",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z"
@@ -42,7 +42,7 @@ export const initialServices: Service[] = [
     description: "Cắt móng, dũa móng, đẩy lõi móng cơ bản",
     category: "Manicure",
     duration: 60, 
-    price: 200000,
+    price: 8.33,
     status: "active",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z"
@@ -53,7 +53,7 @@ export const initialServices: Service[] = [
     description: "Sơn móng kiểu Pháp cổ điển với đầu móng trắng",
     category: "Manicure",
     duration: 75, 
-    price: 280000,
+    price: 11.67,
     status: "inactive",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z"
@@ -185,7 +185,7 @@ const serviceNames = [
   "French Manicure"
 ];
 
-const servicePrices = [450000, 380000, 650000, 200000, 280000];
+const servicePrices = [18.75, 15.83, 27.08, 8.33, 11.67];
 const serviceDurations = [90, 120, 150, 60, 75];
 
 // Generate single heavy appointment day
@@ -244,12 +244,12 @@ const generateSingleHeavyDay = (year: number, month: number, day: number, startI
       id: currentId++,
       date,
       time,
-      customer: customer.name,
-      phone: customer.phone,
-      service: serviceNames[serviceIndex],
-      duration: `${serviceDurations[serviceIndex]} phút`,
-      price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
-      status: "confirmed",
+        customer: customer.name,
+        phone: customer.phone,
+        service: serviceNames[serviceIndex],
+        duration: `${serviceDurations[serviceIndex]} phút`,
+        price: `$${servicePrices[serviceIndex].toFixed(2)}`,
+        status: "confirmed",
       staff: assignmentType === 'anyone' ? 'Bất kì' : employee.name,
       customerId: customerIndex.toString(),
       serviceId: (serviceIndex + 1).toString(),
@@ -325,7 +325,7 @@ const generateHeavyAppointmentDays = (year: number, month: number, startId: numb
         phone: customer.phone,
         service: serviceNames[serviceIndex],
         duration: `${serviceDurations[serviceIndex]} phút`,
-        price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
+        price: `$${servicePrices[serviceIndex].toFixed(2)}`,
         status: "confirmed",
         staff: assignmentType === 'anyone' ? 'Bất kì' : employee.name,
         customerId: customerIndex.toString(),
@@ -394,7 +394,7 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
       }
       
       // Create staff salary data with staff tips for completed appointments
-      const totalTip = status === "completed" ? Math.floor(Math.random() * 100000) + 20000 : 0; // 20k-120k tip for completed
+      const totalTip = status === "completed" ? (Math.random() * 4.17 + 0.83) : 0; // $0.83-$5.00 tip for completed
       const staffSalaryData = [{
         staffId: employee.id,
         staffName: employee.name,
@@ -424,7 +424,7 @@ const generateAppointmentsForMonth = (year: number, month: number, startId: numb
         phone: customer.phone,
         service: serviceNames[serviceIndex],
         duration: `${serviceDurations[serviceIndex]} phút`,
-        price: `${servicePrices[serviceIndex].toLocaleString()}đ`,
+        price: `$${servicePrices[serviceIndex].toFixed(2)}`,
         status,
         staff: assignmentType === 'anyone' ? 'Bất kì' : employee.name,
         customerId: customerIndex.toString(),
@@ -520,71 +520,71 @@ const generateAug6TestData = () => {
   // Create appointments for 15 employees to test horizontal scrolling
   const employeeAppointments = [
     // Lý Dung - 3 appointments
-    { staff: "Lý Dung", time: "08:00", service: "French Manicure", duration: 75, price: 280000, customer: "Huỳnh Thi Anh" },
-    { staff: "Lý Dung", time: "11:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Lý Thi Hồng" },
-    { staff: "Lý Dung", time: "14:30", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Ngô Thi Hiền" },
+    { staff: "Lý Dung", time: "08:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Huỳnh Thi Anh" },
+    { staff: "Lý Dung", time: "11:00", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Lý Thi Hồng" },
+    { staff: "Lý Dung", time: "14:30", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Ngô Thi Hiền" },
     
     // Võ Hoa - 2 appointments  
-    { staff: "Võ Hoa", time: "09:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Đinh Thi Vy" },
-    { staff: "Võ Hoa", time: "15:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Bùi Thi Thanh" },
+    { staff: "Võ Hoa", time: "09:30", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Đinh Thi Vy" },
+    { staff: "Võ Hoa", time: "15:00", service: "Nail Extension", duration: 150, price: 27.08, customer: "Bùi Thi Thanh" },
     
     // Phạm Nhung - 3 appointments
-    { staff: "Phạm Nhung", time: "08:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hồ Thi Yến" },
-    { staff: "Phạm Nhung", time: "13:30", service: "French Manicure", duration: 75, price: 280000, customer: "Dương Thi Diệu" },
-    { staff: "Phạm Nhung", time: "16:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Phan Thi Kim" },
+    { staff: "Phạm Nhung", time: "08:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Hồ Thi Yến" },
+    { staff: "Phạm Nhung", time: "13:30", service: "French Manicure", duration: 75, price: 11.67, customer: "Dương Thi Diệu" },
+    { staff: "Phạm Nhung", time: "16:00", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Phan Thi Kim" },
     
     // Nguyễn Thúy - 2 appointments
-    { staff: "Nguyễn Thúy", time: "10:00", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Võ Thi Hoài" },
-    { staff: "Nguyễn Thúy", time: "14:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Đặng Thi Xuân" },
+    { staff: "Nguyễn Thúy", time: "10:00", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Võ Thi Hoài" },
+    { staff: "Nguyễn Thúy", time: "14:00", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Đặng Thi Xuân" },
     
     // Cao Phương - 3 appointments
-    { staff: "Cao Phương", time: "09:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Lê Thi An" },
-    { staff: "Cao Phương", time: "12:00", service: "French Manicure", duration: 75, price: 280000, customer: "Trần Thi Bích" },
-    { staff: "Cao Phương", time: "16:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Phạm Thi Cúc" },
+    { staff: "Cao Phương", time: "09:00", service: "Nail Extension", duration: 150, price: 27.08, customer: "Lê Thi An" },
+    { staff: "Cao Phương", time: "12:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Trần Thi Bích" },
+    { staff: "Cao Phương", time: "16:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Phạm Thi Cúc" },
     
     // Đỗ Hoa - 2 appointments
-    { staff: "Đỗ Hoa", time: "11:30", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Huỳnh Thi Đào" },
-    { staff: "Đỗ Hoa", time: "15:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Hoàng Thi Giang" },
+    { staff: "Đỗ Hoa", time: "11:30", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Huỳnh Thi Đào" },
+    { staff: "Đỗ Hoa", time: "15:30", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Hoàng Thi Giang" },
     
     // Nguyễn Trang - 3 appointments
-    { staff: "Nguyễn Trang", time: "10:30", service: "French Manicure", duration: 75, price: 280000, customer: "Phan Thi Hiền" },
-    { staff: "Nguyễn Trang", time: "13:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Vũ Thi Khánh" },
-    { staff: "Nguyễn Trang", time: "17:00", service: "Nail Extension", duration: 150, price: 650000, customer: "Võ Thi Lam" },
+    { staff: "Nguyễn Trang", time: "10:30", service: "French Manicure", duration: 75, price: 11.67, customer: "Phan Thi Hiền" },
+    { staff: "Nguyễn Trang", time: "13:00", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Vũ Thi Khánh" },
+    { staff: "Nguyễn Trang", time: "17:00", service: "Nail Extension", duration: 150, price: 27.08, customer: "Võ Thi Lam" },
     
     // Đào Bích - 2 appointments
-    { staff: "Đào Bích", time: "12:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Bùi Thi My" },
-    { staff: "Đào Bích", time: "17:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Đỗ Thi Nhung" },
+    { staff: "Đào Bích", time: "12:00", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Bùi Thi My" },
+    { staff: "Đào Bích", time: "17:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Đỗ Thi Nhung" },
     
     // Huỳnh Thi Anh - 2 appointments
-    { staff: "Huỳnh Thi Anh", time: "09:00", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Hồ Thi Oanh" },
-    { staff: "Huỳnh Thi Anh", time: "16:00", service: "French Manicure", duration: 75, price: 280000, customer: "Lý Thi Phúc" },
+    { staff: "Huỳnh Thi Anh", time: "09:00", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Hồ Thi Oanh" },
+    { staff: "Huỳnh Thi Anh", time: "16:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Lý Thi Phúc" },
     
     // Vũ Thị Nga - 3 appointments
-    { staff: "Vũ Thị Nga", time: "08:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Đinh Thi Quỳnh" },
-    { staff: "Vũ Thị Nga", time: "12:30", service: "Nail Extension", duration: 150, price: 650000, customer: "Bùi Thi Thúy" },
-    { staff: "Vũ Thị Nga", time: "17:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Đặng Thi Uyên" },
+    { staff: "Vũ Thị Nga", time: "08:00", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Đinh Thi Quỳnh" },
+    { staff: "Vũ Thị Nga", time: "12:30", service: "Nail Extension", duration: 150, price: 27.08, customer: "Bùi Thi Thúy" },
+    { staff: "Vũ Thị Nga", time: "17:00", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Đặng Thi Uyên" },
     
     // Mai Linh - 2 appointments
-    { staff: "Mai Linh", time: "10:00", service: "French Manicure", duration: 75, price: 280000, customer: "Hoàng Thi Vy" },
-    { staff: "Mai Linh", time: "14:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Phan Thi Xuân" },
+    { staff: "Mai Linh", time: "10:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Hoàng Thi Vy" },
+    { staff: "Mai Linh", time: "14:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Phan Thi Xuân" },
     
     // Trần Hương - 3 appointments
-    { staff: "Trần Hương", time: "08:30", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Võ Thi Yến" },
-    { staff: "Trần Hương", time: "13:30", service: "Nail Extension", duration: 150, price: 650000, customer: "Vũ Thi Kim" },
-    { staff: "Trần Hương", time: "16:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Đỗ Thi Hoài" },
+    { staff: "Trần Hương", time: "08:30", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Võ Thi Yến" },
+    { staff: "Trần Hương", time: "13:30", service: "Nail Extension", duration: 150, price: 27.08, customer: "Vũ Thi Kim" },
+    { staff: "Trần Hương", time: "16:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Đỗ Thi Hoài" },
     
     // Lê Thu - 2 appointments
-    { staff: "Lê Thu", time: "11:00", service: "Gel Polish + Nail Art", duration: 90, price: 450000, customer: "Hồ Thi Xuân" },
-    { staff: "Lê Thu", time: "15:00", service: "French Manicure", duration: 75, price: 280000, customer: "Lý Thi An" },
+    { staff: "Lê Thu", time: "11:00", service: "Gel Polish + Nail Art", duration: 90, price: 18.75, customer: "Hồ Thi Xuân" },
+    { staff: "Lê Thu", time: "15:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Lý Thi An" },
     
     // Phạm Lan - 2 appointments  
-    { staff: "Phạm Lan", time: "09:30", service: "Basic Manicure", duration: 60, price: 200000, customer: "Trần Thi Bích" },
-    { staff: "Phạm Lan", time: "14:00", service: "Manicure + Pedicure", duration: 120, price: 380000, customer: "Cao Thi Cúc" },
+    { staff: "Phạm Lan", time: "09:30", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Trần Thi Bích" },
+    { staff: "Phạm Lan", time: "14:00", service: "Manicure + Pedicure", duration: 120, price: 15.83, customer: "Cao Thi Cúc" },
     
     // Huỳnh Anh - 3 appointments
-    { staff: "Huỳnh Anh", time: "10:30", service: "Nail Extension", duration: 150, price: 650000, customer: "Phạm Thi Đào" },
-    { staff: "Huỳnh Anh", time: "13:00", service: "French Manicure", duration: 75, price: 280000, customer: "Huỳnh Thi Giang" },
-    { staff: "Huỳnh Anh", time: "16:00", service: "Basic Manicure", duration: 60, price: 200000, customer: "Hoàng Thi Hiền" },
+    { staff: "Huỳnh Anh", time: "10:30", service: "Nail Extension", duration: 150, price: 27.08, customer: "Phạm Thi Đào" },
+    { staff: "Huỳnh Anh", time: "13:00", service: "French Manicure", duration: 75, price: 11.67, customer: "Huỳnh Thi Giang" },
+    { staff: "Huỳnh Anh", time: "16:00", service: "Basic Manicure", duration: 60, price: 8.33, customer: "Hoàng Thi Hiền" },
   ];
   
   
@@ -612,7 +612,7 @@ const generateAug6TestData = () => {
       phone: customer.phone,
       service: aptData.service,
       duration: `${aptData.duration} phút`,
-      price: `${aptData.price.toLocaleString()}đ`,
+      price: `$${aptData.price.toFixed(2)}`,
       status: Math.random() < 0.1 ? "cancelled" : Math.random() < 0.2 ? "completed" : "confirmed",
       staff: assignmentType === 'anyone' ? 'Bất kì' : aptData.staff,
       customerId: customerIndex.toString(),
