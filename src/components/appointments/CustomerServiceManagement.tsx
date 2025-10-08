@@ -691,16 +691,16 @@ export function CustomerServiceManagement({
 
       {/* Invoice Detail Dialog */}
       <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-3">
+          <DialogHeader className="pb-2">
             <DialogTitle>Hóa đơn thanh toán</DialogTitle>
           </DialogHeader>
           
-          <div className="overflow-y-auto flex-1 pr-2">
+          <div className="overflow-y-auto flex-1 pr-2 space-y-3">
           {selectedInvoice && (
-            <div className="space-y-6">
+            <>
               {/* Customer Info */}
-              <div className="text-center pb-4 border-b">
+              <div className="text-center pb-2 border-b">
                 <div className="text-3xl font-bold mb-2">{selectedInvoice.invoice_number}</div>
                 <div className="text-xl font-semibold mb-1">{selectedCustomer?.name}</div>
                 {selectedCustomer?.phone && (
@@ -713,10 +713,10 @@ export function CustomerServiceManagement({
 
               {/* Services Section */}
               <div>
-                <h3 className="font-semibold mb-3">Dịch vụ đã sử dụng</h3>
-                <div className="space-y-2">
+                <h3 className="font-semibold mb-2 text-sm">Dịch vụ đã sử dụng</h3>
+                <div className="space-y-1.5">
                   {selectedInvoice.services.map((service: any, idx: number) => (
-                    <div key={idx} className="bg-muted/50 rounded-lg p-4">
+                    <div key={idx} className="bg-muted/50 rounded-lg p-2.5">
                       <div className="flex justify-between items-center">
                         <div>
                           <div className="font-medium">{service.name}</div>
@@ -735,8 +735,8 @@ export function CustomerServiceManagement({
 
               {/* Staff Tips Section */}
               {invoiceData && (
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-3">Tip cho nhân viên</h3>
+                <div className="border-t pt-2">
+                  <h3 className="font-semibold mb-2 text-sm">Tip cho nhân viên</h3>
                   {(() => {
                     // Get total tip from invoice (saved in first service or calculate from total)
                     // Tip is stored in services[0].tip when saved
@@ -760,7 +760,7 @@ export function CustomerServiceManagement({
                     const remainingTip = invoiceTotalTip - distributedTip;
                     
                     return (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {invoiceData.services?.map((service: any, idx: number) => {
                           if (!service.staff || service.staff.length === 0) return null;
                           
@@ -769,9 +769,9 @@ export function CustomerServiceManagement({
                             const currentStaffTip = staffTips[staffKey] || 0;
                             
                             return (
-                              <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+                              <div key={staffKey} className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
                                 <div>
-                                  <div className="font-medium">{staffMember.name}</div>
+                                  <div className="font-medium text-sm">{staffMember.name}</div>
                                   <div className="text-xs text-muted-foreground">
                                     Dịch vụ: {service.name}
                                   </div>
@@ -780,42 +780,9 @@ export function CustomerServiceManagement({
                                    <Input
                                     type="number"
                                     value={currentStaffTip}
-                                    onChange={(e) => {
-                                      const inputValue = e.target.value;
-                                      
-                                      // Allow empty input for editing
-                                      if (inputValue === '') {
-                                        setStaffTips(prev => ({
-                                          ...prev,
-                                          [staffKey]: 0
-                                        }));
-                                        setHasTipChanges(true);
-                                        return;
-                                      }
-                                      
-                                      const newValue = Number(inputValue);
-                                      
-                                      // Validate: must be >= 0
-                                      if (newValue < 0 || isNaN(newValue)) {
-                                        return;
-                                      }
-                                      
-                                      setStaffTips(prev => ({
-                                        ...prev,
-                                        [staffKey]: newValue
-                                      }));
-                                      setHasTipChanges(true);
-                                    }}
-                                    onBlur={(e) => {
-                                      // Ensure value is a valid number on blur
-                                      if (e.target.value === '' || isNaN(Number(e.target.value))) {
-                                        setStaffTips(prev => ({
-                                          ...prev,
-                                          [staffKey]: 0
-                                        }));
-                                      }
-                                    }}
-                                    className="w-28 h-8 text-right"
+                                    readOnly
+                                    disabled
+                                    className="w-28 h-8 text-right bg-muted cursor-not-allowed"
                                     min="0"
                                     step="0.001"
                                   />
@@ -846,9 +813,9 @@ export function CustomerServiceManagement({
               )}
 
               {/* Payment Summary */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Tổng kết thanh toán</h3>
-                <div className="space-y-2">
+              <div className="border-t pt-2">
+                <h3 className="font-semibold mb-2 text-sm">Tổng kết thanh toán</h3>
+                <div className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal:</span>
                     <span>${selectedInvoice.subtotal.toFixed(2)}</span>
@@ -873,14 +840,14 @@ export function CustomerServiceManagement({
               </div>
 
               {selectedInvoice.notes && (
-                <div className="bg-muted/50 rounded-lg p-3">
+                <div className="bg-muted/50 rounded-lg p-2">
                   <div className="text-sm font-medium mb-1">Ghi chú:</div>
                   <div className="text-sm text-muted-foreground">{selectedInvoice.notes}</div>
                 </div>
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-4 pb-4 border-t">
+              <div className="flex gap-2 pt-2 border-t">
                 <Button
                   variant="outline"
                   onClick={() => handlePrintInvoice(selectedInvoice)}
@@ -889,16 +856,6 @@ export function CustomerServiceManagement({
                   <Printer className="w-4 h-4 mr-2" />
                   In hóa đơn
                 </Button>
-                {invoiceData && hasTipChanges && (
-                  <Button
-                    onClick={handleSaveTip}
-                    disabled={isSavingTip}
-                    className="flex-1"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSavingTip ? "Đang lưu..." : "Lưu tip"}
-                  </Button>
-                )}
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -910,7 +867,7 @@ export function CustomerServiceManagement({
                   Đóng
                 </Button>
               </div>
-            </div>
+            </>
           )}
           </div>
         </DialogContent>
