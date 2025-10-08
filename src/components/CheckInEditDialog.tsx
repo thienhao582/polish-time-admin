@@ -60,7 +60,7 @@ export const CheckInEditDialog = ({ isOpen, onClose, checkInItem, onUpdate, onAp
               serviceName: service.name,
               staffIds,
               staffNames,
-              price: service.price,
+              price: service.price / 24000,
               duration: service.duration,
               staffSalaryInfo: []
             };
