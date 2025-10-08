@@ -164,17 +164,27 @@ const customerFirstNames = [
   "Hoài", "Xuân", "An", "Bích", "Cúc", "Đào", "Giang", "Hiền", "Khánh", "Lam"
 ];
 
-export const initialCustomers: Customer[] = Array.from({ length: 100 }, (_, index) => {
-  const firstName = customerFirstNames[Math.floor(Math.random() * customerFirstNames.length)];
-  const lastName = vietnameseLastNames[Math.floor(Math.random() * vietnameseLastNames.length)];
-  
-  return {
-    id: (index + 1).toString(),
-    name: `${lastName} Thị ${firstName}`,
-    phone: `091${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
-    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`,
-  };
-});
+export const initialCustomers: Customer[] = [
+  // First customer with specific phone for testing
+  {
+    id: "1",
+    name: "Hoàng Thị Vân",
+    phone: "09141095157",
+    email: "van.hoang@email.com",
+  },
+  // Generate remaining 99 customers
+  ...Array.from({ length: 99 }, (_, index) => {
+    const firstName = customerFirstNames[Math.floor(Math.random() * customerFirstNames.length)];
+    const lastName = vietnameseLastNames[Math.floor(Math.random() * vietnameseLastNames.length)];
+    
+    return {
+      id: (index + 2).toString(),
+      name: `${lastName} Thị ${firstName}`,
+      phone: `091${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
+      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@email.com`,
+    };
+  })
+];
 
 // Generate appointments for last month, current month, and next month
 const serviceNames = [
