@@ -522,7 +522,7 @@ export function CustomerServiceManagement({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Quản lý dịch vụ khách hàng
+            Quản lý khách hàng
           </DialogTitle>
         </DialogHeader>
         

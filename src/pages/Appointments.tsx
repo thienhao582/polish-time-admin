@@ -455,7 +455,7 @@ const Appointments = () => {
             className="border-purple-600 text-purple-600 hover:bg-purple-50"
           >
             <FileText className="w-4 h-4 mr-2" />
-            Quản lý dịch vụ khách hàng
+            Quản lý khách hàng
           </Button>
 
           <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
